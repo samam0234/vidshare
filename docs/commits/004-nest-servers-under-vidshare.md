@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `004` |
 | **파일명** | `004-nest-servers-under-vidshare.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `dd0e585` |
+| **Git 커밋 (full)** | `dd0e585` |
 | **날짜** | 2026-08-14 |
 | **작성자** | VidShare |
 | **브랜치** | `master` |
