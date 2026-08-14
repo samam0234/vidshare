@@ -87,6 +87,7 @@ NNN-짧은-영문-slug.md
 | 011 | [011-messages-notifications-serial.md](./011-messages-notifications-serial.md) | `9ebfb23` | 메시지·알림 작성 기반 상세 | 2026-08-15 |
 | 012 | [012-navbar-new-tags-hamburger.md](./012-navbar-new-tags-hamburger.md) | `4bc6809` | 네비 롱폼·커뮤니티·챗봇 + 햄버거 | 2026-08-15 |
 | 013 | [013-button-svg-pointer-events.md](./013-button-svg-pointer-events.md) | `1207823` | 버튼 안 SVG 클릭 수정 | 2026-08-15 |
+| 014 | [014-support-faq-user-self-help.md](./014-support-faq-user-self-help.md) | `TBD` | 고객센터 FAQ 유저 자가해결 안내 | 2026-08-15 |
 
 ---
 

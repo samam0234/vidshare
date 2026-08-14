@@ -28,11 +28,9 @@ export default function FaqAccordion() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
-      <h1 className="text-2xl font-bold">
-        🎬 쇼츠 문제 해결 방법 안내문
-      </h1>
+      <h1 className="text-2xl font-bold">고객센터</h1>
       <p className="mt-2 text-sm text-[var(--text-muted)]">
-        자주 묻는 문제와 해결 방법을 확인해 보세요.
+        자주 묻는 문제를 직접 해결할 수 있는 짧은 방법을 모아 두었습니다.
       </p>
       <hr className="my-6 border-[var(--border)]" />
 
