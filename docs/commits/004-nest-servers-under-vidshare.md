@@ -74,4 +74,4 @@ cd vidshare/FrontServer && npm install && npm run dev
 
 ### 후속
 - [ ] UI mock → API 연동
-- [ ] 해시 TBD 갱신
+- [x] 해시 갱신 (`dd0e585`)

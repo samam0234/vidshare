@@ -130,7 +130,7 @@ npm run dev
 - [x] 이 문서의 커밋 해시 갱신 (`630d716`)
 
 ### 참고 링크
-- [루트 README](../../README.md)
+- [루트 README](../README.md)
 - [아키텍처](../architecture/overview.md)
 - [커밋 가이드](./README.md)
 - [템플릿](./TEMPLATE.md)

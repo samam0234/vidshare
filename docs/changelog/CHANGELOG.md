@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### Changed
+- 프로젝트 문서를 `FrontServer/docs/` 에서 루트 `docs/` 로 이동
+- Git 저장소 루트를 `FrontServer/` 에서 `vidshare/` 로 이동 (루트 docs 추적)
+
 ### 예정
 - FrontServer UI ↔ BackendServer API 전면 연동
 - 인증·DB·실업로드 (로드맵 참고)

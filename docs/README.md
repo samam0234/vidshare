@@ -83,12 +83,13 @@ Git 커밋 메시지는 짧게, **무엇을·왜 했는지** 는 `docs/commits/`
 
 1. 알맞은 하위 폴더에 `.md` 생성
 2. 이 파일(docs README) 구조 목록에 경로 반영 (필요할 때만)
-3. 루트 README의 [문서(docs)](../README.md#문서docs) 표는 폴더 단위만 유지
+3. 루트 README의 [문서](../README.md#문서) 표는 폴더 단위만 유지
 
 ---
 
 ## 관련 링크
 
 - 앱 실행·기능 소개: [../README.md](../README.md)
-- 기존 HTML 프로토타입: `../../../oldplanHTML/` (project 루트)
-- VidShare 루트: `../../README.md` (`vidshare/`)
+- 프론트 가이드: [../FrontServer/README.md](../FrontServer/README.md)
+- 백엔드 가이드: [../BackendServer/README.md](../BackendServer/README.md)
+- 기존 HTML 프로토타입: `../../oldplanHTML/` (project 루트)

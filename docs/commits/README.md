@@ -78,6 +78,7 @@ NNN-짧은-영문-slug.md
 | 002 | [002-vidshare-frontend-redesign.md](./002-vidshare-frontend-redesign.md) | `630d716` | VidShare 프론트 리디자인 + docs | 2026-08-14 |
 | 003 | [003-split-front-backend-servers.md](./003-split-front-backend-servers.md) | `5dccd96` | FrontServer / BackendServer 분리 | 2026-08-14 |
 | 004 | [004-nest-servers-under-vidshare.md](./004-nest-servers-under-vidshare.md) | `dd0e585` | 서버 폴더를 vidshare 하위로 배치 | 2026-08-14 |
+| 005 | [005-move-docs-to-root.md](./005-move-docs-to-root.md) | `5a64037` | 문서를 루트 `docs/`로 이동 + Git 루트 상향 | 2026-08-14 |
 
 ---
 

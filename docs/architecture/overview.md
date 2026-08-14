@@ -90,7 +90,7 @@ BackendServer (`NEXT_PUBLIC_API_URL`, 기본 `http://localhost:4000`) HTTP 클�
 
 ### `BackendServer/` (형제 폴더)
 Express + TypeScript. 인메모리 `store` 로 쇼츠·댓글·알림·메시지·FAQ API 제공.  
-상세: `../../BackendServer/README.md` (`vidshare/BackendServer`)
+상세: [`../BackendServer/README.md`](../BackendServer/README.md) (`vidshare/BackendServer`)
 
 ---
 
