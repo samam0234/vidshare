@@ -76,6 +76,7 @@ NNN-짧은-영문-slug.md
 |-----------|------|-------------|------------|------|
 | 001 | [001-initial-create-next-app.md](./001-initial-create-next-app.md) | `7dcb8d8` | Create Next App 초기 스캐폴드 | 2026-08-14 |
 | 002 | [002-vidshare-frontend-redesign.md](./002-vidshare-frontend-redesign.md) | `630d716` | VidShare 프론트 리디자인 + docs | 2026-08-14 |
+| 003 | [003-split-front-backend-servers.md](./003-split-front-backend-servers.md) | `TBD` | FrontServer / BackendServer 분리 | 2026-08-14 |
 
 ---
 

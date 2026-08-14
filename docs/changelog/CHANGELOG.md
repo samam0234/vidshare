@@ -8,7 +8,21 @@
 ## [Unreleased]
 
 ### 예정
-- 백엔드·인증·실업로드 연동 (로드맵 참고)
+- FrontServer UI ↔ BackendServer API 전면 연동
+- 인증·DB·실업로드 (로드맵 참고)
+
+---
+
+## [0.3.0] - 2026-08-14
+
+### Changed
+- 프로젝트 폴더 분리: `vidshare/` → `FrontServer/` + 신규 `BackendServer/`
+- 루트 `README.md` 모노레포 가이드 추가
+
+### Added
+- BackendServer (Express + TypeScript, REST API, 인메모리 store)
+- FrontServer `lib/api.ts` BackendServer 클라이언트 스텁
+- FrontServer `.env.local.example` (`NEXT_PUBLIC_API_URL`)
 
 ---
 

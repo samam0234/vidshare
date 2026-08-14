@@ -1,7 +1,8 @@
 {
-  "name": "vidshare",
+  "name": "vidshare-front",
   "version": "0.1.0",
   "private": true,
+  "description": "VidShare FrontServer — Next.js UI",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

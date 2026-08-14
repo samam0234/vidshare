@@ -1,28 +1,34 @@
 # 아키텍처 개요
 
-**상태**: 구현됨 (프론트엔드 전용)  
+**상태**: 구현됨 (FrontServer + BackendServer 분리)  
 **최종 갱신**: 2026-08-14
 
 ---
 
 ## 1. 한 줄 요약
 
-VidShare는 **Next.js App Router** 기반 SPA/SSR 하이브리드 UI이며,  
-데이터는 **서버 없이 클라이언트 mock**으로 동작하는 데모 아키텍처입니다.
+VidShare는 **프론트(FrontServer)** 와 **백엔드(BackendServer)** 를 폴더로 나눈 구조입니다.
 
 ```
 [Browser]
     │
     ▼
-[Next.js App Router]
-    │  layout (Navbar, Footer, ThemeProvider)
+[FrontServer :3000]  Next.js App Router
+    │  layout / pages / components
+    │  lib/mock-data.ts  ← UI가 아직 주로 사용
+    │  lib/api.ts        ← BackendServer 호출 스텁
     │
-    ├─ pages (app/*/page.tsx)
-    ├─ client components (상호작용)
-    └─ lib/mock-data.ts  ← 현재 단일 데이터 소스
+    ▼ (예정: 전면 연동)
+[BackendServer :4000]  Express REST API
+    │  routes + in-memory store
+    └── (예정) DB / Auth / Storage
 ```
 
-백엔드·DB·외부 API(인증/스토리지)는 **아직 없습니다.**
+| 폴더 | 역할 | 포트 |
+|------|------|------|
+| `FrontServer/` | Next.js UI | 3000 |
+| `BackendServer/` | Express API | 4000 |
+| `oldplanHTML/` | 구 HTML 예시 | — |
 
 ---
 
@@ -76,7 +82,15 @@ VidShare는 **Next.js App Router** 기반 SPA/SSR 하이브리드 UI이며,
 - DOM class: `html.dark` / `html.light`
 
 ### `lib/mock-data.ts`
-현재 **유일한 콘텐츠 소스**. API 도입 시 이 레이어를 fetch 클라이언트로 교체하는 것이 목표입니다.
+현재 UI가 **주로 사용하는** 콘텐츠 소스.
+
+### `lib/api.ts`
+BackendServer (`NEXT_PUBLIC_API_URL`, 기본 `http://localhost:4000`) HTTP 클라이언트.  
+점진적으로 mock 대신 이 모듈을 쓰도록 교체합니다.
+
+### `BackendServer/` (형제 폴더)
+Express + TypeScript. 인메모리 `store` 로 쇼츠·댓글·알림·메시지·FAQ API 제공.  
+상세: `../../BackendServer/README.md`
 
 ---
 
