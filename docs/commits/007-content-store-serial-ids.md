@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `007` |
 | **파일명** | `007-content-store-serial-ids.md` |
-| **Git 커밋 (short)** | `7668969` |
-| **Git 커밋 (full)** | `7668969998eaee17f25ddafe8a2d98a6712d6351` |
+| **Git 커밋 (short)** | `a0a845c` |
+| **Git 커밋 (full)** | `a0a845c` |
 | **날짜** | `2026-08-15` |
 | **작성자** | VidShare |
 | **브랜치** | `master` |
@@ -56,5 +56,5 @@ localStorage 스토어와 SerialBadge를 먼저 넣는다.
 
 - [x] 문서 번호·파일명 규칙 준수
 - [x] 인덱스·CHANGELOG 반영
-- [x] Git 해시 기입 (`7668969`)
+- [x] Git 해시 기입 (`a0a845c`)
 - [x] 민감 정보 없음

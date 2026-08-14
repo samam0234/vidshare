@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `009` |
 | **파일명** | `009-community-pages.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `dfe9870` |
 | **날짜** | `2026-08-15` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

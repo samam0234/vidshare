@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `012` |
 | **파일명** | `012-navbar-new-tags-hamburger.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `4bc6809` |
 | **날짜** | `2026-08-15` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `011` |
 | **파일명** | `011-messages-notifications-serial.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `9ebfb23` |
 | **날짜** | `2026-08-15` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

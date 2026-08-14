@@ -80,13 +80,13 @@ NNN-짧은-영문-slug.md
 | 004 | [004-nest-servers-under-vidshare.md](./004-nest-servers-under-vidshare.md) | `dd0e585` | 서버 폴더를 vidshare 하위로 배치 | 2026-08-14 |
 | 005 | [005-move-docs-to-root.md](./005-move-docs-to-root.md) | `5a64037` | 문서를 루트 `docs/`로 이동 + Git 루트 상향 | 2026-08-14 |
 | 006 | [006-track-backend-server.md](./006-track-backend-server.md) | `c0ee728` | BackendServer 소스를 저장소에 추가 | 2026-08-14 |
-| 007 | [007-content-store-serial-ids.md](./007-content-store-serial-ids.md) | `7668969` | 작성 콘텐츠 일련번호 스토어 | 2026-08-15 |
-| 008 | [008-longform-pages.md](./008-longform-pages.md) | `TBD` | 롱폼 영상 목록·작성·상세 | 2026-08-15 |
-| 009 | [009-community-pages.md](./009-community-pages.md) | `TBD` | 커뮤니티 목록·작성·상세 | 2026-08-15 |
-| 010 | [010-chatbot-pages.md](./010-chatbot-pages.md) | `TBD` | 챗봇 대화 목록·상세 | 2026-08-15 |
-| 011 | [011-messages-notifications-serial.md](./011-messages-notifications-serial.md) | `TBD` | 메시지·알림 작성 기반 상세 | 2026-08-15 |
-| 012 | [012-navbar-new-tags-hamburger.md](./012-navbar-new-tags-hamburger.md) | `TBD` | 네비 롱폼·커뮤니티·챗봇 + 햄버거 | 2026-08-15 |
-| 013 | [013-button-svg-pointer-events.md](./013-button-svg-pointer-events.md) | `TBD` | 버튼 안 SVG 클릭 수정 | 2026-08-15 |
+| 007 | [007-content-store-serial-ids.md](./007-content-store-serial-ids.md) | `a0a845c` | 작성 콘텐츠 일련번호 스토어 | 2026-08-15 |
+| 008 | [008-longform-pages.md](./008-longform-pages.md) | `52c05e1` | 롱폼 영상 목록·작성·상세 | 2026-08-15 |
+| 009 | [009-community-pages.md](./009-community-pages.md) | `dfe9870` | 커뮤니티 목록·작성·상세 | 2026-08-15 |
+| 010 | [010-chatbot-pages.md](./010-chatbot-pages.md) | `75a5869` | 챗봇 대화 목록·상세 | 2026-08-15 |
+| 011 | [011-messages-notifications-serial.md](./011-messages-notifications-serial.md) | `9ebfb23` | 메시지·알림 작성 기반 상세 | 2026-08-15 |
+| 012 | [012-navbar-new-tags-hamburger.md](./012-navbar-new-tags-hamburger.md) | `4bc6809` | 네비 롱폼·커뮤니티·챗봇 + 햄버거 | 2026-08-15 |
+| 013 | [013-button-svg-pointer-events.md](./013-button-svg-pointer-events.md) | `1207823` | 버튼 안 SVG 클릭 수정 | 2026-08-15 |
 
 ---
 
