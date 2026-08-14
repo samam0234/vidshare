@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `003` |
 | **파일명** | `003-split-front-backend-servers.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `5dccd96` |
+| **Git 커밋 (full)** | `5dccd96fd54288c2271860fb8f8cacc969abf396` |
 | **날짜** | 2026-08-14 |
 | **작성자** | VidShare |
 | **브랜치** | `master` |
