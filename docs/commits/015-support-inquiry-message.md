@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `015` |
 | **파일명** | `015-support-inquiry-message.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `6363ed4` |
 | **날짜** | `2026-08-15` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

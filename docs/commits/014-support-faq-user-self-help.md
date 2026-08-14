@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `014` |
 | **파일명** | `014-support-faq-user-self-help.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `6c409b5` |
 | **날짜** | `2026-08-15` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |
