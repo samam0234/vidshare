@@ -11,6 +11,7 @@ import type {
   ContentState,
   Conversation,
   LongformVideo,
+  SupportInquiry,
 } from "@/types/content";
 import { currentUser } from "@/lib/mock-data";
 import { randomGradient } from "@/lib/utils";
@@ -26,6 +27,7 @@ const emptyState: ContentState = {
     conversation: 1,
     chatLine: 1,
     notification: 1,
+    inquiry: 1,
   },
   longform: [],
   community: [],
@@ -34,6 +36,7 @@ const emptyState: ContentState = {
   conversations: [],
   chatLines: [],
   notifications: [],
+  inquiries: [],
 };
 
 let state: ContentState = emptyState;
@@ -63,6 +66,7 @@ function load() {
         ...emptyState,
         ...parsed,
         next: { ...emptyState.next, ...parsed.next },
+        inquiries: parsed.inquiries ?? [],
       };
     }
   } catch {
@@ -320,6 +324,33 @@ export function markNotificationRead(id: number) {
   });
 }
 
+export function addInquiry(input: {
+  subject: string;
+  body: string;
+}): SupportInquiry {
+  const prev = getSnapshot();
+  const id = prev.next.inquiry ?? 1;
+  const item: SupportInquiry = {
+    id,
+    subject: input.subject.trim(),
+    body: input.body.trim(),
+    authorName: currentUser.name,
+    createdAt: isoNow(),
+  };
+  let next: ContentState = {
+    ...prev,
+    next: { ...prev.next, inquiry: id + 1 },
+    inquiries: [item, ...(prev.inquiries ?? [])],
+  };
+  next = pushNotification(next, {
+    category: "system",
+    message: `고객센터 문의 ${formatSerial(id)} 을 보냈습니다.`,
+    href: `/support/${id}`,
+  });
+  setState(next);
+  return item;
+}
+
 export function removeNotification(id: number) {
   const prev = getSnapshot();
   setState({
@@ -382,9 +413,14 @@ export function useContentStore() {
     (id: number) => snapshot.notifications.find((x) => x.id === id),
     [snapshot.notifications]
   );
+  const getInquiry = useCallback(
+    (id: number) => snapshot.inquiries.find((x) => x.id === id),
+    [snapshot.inquiries]
+  );
 
   return {
     ...snapshot,
+    inquiries: snapshot.inquiries ?? [],
     unreadCount,
     getLongform,
     getCommunity,
@@ -393,5 +429,6 @@ export function useContentStore() {
     getConversation,
     getChatLines,
     getNotification,
+    getInquiry,
   };
 }

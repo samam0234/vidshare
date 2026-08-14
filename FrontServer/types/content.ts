@@ -60,6 +60,14 @@ export type AppNotification = {
   createdAt: string;
 };
 
+export type SupportInquiry = {
+  id: number;
+  subject: string;
+  body: string;
+  authorName: string;
+  createdAt: string;
+};
+
 export type ContentState = {
   next: {
     longform: number;
@@ -69,6 +77,7 @@ export type ContentState = {
     conversation: number;
     chatLine: number;
     notification: number;
+    inquiry: number;
   };
   longform: LongformVideo[];
   community: CommunityPost[];
@@ -77,4 +86,5 @@ export type ContentState = {
   conversations: Conversation[];
   chatLines: ChatLine[];
   notifications: AppNotification[];
+  inquiries: SupportInquiry[];
 };

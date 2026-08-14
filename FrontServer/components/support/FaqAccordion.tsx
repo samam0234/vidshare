@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { faqItems } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import SupportContact from "./SupportContact";
 
 export default function FaqAccordion() {
   const [open, setOpen] = useState<Record<string, boolean>>({
@@ -30,7 +31,7 @@ export default function FaqAccordion() {
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
       <h1 className="text-2xl font-bold">고객센터</h1>
       <p className="mt-2 text-sm text-[var(--text-muted)]">
-        자주 묻는 문제를 직접 해결할 수 있는 짧은 방법을 모아 두었습니다.
+        먼저 아래 방법으로 직접 해결해 보세요. 안 되면 페이지 아래에서 메시지를 보낼 수 있습니다.
       </p>
       <hr className="my-6 border-[var(--border)]" />
 
@@ -90,6 +91,8 @@ export default function FaqAccordion() {
           모두 닫기
         </button>
       </div>
+
+      <SupportContact />
     </main>
   );
 }
