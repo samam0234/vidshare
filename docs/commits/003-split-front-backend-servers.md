@@ -86,5 +86,5 @@ curl http://localhost:4000/api/health
 
 ### 후속
 - [ ] UI mock → API 연동
-- [ ] 해시 TBD 갱신
-- [ ] 구 `vidshare/` 폴더 정리 (잠금 해제 후 삭제)
+- [x] 해시 갱신 (`5dccd96`)
+- [x] 구 `vidshare/` 폴더 삭제
