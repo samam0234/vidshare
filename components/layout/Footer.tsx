@@ -1,0 +1,31 @@
+import Link from "next/link";
+
+export default function Footer() {
+  return (
+    <footer className="mt-auto border-t border-[var(--border)] bg-[var(--nav)]">
+      <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 px-4 py-6 text-center text-sm text-[var(--text-muted)]">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <a href="#" className="hover:text-[var(--text)] hover:underline">
+            이용약관
+          </a>
+          <span aria-hidden>|</span>
+          <a href="#" className="hover:text-[var(--text)] hover:underline">
+            개인정보처리방침
+          </a>
+          <span aria-hidden>|</span>
+          <a href="#" className="hover:text-[var(--text)] hover:underline">
+            사업자 정보확인
+          </a>
+          <span aria-hidden>|</span>
+          <Link
+            href="/support"
+            className="hover:text-[var(--text)] hover:underline"
+          >
+            고객센터
+          </Link>
+        </div>
+        <p>© VidShare Corp. All rights reserved.</p>
+      </div>
+    </footer>
+  );
+}
