@@ -13,11 +13,19 @@
 
 ---
 
+## [0.3.1] - 2026-08-14
+
+### Fixed
+- 의도한 구조로 복구: **`vidshare/FrontServer`**, **`vidshare/BackendServer`**
+- `vidshare` 폴더를 프로젝트 컨테이너로 유지 (삭제하지 않음)
+
+---
+
 ## [0.3.0] - 2026-08-14
 
 ### Changed
-- 프로젝트 폴더 분리: `vidshare/` → `FrontServer/` + 신규 `BackendServer/`
-- 루트 `README.md` 모노레포 가이드 추가
+- 프론트/백엔드 서버 폴더 분리 (`FrontServer` + `BackendServer`)
+- `vidshare/README.md` 모노레포 가이드
 
 ### Added
 - BackendServer (Express + TypeScript, REST API, 인메모리 store)

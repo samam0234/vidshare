@@ -26,9 +26,9 @@ VidShare는 **프론트(FrontServer)** 와 **백엔드(BackendServer)** 를 폴�
 
 | 폴더 | 역할 | 포트 |
 |------|------|------|
-| `FrontServer/` | Next.js UI | 3000 |
-| `BackendServer/` | Express API | 4000 |
-| `oldplanHTML/` | 구 HTML 예시 | — |
+| `vidshare/FrontServer/` | Next.js UI | 3000 |
+| `vidshare/BackendServer/` | Express API | 4000 |
+| `oldplanHTML/` | 구 HTML 예시 (project 루트) | — |
 
 ---
 
@@ -90,7 +90,7 @@ BackendServer (`NEXT_PUBLIC_API_URL`, 기본 `http://localhost:4000`) HTTP 클�
 
 ### `BackendServer/` (형제 폴더)
 Express + TypeScript. 인메모리 `store` 로 쇼츠·댓글·알림·메시지·FAQ API 제공.  
-상세: `../../BackendServer/README.md`
+상세: `../../BackendServer/README.md` (`vidshare/BackendServer`)
 
 ---
 

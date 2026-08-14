@@ -4,7 +4,8 @@
 
 - 프레임워크: **Next.js (App Router) + React + TypeScript + Tailwind CSS**
 - 형제 서버: **[BackendServer](../BackendServer/)** (REST API, 포트 4000)
-- 예전 HTML 참고: `../oldplanHTML`
+- 프로젝트 루트: **[../README.md](../README.md)** (`vidshare/`)
+- 예전 HTML 참고: `../../oldplanHTML`
 
 > UI는 완성되어 있으며, 데이터는 아직 주로 **클라이언트 mock** (`lib/mock-data.ts`)을 사용합니다.  
 > BackendServer 연동용 클라이언트는 `lib/api.ts` 에 준비되어 있습니다.
@@ -30,7 +31,7 @@
 
 | 구분 | 설명 |
 |------|------|
-| 폴더 | `FrontServer/` (구 `vidshare/`) |
+| 폴더 | `vidshare/FrontServer/` |
 | 목적 | 숏폼 플랫폼 UX / 데모 |
 | 포트 | **3000** |
 | 데이터 | mock + (준비) BackendServer API |
@@ -78,7 +79,7 @@
 ### 설치 · 실행
 
 ```bash
-cd FrontServer
+cd vidshare/FrontServer
 npm install
 npm run dev
 ```
@@ -99,8 +100,8 @@ npm run lint
 
 | 서버 | 경로 | 포트 |
 |------|------|------|
-| FrontServer | `../FrontServer` | 3000 |
-| BackendServer | `../BackendServer` | 4000 |
+| FrontServer | `vidshare/FrontServer` | 3000 |
+| BackendServer | `vidshare/BackendServer` | 4000 |
 
 1. BackendServer에서 `npm run dev`
 2. FrontServer에 환경 변수 (선택):
