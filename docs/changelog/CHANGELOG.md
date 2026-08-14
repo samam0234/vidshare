@@ -10,6 +10,7 @@
 ### Added
 - BackendServer 소스를 저장소에 추가 (Express REST, 인메모리 store)
 - 작성 콘텐츠 일련번호 스토어 (`content-store`, SerialBadge)
+- 롱폼 영상 목록·작성·상세 (`/longform`)
 
 ### Changed
 - 프로젝트 문서를 `FrontServer/docs/` 에서 루트 `docs/` 로 이동

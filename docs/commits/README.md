@@ -81,6 +81,7 @@ NNN-짧은-영문-slug.md
 | 005 | [005-move-docs-to-root.md](./005-move-docs-to-root.md) | `5a64037` | 문서를 루트 `docs/`로 이동 + Git 루트 상향 | 2026-08-14 |
 | 006 | [006-track-backend-server.md](./006-track-backend-server.md) | `c0ee728` | BackendServer 소스를 저장소에 추가 | 2026-08-14 |
 | 007 | [007-content-store-serial-ids.md](./007-content-store-serial-ids.md) | `7668969` | 작성 콘텐츠 일련번호 스토어 | 2026-08-15 |
+| 008 | [008-longform-pages.md](./008-longform-pages.md) | `TBD` | 롱폼 영상 목록·작성·상세 | 2026-08-15 |
 
 ---
 
