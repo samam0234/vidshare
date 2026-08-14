@@ -113,6 +113,14 @@ body {
   outline-offset: 2px;
 }
 
+/* SVG default pointer-events is visiblePainted — clicks miss the gaps
+   between hamburger lines / icon strokes. Let the button receive them. */
+button svg,
+a svg,
+[role="button"] svg {
+  pointer-events: none;
+}
+
 /* Utility surfaces */
 .surface {
   background: var(--bg-elevated);

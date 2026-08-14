@@ -20,6 +20,9 @@
 - Git 저장소 루트를 `FrontServer/` 에서 `vidshare/` 로 이동 (루트 docs 추적)
 - 네비: 메시지/알림 텍스트 제거, 롱폼·커뮤니티·챗봇 추가, 좁은 화면 햄버거
 
+### Fixed
+- 버튼 안 SVG 클릭이 아이콘 선 사이로 빠지던 문제
+
 ### 예정
 - FrontServer UI ↔ BackendServer API 전면 연동
 - 인증·DB·실업로드 (로드맵 참고)
