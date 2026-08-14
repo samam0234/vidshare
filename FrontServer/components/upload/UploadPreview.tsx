@@ -19,8 +19,7 @@ export default function UploadPreview({
       <div
         className="relative aspect-[9/16] w-full max-w-sm overflow-hidden rounded-3xl border border-[var(--border)] shadow-[var(--shadow)]"
         style={{
-          background: thumb ? undefined : gradient,
-          backgroundImage: thumb ? `url(${thumb})` : undefined,
+          backgroundImage: thumb ? `url(${thumb})` : gradient,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}

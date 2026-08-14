@@ -1,10 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Shuffle, Upload } from "lucide-react";
 import { randomGradient } from "@/lib/utils";
 import UploadPreview from "./UploadPreview";
+
+// Stable default so server-rendered HTML matches the client's first render.
+// The actual random gradient is applied after mount (client-only) via useEffect.
+const DEFAULT_GRADIENT = "linear-gradient(160deg, hsl(220 70% 45%), hsl(260 65% 30%))";
 
 export default function UploadForm() {
   const router = useRouter();
@@ -12,9 +16,14 @@ export default function UploadForm() {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [thumb, setThumb] = useState<string | null>(null);
-  const [gradient, setGradient] = useState(randomGradient());
+  const [gradient, setGradient] = useState(DEFAULT_GRADIENT);
   const [uploading, setUploading] = useState(false);
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: randomize only after hydration to avoid SSR/client mismatch
+    setGradient(randomGradient());
+  }, []);
 
   function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
