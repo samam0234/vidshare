@@ -7,6 +7,9 @@
 
 ## [Unreleased]
 
+### Added
+- BackendServer 소스를 저장소에 추가 (Express REST, 인메모리 store)
+
 ### Changed
 - 프로젝트 문서를 `FrontServer/docs/` 에서 루트 `docs/` 로 이동
 - Git 저장소 루트를 `FrontServer/` 에서 `vidshare/` 로 이동 (루트 docs 추적)
