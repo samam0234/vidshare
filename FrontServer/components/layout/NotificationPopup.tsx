@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Settings, X } from "lucide-react";
-import { notifications as mockNotifications } from "@/lib/mock-data";
+import { formatSerial, useContentStore } from "@/lib/content-store";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -12,7 +12,11 @@ type Props = {
 };
 
 export default function NotificationPopup({ open, onClose, className }: Props) {
+  const { notifications } = useContentStore();
+
   if (!open) return null;
+
+  const items = notifications.slice(0, 6);
 
   return (
     <div
@@ -45,16 +49,26 @@ export default function NotificationPopup({ open, onClose, className }: Props) {
         </div>
       </div>
       <div className="custom-scroll max-h-72 overflow-y-auto">
-        {mockNotifications.slice(0, 6).map((n) => (
-          <div
+        {items.length === 0 && (
+          <p className="px-4 py-8 text-center text-sm text-[var(--text-muted)]">
+            새 알림이 없습니다.
+          </p>
+        )}
+        {items.map((n) => (
+          <Link
             key={n.id}
+            href={`/notifications/${n.id}`}
+            onClick={onClose}
             className={cn(
-              "border-b border-[var(--border)] px-4 py-3 text-sm transition-colors hover:bg-[var(--btn)]",
+              "block border-b border-[var(--border)] px-4 py-3 text-sm transition-colors hover:bg-[var(--btn)]",
               !n.read && "bg-[var(--accent)]/5"
             )}
           >
+            <span className="mr-1.5 font-mono text-[11px] text-[var(--accent)]">
+              {formatSerial(n.id)}
+            </span>
             {n.message}
-          </div>
+          </Link>
         ))}
       </div>
       <Link

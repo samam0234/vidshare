@@ -84,6 +84,7 @@ NNN-짧은-영문-slug.md
 | 008 | [008-longform-pages.md](./008-longform-pages.md) | `TBD` | 롱폼 영상 목록·작성·상세 | 2026-08-15 |
 | 009 | [009-community-pages.md](./009-community-pages.md) | `TBD` | 커뮤니티 목록·작성·상세 | 2026-08-15 |
 | 010 | [010-chatbot-pages.md](./010-chatbot-pages.md) | `TBD` | 챗봇 대화 목록·상세 | 2026-08-15 |
+| 011 | [011-messages-notifications-serial.md](./011-messages-notifications-serial.md) | `TBD` | 메시지·알림 작성 기반 상세 | 2026-08-15 |
 
 ---
 

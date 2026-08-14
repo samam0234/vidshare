@@ -1,9 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { MoreVertical } from "lucide-react";
-import { notifications as seed } from "@/lib/mock-data";
-import type { Notification, NotificationCategory } from "@/types";
+import { Bell, MoreVertical } from "lucide-react";
+import {
+  formatWhen,
+  removeNotification,
+  useContentStore,
+} from "@/lib/content-store";
+import type { NotificationCategory } from "@/types";
+import SerialBadge from "@/components/ui/SerialBadge";
 import { cn } from "@/lib/utils";
 
 const tabs: { key: "all" | NotificationCategory; label: string }[] = [
@@ -16,9 +22,9 @@ const tabs: { key: "all" | NotificationCategory; label: string }[] = [
 ];
 
 export default function NotificationList() {
-  const [items, setItems] = useState<Notification[]>(seed);
+  const { notifications } = useContentStore();
   const [tab, setTab] = useState<(typeof tabs)[number]["key"]>("all");
-  const [menuId, setMenuId] = useState<string | null>(null);
+  const [menuId, setMenuId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,23 +38,16 @@ export default function NotificationList() {
   }, []);
 
   const filtered =
-    tab === "all" ? items : items.filter((n) => n.category === tab);
-
-  function hide(id: string) {
-    setItems((prev) => prev.filter((n) => n.id !== id));
-    setMenuId(null);
-  }
-
-  function mute(id: string) {
-    setItems((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, message: `🔕 ${n.message.replace(/^[^\s]+\s/, "")}` } : n))
-    );
-    setMenuId(null);
-  }
+    tab === "all"
+      ? notifications
+      : notifications.filter((n) => n.category === tab);
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
       <h1 className="text-2xl font-bold">알림</h1>
+      <p className="mt-1 text-sm text-[var(--text-muted)]">
+        글·대화 작성 시 알림이 생성되고 일련번호 상세로 열립니다.
+      </p>
 
       <div className="custom-scroll mt-5 flex gap-1 overflow-x-auto pb-1">
         {tabs.map((t) => (
@@ -70,9 +69,12 @@ export default function NotificationList() {
 
       <div className="mt-5 space-y-2" ref={menuRef}>
         {filtered.length === 0 && (
-          <p className="py-12 text-center text-sm text-[var(--text-muted)]">
-            알림이 없습니다.
-          </p>
+          <div className="flex flex-col items-center gap-2 py-12 text-center">
+            <Bell className="text-[var(--text-muted)]" size={28} />
+            <p className="text-sm text-[var(--text-muted)]">
+              알림이 없습니다. 커뮤니티·롱폼·메시지를 작성하면 생성됩니다.
+            </p>
+          </div>
         )}
         {filtered.map((n) => (
           <div
@@ -82,9 +84,15 @@ export default function NotificationList() {
               !n.read && "ring-1 ring-[var(--accent)]/20"
             )}
           >
-            <div className="min-w-0 flex-1 text-sm leading-relaxed">
-              {n.message}
-            </div>
+            <Link href={`/notifications/${n.id}`} className="min-w-0 flex-1">
+              <div className="mb-1 flex items-center gap-2">
+                <SerialBadge id={n.id} />
+                <span className="text-[11px] text-[var(--text-muted)]">
+                  {formatWhen(n.createdAt)}
+                </span>
+              </div>
+              <div className="text-sm leading-relaxed">{n.message}</div>
+            </Link>
             <div className="relative shrink-0">
               <button
                 type="button"
@@ -99,26 +107,22 @@ export default function NotificationList() {
               </button>
               {menuId === n.id && (
                 <div className="absolute right-0 top-8 z-20 w-44 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-[var(--shadow)]">
-                  <button
-                    type="button"
+                  <Link
+                    href={`/notifications/${n.id}`}
                     className="block w-full px-3 py-2.5 text-left text-sm hover:bg-[var(--btn)]"
-                    onClick={() => hide(n.id)}
+                    onClick={() => setMenuId(null)}
                   >
-                    👁‍ 알림 숨기기
-                  </button>
-                  <button
-                    type="button"
-                    className="block w-full px-3 py-2.5 text-left text-sm hover:bg-[var(--btn)]"
-                    onClick={() => mute(n.id)}
-                  >
-                    🔕 알림 받지 않기
-                  </button>
+                    상세 보기
+                  </Link>
                   <button
                     type="button"
                     className="block w-full px-3 py-2.5 text-left text-sm text-[var(--danger)] hover:bg-[var(--btn)]"
-                    onClick={() => hide(n.id)}
+                    onClick={() => {
+                      removeNotification(n.id);
+                      setMenuId(null);
+                    }}
                   >
-                    ❌ 해당 알림 삭제
+                    삭제
                   </button>
                 </div>
               )}
