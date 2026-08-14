@@ -7,7 +7,7 @@
 | **문서 번호** | `001` |
 | **파일명** | `001-initial-create-next-app.md` |
 | **Git 커밋 (short)** | `7dcb8d8` |
-| **Git 커밋 (full)** | (저장소 `git log -1 --format=%H 7dcb8d8` 로 확인) |
+| **Git 커밋 (full)** | `7dcb8d85f45d41e163904735394eccef5878b179` |
 | **날짜** | 2026-08-14 |
 | **작성자** | create-next-app / 초기 생성 |
 | **브랜치** | `master` |

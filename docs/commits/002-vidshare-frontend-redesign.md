@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `002` |
 | **파일명** | `002-vidshare-frontend-redesign.md` |
-| **Git 커밋 (short)** | `TBD` ← 커밋 후 갱신 |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `630d716` |
+| **Git 커밋 (full)** | `630d71668ce69bb07f219df8ceddc4ecf70b5079` |
 | **날짜** | 2026-08-14 |
 | **작성자** | VidShare 리디자인 작업 |
 | **브랜치** | `master` |
@@ -127,7 +127,7 @@ npm run dev
 - [ ] 인증 + API + DB
 - [ ] 실 영상 업로드 스토리지
 - [ ] mock → API 교체
-- [ ] 이 문서의 `TBD` 해시를 실제 커밋 해시로 갱신
+- [x] 이 문서의 커밋 해시 갱신 (`630d716`)
 
 ### 참고 링크
 - [루트 README](../../README.md)

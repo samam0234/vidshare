@@ -75,9 +75,7 @@ NNN-짧은-영문-slug.md
 | 문서 번호 | 파일 | Git (short) | 한 줄 요약 | 날짜 |
 |-----------|------|-------------|------------|------|
 | 001 | [001-initial-create-next-app.md](./001-initial-create-next-app.md) | `7dcb8d8` | Create Next App 초기 스캐폴드 | 2026-08-14 |
-| 002 | [002-vidshare-frontend-redesign.md](./002-vidshare-frontend-redesign.md) | `TBD` | VidShare 프론트 리디자인 + docs | 2026-08-14 |
-
-`TBD` 는 커밋 생성 후 실제 해시로 교체하세요.
+| 002 | [002-vidshare-frontend-redesign.md](./002-vidshare-frontend-redesign.md) | `630d716` | VidShare 프론트 리디자인 + docs | 2026-08-14 |
 
 ---
 
