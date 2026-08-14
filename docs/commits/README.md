@@ -80,6 +80,7 @@ NNN-짧은-영문-slug.md
 | 004 | [004-nest-servers-under-vidshare.md](./004-nest-servers-under-vidshare.md) | `dd0e585` | 서버 폴더를 vidshare 하위로 배치 | 2026-08-14 |
 | 005 | [005-move-docs-to-root.md](./005-move-docs-to-root.md) | `5a64037` | 문서를 루트 `docs/`로 이동 + Git 루트 상향 | 2026-08-14 |
 | 006 | [006-track-backend-server.md](./006-track-backend-server.md) | `c0ee728` | BackendServer 소스를 저장소에 추가 | 2026-08-14 |
+| 007 | [007-content-store-serial-ids.md](./007-content-store-serial-ids.md) | `7668969` | 작성 콘텐츠 일련번호 스토어 | 2026-08-15 |
 
 ---
 
