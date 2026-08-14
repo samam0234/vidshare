@@ -15,32 +15,51 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
+import { useContentStore } from "@/lib/content-store";
 import NotificationPopup from "./NotificationPopup";
 
 const navLinks = [
+  { href: "/longform", label: "롱폼 영상" },
+  { href: "/community", label: "커뮤니티" },
+  { href: "/chatbot", label: "챗봇" },
   { href: "/", label: "쇼츠" },
   { href: "/upload", label: "업로드" },
-  { href: "/messages", label: "메시지" },
-  { href: "/notifications", label: "알림" },
   { href: "/support", label: "고객센터" },
 ];
+
+function pathActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
+  const { unreadCount } = useContentStore();
   const [query, setQuery] = useState("");
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [cramped, setCramped] = useState(true);
   const [pathForMenus, setPathForMenus] = useState(pathname);
   const notifRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
 
-  // Close menus when route changes (React "adjust state when prop changes" pattern)
   if (pathForMenus !== pathname) {
     setPathForMenus(pathname);
     if (menuOpen) setMenuOpen(false);
     if (notifOpen) setNotifOpen(false);
   }
+
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const update = () => setCramped(el.clientWidth < 1120);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -59,37 +78,45 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--nav)]/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-4">
-        <button
-          type="button"
-          className="rounded-xl p-2 text-[var(--text)] hover:bg-[var(--btn)] lg:hidden"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label="메뉴"
-        >
-          {menuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+  <header className="sticky top-0 z-[200] border-b border-[var(--border)] bg-[var(--nav)]/90 backdrop-blur-xl">
+      <div
+        ref={barRef}
+        className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-4"
+      >
+        {cramped && (
+          <button
+            type="button"
+            className="rounded-xl p-2 text-[var(--text)] hover:bg-[var(--btn)]"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="메뉴"
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        )}
 
         <Link href="/" className="shrink-0 text-lg font-bold tracking-tight">
           <span className="logo-grad">VidShare</span>
         </Link>
 
-        <nav className="ml-2 hidden items-center gap-1 lg:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                pathname === link.href
-                  ? "bg-[var(--btn)] text-[var(--text)]"
-                  : "text-[var(--text-muted)] hover:bg-[var(--btn)] hover:text-[var(--text)]"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        {!cramped && (
+          <nav className="ml-2 flex items-center gap-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                  pathActive(pathname, link.href)
+                    ? "bg-[var(--btn)] text-[var(--text)]"
+                    : "text-[var(--text-muted)] hover:bg-[var(--btn)] hover:text-[var(--text)]"
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        )}
 
         <form
           onSubmit={onSearch}
@@ -143,7 +170,9 @@ export default function Navbar() {
               aria-label="알림"
             >
               <Bell size={20} />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--accent-hot)]" />
+              {unreadCount > 0 && (
+                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--accent-hot)]" />
+              )}
             </button>
             <NotificationPopup
               open={notifOpen}
@@ -176,8 +205,8 @@ export default function Navbar() {
         </div>
       </div>
 
-      {menuOpen && (
-        <div className="border-t border-[var(--border)] bg-[var(--nav)] px-3 py-3 lg:hidden">
+      {cramped && menuOpen && (
+        <div className="border-t border-[var(--border)] bg-[var(--nav)] px-3 py-3">
           <form onSubmit={onSearch} className="mb-3 flex gap-2 sm:hidden">
             <input
               value={query}
@@ -199,7 +228,7 @@ export default function Navbar() {
                 href={link.href}
                 className={cn(
                   "rounded-xl px-3 py-2.5 text-sm font-medium",
-                  pathname === link.href
+                  pathActive(pathname, link.href)
                     ? "bg-[var(--btn)]"
                     : "text-[var(--text-muted)] hover:bg-[var(--btn)]"
                 )}

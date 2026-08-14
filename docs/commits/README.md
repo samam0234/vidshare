@@ -85,6 +85,7 @@ NNN-짧은-영문-slug.md
 | 009 | [009-community-pages.md](./009-community-pages.md) | `TBD` | 커뮤니티 목록·작성·상세 | 2026-08-15 |
 | 010 | [010-chatbot-pages.md](./010-chatbot-pages.md) | `TBD` | 챗봇 대화 목록·상세 | 2026-08-15 |
 | 011 | [011-messages-notifications-serial.md](./011-messages-notifications-serial.md) | `TBD` | 메시지·알림 작성 기반 상세 | 2026-08-15 |
+| 012 | [012-navbar-new-tags-hamburger.md](./012-navbar-new-tags-hamburger.md) | `TBD` | 네비 롱폼·커뮤니티·챗봇 + 햄버거 | 2026-08-15 |
 
 ---
 
