@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `016` |
 | **파일명** | `016-noto-sans-css-font.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `c0ed3f7` |
 | **날짜** | `2026-08-15` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

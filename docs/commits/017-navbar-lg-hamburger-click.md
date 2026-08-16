@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `017` |
 | **파일명** | `017-navbar-lg-hamburger-click.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `5be7e28` |
 | **날짜** | `2026-08-15` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |
