@@ -89,6 +89,7 @@ NNN-짧은-영문-slug.md
 | 013 | [013-button-svg-pointer-events.md](./013-button-svg-pointer-events.md) | `1207823` | 버튼 안 SVG 클릭 수정 | 2026-08-15 |
 | 014 | [014-support-faq-user-self-help.md](./014-support-faq-user-self-help.md) | `6c409b5` | 고객센터 FAQ 유저 자가해결 안내 | 2026-08-15 |
 | 015 | [015-support-inquiry-message.md](./015-support-inquiry-message.md) | `6363ed4` | 고객센터 문의 메시지 | 2026-08-15 |
+| 016 | [016-noto-sans-css-font.md](./016-noto-sans-css-font.md) | `TBD` | Turbopack next/font 오류 우회 | 2026-08-15 |
 
 ---
 
