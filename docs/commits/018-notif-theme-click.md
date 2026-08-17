@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `018` |
 | **파일명** | `018-notif-theme-click.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `4f353d4` |
 | **날짜** | `2026-08-15` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

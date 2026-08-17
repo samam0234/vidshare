@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `019` |
 | **파일명** | `019-lan-dev-access.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `fa96be5` |
 | **날짜** | `2026-08-15` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |
