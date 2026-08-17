@@ -18,7 +18,9 @@
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
 }
 
-html.light {
+html.light,
+body.light,
+.theme-light {
   --bg: #f4f4f7;
   --bg-elevated: #ffffff;
   --bg-card: #ffffff;
@@ -47,7 +49,9 @@ html {
   color-scheme: dark;
 }
 
-html.light {
+html.light,
+body.light,
+.theme-light {
   color-scheme: light;
 }
 

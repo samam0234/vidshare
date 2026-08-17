@@ -13,7 +13,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useTheme } from "@/context/ThemeContext";
+import { toggleStoredTheme, useTheme } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
 import { useContentStore } from "@/lib/content-store";
 import NotificationPopup from "./NotificationPopup";
@@ -33,7 +33,7 @@ function pathActive(pathname: string, href: string) {
 }
 
 export default function Navbar() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
   const { unreadCount } = useContentStore();
@@ -51,18 +51,16 @@ export default function Navbar() {
   }
 
   useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      const t = e.target as Node;
-      if (notifRef.current && !notifRef.current.contains(t)) {
+    if (!notifOpen && !menuOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
         setNotifOpen(false);
-      }
-      if (menuRef.current && !menuRef.current.contains(t)) {
         setMenuOpen(false);
       }
     }
-    document.addEventListener("click", onDocClick);
-    return () => document.removeEventListener("click", onDocClick);
-  }, []);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [notifOpen, menuOpen]);
 
   function onSearch(e: FormEvent) {
     e.preventDefault();
@@ -71,71 +69,71 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-[200] border-b border-[var(--border)] bg-[var(--nav)]/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-4">
-        <div ref={menuRef} className="relative shrink-0 lg:hidden">
-          <button
-            type="button"
-            className="relative z-10 flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text)] hover:bg-[var(--btn)]"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setMenuOpen((v) => !v);
-              setNotifOpen(false);
-            }}
-            aria-label="메뉴"
-            aria-expanded={menuOpen}
+    <header className="sticky top-0 isolate z-[300] border-b border-[var(--border)] bg-[var(--nav)]">
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:px-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <div ref={menuRef} className="relative shrink-0 lg:hidden">
+            <button
+              type="button"
+              className="relative z-10 flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text)] hover:bg-[var(--btn)]"
+              onClick={() => {
+                setMenuOpen((v) => !v);
+                setNotifOpen(false);
+              }}
+              aria-label="메뉴"
+              aria-expanded={menuOpen}
+            >
+              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
+
+          <Link href="/" className="shrink-0 text-lg font-bold tracking-tight">
+            <span className="logo-grad">VidShare</span>
+          </Link>
+
+          <nav className="ml-1 hidden items-center gap-1 lg:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                  pathActive(pathname, link.href)
+                    ? "bg-[var(--btn)] text-[var(--text)]"
+                    : "text-[var(--text-muted)] hover:bg-[var(--btn)] hover:text-[var(--text)]"
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <form
+            onSubmit={onSearch}
+            className="ml-2 hidden min-w-0 max-w-xs flex-1 items-center gap-2 sm:flex lg:max-w-sm"
           >
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+            <div className="relative min-w-0 flex-1">
+              <Search
+                size={16}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="검색어를 입력하세요..."
+                className="w-full rounded-full border border-[var(--border)] bg-[var(--bg)] py-2 pl-9 pr-3 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              className="shrink-0 rounded-full border border-[var(--border)] bg-[var(--btn)] px-3 py-2 text-sm font-medium hover:border-[var(--accent)]"
+            >
+              검색
+            </button>
+          </form>
         </div>
 
-        <Link href="/" className="shrink-0 text-lg font-bold tracking-tight">
-          <span className="logo-grad">VidShare</span>
-        </Link>
-
-        <nav className="ml-2 hidden items-center gap-1 lg:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                pathActive(pathname, link.href)
-                  ? "bg-[var(--btn)] text-[var(--text)]"
-                  : "text-[var(--text-muted)] hover:bg-[var(--btn)] hover:text-[var(--text)]"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        <form
-          onSubmit={onSearch}
-          className="mx-auto hidden min-w-0 flex-1 max-w-xl items-center gap-2 sm:flex"
-        >
-          <div className="relative flex-1">
-            <Search
-              size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-            />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="검색어를 입력하세요..."
-              className="w-full rounded-full border border-[var(--border)] bg-[var(--bg)] py-2 pl-9 pr-3 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none"
-            />
-          </div>
-          <button
-            type="submit"
-            className="shrink-0 rounded-full bg-[var(--btn)] px-4 py-2 text-sm font-medium border border-[var(--border)] hover:border-[var(--accent)]"
-          >
-            검색
-          </button>
-        </form>
-
-        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+        <div className="relative z-[310] flex shrink-0 items-center gap-0.5 sm:gap-1">
           <Link
             href="/upload"
             className="hidden items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 sm:inline-flex"
@@ -146,7 +144,7 @@ export default function Navbar() {
 
           <Link
             href="/messages"
-            className="rounded-xl p-2 text-[var(--text)] hover:bg-[var(--btn)]"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text)] hover:bg-[var(--btn)]"
             aria-label="메시지"
           >
             <MessageCircle size={20} />
@@ -155,12 +153,13 @@ export default function Navbar() {
           <div className="relative" ref={notifRef}>
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={() => {
                 setNotifOpen((v) => !v);
+                setMenuOpen(false);
               }}
-              className="relative rounded-xl p-2 text-[var(--text)] hover:bg-[var(--btn)]"
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text)] hover:bg-[var(--btn)]"
               aria-label="알림"
+              aria-expanded={notifOpen}
             >
               <Bell size={20} />
               {unreadCount > 0 && (
@@ -175,8 +174,8 @@ export default function Navbar() {
 
           <button
             type="button"
-            onClick={toggleTheme}
-            className="rounded-xl p-2 text-[var(--text)] hover:bg-[var(--btn)]"
+            onClick={() => toggleStoredTheme()}
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text)] hover:bg-[var(--btn)]"
             aria-label="테마 전환"
           >
             {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}

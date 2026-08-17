@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Settings, X } from "lucide-react";
 import { formatSerial, useContentStore } from "@/lib/content-store";
@@ -8,22 +9,18 @@ import { cn } from "@/lib/utils";
 type Props = {
   open: boolean;
   onClose: () => void;
-  className?: string;
 };
 
-export default function NotificationPopup({ open, onClose, className }: Props) {
+export default function NotificationPopup({ open, onClose }: Props) {
   const { notifications } = useContentStore();
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   const items = notifications.slice(0, 6);
 
-  return (
+  return createPortal(
     <div
-      className={cn(
-        "absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-[var(--shadow)]",
-        className
-      )}
+      className="fixed right-3 top-16 z-[400] w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-[var(--shadow)]"
       role="dialog"
       aria-label="알림"
     >
@@ -34,7 +31,7 @@ export default function NotificationPopup({ open, onClose, className }: Props) {
             href="/notifications"
             onClick={onClose}
             className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--btn)] hover:text-[var(--text)]"
-            aria-label="알림 설정"
+            aria-label="알림 목록"
           >
             <Settings size={16} />
           </Link>
@@ -78,6 +75,7 @@ export default function NotificationPopup({ open, onClose, className }: Props) {
       >
         모든 알림 보기
       </Link>
-    </div>
+    </div>,
+    document.body
   );
 }

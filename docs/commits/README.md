@@ -91,6 +91,7 @@ NNN-짧은-영문-slug.md
 | 015 | [015-support-inquiry-message.md](./015-support-inquiry-message.md) | `6363ed4` | 고객센터 문의 메시지 | 2026-08-15 |
 | 016 | [016-noto-sans-css-font.md](./016-noto-sans-css-font.md) | `c0ed3f7` | Turbopack next/font 오류 우회 | 2026-08-15 |
 | 017 | [017-navbar-lg-hamburger-click.md](./017-navbar-lg-hamburger-click.md) | `5be7e28` | 넓은 화면 메뉴 + 햄버거 클릭 | 2026-08-15 |
+| 018 | [018-notif-theme-click.md](./018-notif-theme-click.md) | `TBD` | 알림 팝업·테마 전환 클릭 복구 | 2026-08-15 |
 
 ---
 

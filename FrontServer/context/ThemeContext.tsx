@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useLayoutEffect,
   useMemo,
   useSyncExternalStore,
   type ReactNode,
@@ -21,8 +22,14 @@ const STORAGE_KEY = "vidshare-theme";
 
 function applyDomTheme(t: Theme) {
   if (typeof document === "undefined") return;
-  document.documentElement.classList.toggle("light", t === "light");
-  document.documentElement.classList.toggle("dark", t === "dark");
+  const root = document.documentElement;
+  root.classList.toggle("light", t === "light");
+  root.classList.remove("dark");
+  document.body.classList.toggle("light", t === "light");
+}
+
+export function toggleStoredTheme() {
+  writeTheme(currentTheme === "dark" ? "light" : "dark");
 }
 
 /** Tiny external store so theme can update without setState-in-effect */
@@ -89,13 +96,17 @@ const ThemeContext = createContext<ThemeContextValue>({
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
+  useLayoutEffect(() => {
+    applyDomTheme(theme);
+  }, [theme]);
+
   const setTheme = useCallback((t: Theme) => {
     writeTheme(t);
   }, []);
 
   const toggleTheme = useCallback(() => {
-    writeTheme(theme === "dark" ? "light" : "dark");
-  }, [theme]);
+    toggleStoredTheme();
+  }, []);
 
   const value = useMemo(
     () => ({ theme, toggleTheme, setTheme }),
@@ -103,7 +114,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>
+      <div
+        className={
+          theme === "light"
+            ? "theme-light flex min-h-full flex-1 flex-col"
+            : "flex min-h-full flex-1 flex-col"
+        }
+      >
+        {children}
+      </div>
+    </ThemeContext.Provider>
   );
 }
 

@@ -26,6 +26,7 @@
 - 버튼 안 SVG 클릭이 아이콘 선 사이로 빠지던 문제
 - Turbopack `next/font/google` 모듈 해석 오류 (Noto Sans KR CSS 링크로 우회)
 - 네비가 세 줄 모드에 고정되던 문제 (`lg` 이상 메뉴 노출, 좁을 때 햄버거 클릭)
+- 알림 종·테마 버튼이 클릭되지 않던 문제 (댓글 패널 히트박스, 테마 래퍼)
 
 ### 예정
 - FrontServer UI ↔ BackendServer API 전면 연동

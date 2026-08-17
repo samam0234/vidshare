@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { Comment } from "@/types";
-import { cn } from "@/lib/utils";
 
 type Props = {
   open: boolean;
@@ -41,22 +40,18 @@ export default function CommentPanel({
     setText("");
   }
 
+  if (!open) return null;
+
   return (
     <>
-      {open && (
-        <button
-          type="button"
-          className="fixed inset-0 z-[90] bg-black/40 md:bg-transparent"
-          aria-label="댓글 패널 닫기"
-          onClick={onClose}
-        />
-      )}
+      <button
+        type="button"
+        className="fixed inset-0 z-[90] bg-black/40 md:bg-transparent"
+        aria-label="댓글 패널 닫기"
+        onClick={onClose}
+      />
       <aside
-        className={cn(
-          "comment-panel fixed right-0 top-0 z-[100] flex h-full w-full max-w-md flex-col border-l border-[var(--border)] bg-[var(--bg-elevated)] shadow-[var(--shadow)]",
-          open && "open"
-        )}
-        aria-hidden={!open}
+        className="fixed right-0 top-14 z-[100] flex h-[calc(100%-3.5rem)] w-full max-w-md flex-col border-l border-[var(--border)] bg-[var(--bg-elevated)] shadow-[var(--shadow)]"
       >
         <div className="relative flex items-center justify-center border-b border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
           <h3 className="text-base font-semibold">댓글 {comments.length}</h3>
