@@ -3,9 +3,19 @@
  * UI는 아직 mock-data를 주로 쓰며, 점진적으로 이 모듈로 교체합니다.
  */
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  "http://localhost:4000";
+function resolveApiUrl() {
+  const fromEnv = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  if (typeof window !== "undefined") {
+    const { protocol, hostname } = window.location;
+    if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+      return `${protocol}//${hostname}:4000`;
+    }
+  }
+  return "http://localhost:4000";
+}
+
+const API_URL = resolveApiUrl();
 
 export type ApiResult<T> = {
   success: boolean;
