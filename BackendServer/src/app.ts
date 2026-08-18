@@ -1,4 +1,5 @@
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import express from "express";
 import morgan from "morgan";
 import { errorHandler, notFound } from "./middleware/errorHandler";
@@ -9,6 +10,7 @@ import usersRouter from "./routes/users";
 import notificationsRouter from "./routes/notifications";
 import messagesRouter from "./routes/messages";
 import supportRouter from "./routes/support";
+import authRouter from "./routes/auth";
 
 function isPrivateHostname(hostname: string) {
   if (hostname === "localhost" || hostname === "127.0.0.1") return true;
@@ -49,6 +51,7 @@ export function createApp() {
     })
   );
   app.use(express.json({ limit: "2mb" }));
+  app.use(cookieParser());
   app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
   app.get("/", (_req, res) => {
@@ -64,6 +67,10 @@ export function createApp() {
         "POST /api/shorts/:id/like",
         "GET  /api/shorts/:shortId/comments",
         "POST /api/shorts/:shortId/comments",
+        "POST /api/auth/register",
+        "POST /api/auth/login",
+        "POST /api/auth/logout",
+        "GET  /api/auth/me",
         "GET  /api/users",
         "GET  /api/users/me",
         "GET  /api/users/:id",
@@ -79,6 +86,7 @@ export function createApp() {
   });
 
   app.use("/api/health", healthRouter);
+  app.use("/api/auth", authRouter);
   app.use("/api/shorts", shortsRouter);
   app.use("/api/shorts/:shortId/comments", commentsRouter);
   app.use("/api/comments", commentsRouter);

@@ -15,6 +15,7 @@
 - 챗봇 대화 목록·상세 (`/chatbot`)
 - 메시지·알림 작성 기반 일련번호 상세 (`/messages/:id`, `/notifications/:id`)
 - 고객센터 문의 메시지 (`/support`, `/support/:id`)
+- Backend 인메모리 인증 (bcrypt + HttpOnly 세션, `demo`/`demo1234`)
 
 ### Changed
 - 프로젝트 문서를 `FrontServer/docs/` 에서 루트 `docs/` 로 이동
@@ -31,7 +32,7 @@
 
 ### 예정
 - FrontServer UI ↔ BackendServer API 전면 연동
-- 인증·DB·실업로드 (로드맵 참고)
+- DB·실업로드 (로드맵 참고)
 
 ---
 

@@ -1,12 +1,15 @@
 import { Router } from "express";
-import { authors, currentUser, store } from "../data/store";
+import { authors, store } from "../data/store";
 import { HttpError } from "../middleware/errorHandler";
+import { getRequestPublicUser } from "../auth/requestUser";
 
 const router = Router();
 
 /** GET /api/users/me */
-router.get("/me", (_req, res) => {
-  res.json({ success: true, data: currentUser });
+router.get("/me", (req, res) => {
+  const user = getRequestPublicUser(req);
+  if (!user) throw new HttpError(401, "로그인이 필요합니다.");
+  res.json({ success: true, data: user });
 });
 
 /** GET /api/users */

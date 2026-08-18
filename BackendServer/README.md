@@ -3,7 +3,7 @@
 프론트엔드(`../FrontServer`)와 분리된 **REST API 서버**입니다.
 
 현재는 **인메모리 store** (서버 재시작 시 데이터 초기화)로 동작합니다.  
-DB·실인증·파일 스토리지는 이후 단계에서 연결합니다.
+인증은 인메모리 계정 + HttpOnly 세션 쿠키입니다. 테스트 계정: `demo` / `demo1234`.
 
 ---
 
@@ -73,8 +73,12 @@ npm run typecheck  # 타입만 검사
 | POST | `/api/shorts/:id/like` | 좋아요 `{ action?: "unlike" }` |
 | GET | `/api/shorts/:shortId/comments` | 댓글 목록 |
 | POST | `/api/shorts/:shortId/comments` | 댓글 작성 `{ text, author? }` |
+| POST | `/api/auth/register` | 회원가입 `{ handle, name, password }` |
+| POST | `/api/auth/login` | 로그인 `{ handle, password }` |
+| POST | `/api/auth/logout` | 로그아웃 (세션 쿠키 삭제) |
+| GET | `/api/auth/me` | 현재 세션 사용자 (없으면 401) |
 | GET | `/api/users` | 사용자 목록 |
-| GET | `/api/users/me` | 현재 사용자 (데모 고정) |
+| GET | `/api/users/me` | 현재 세션 사용자 (없으면 401) |
 | GET | `/api/users/:id` | 사용자 상세 |
 | GET | `/api/users/:id/shorts` | 사용자 쇼츠 |
 | GET | `/api/notifications?category=` | 알림 목록 |
