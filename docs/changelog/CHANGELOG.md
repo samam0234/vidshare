@@ -18,6 +18,7 @@
 - Backend 인메모리 인증 (bcrypt + HttpOnly 세션, `demo`/`demo1234`)
 - 로그인·회원가입 페이지 (`/login`, `/register`)
 - Navbar·프로필 세션 사용자 표시
+- 루트 계획서 `plan.md` (계기·방식 비교)
 
 ### Changed
 - 프로젝트 문서를 `FrontServer/docs/` 에서 루트 `docs/` 로 이동

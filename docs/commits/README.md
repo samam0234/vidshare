@@ -96,6 +96,7 @@ NNN-짧은-영문-slug.md
 | 020 | [020-backend-auth-session.md](./020-backend-auth-session.md) | `7cf452f` | Backend 회원가입·로그인·세션 API | 2026-08-19 |
 | 021 | [021-front-auth-pages.md](./021-front-auth-pages.md) | `b59de8d` | 로그인·회원가입 페이지 | 2026-08-19 |
 | 022 | [022-navbar-session-user.md](./022-navbar-session-user.md) | `5709d20` | Navbar·프로필 세션 연결 | 2026-08-19 |
+| 023 | [023-add-root-plan.md](./023-add-root-plan.md) | `TBD` | 루트 계획서 plan.md | 2026-08-19 |
 
 ---
 

@@ -60,6 +60,7 @@ CORS_ORIGIN=http://localhost:3000
 
 | 위치 | 내용 |
 |------|------|
+| [plan.md](./plan.md) | 기획·계기·방식 비교 (계획서) |
 | [FrontServer/README.md](./FrontServer/README.md) | 프론트 기능·실행 가이드 |
 | [docs/](./docs/) | 아키텍처, 커밋 기록, 보안 등 |
 | [BackendServer/README.md](./BackendServer/README.md) | API 목록·백엔드 가이드 |
