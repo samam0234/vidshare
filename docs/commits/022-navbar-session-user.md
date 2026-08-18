@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `022` |
 | **파일명** | `022-navbar-session-user.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `5709d20` |
 | **날짜** | `2026-08-19` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

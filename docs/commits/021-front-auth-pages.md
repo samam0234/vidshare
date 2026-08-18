@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `021` |
 | **파일명** | `021-front-auth-pages.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `b59de8d` |
 | **날짜** | `2026-08-19` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

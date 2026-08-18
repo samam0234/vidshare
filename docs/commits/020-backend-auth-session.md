@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `020` |
 | **파일명** | `020-backend-auth-session.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `7cf452f` |
 | **날짜** | `2026-08-19` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |
