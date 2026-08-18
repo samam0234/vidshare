@@ -94,6 +94,7 @@ NNN-짧은-영문-slug.md
 | 018 | [018-notif-theme-click.md](./018-notif-theme-click.md) | `4f353d4` | 알림 팝업·테마 전환 클릭 복구 | 2026-08-15 |
 | 019 | [019-lan-dev-access.md](./019-lan-dev-access.md) | `fa96be5` | 개발 서버 LAN 접속 | 2026-08-15 |
 | 020 | [020-backend-auth-session.md](./020-backend-auth-session.md) | `TBD` | Backend 회원가입·로그인·세션 API | 2026-08-19 |
+| 021 | [021-front-auth-pages.md](./021-front-auth-pages.md) | `TBD` | 로그인·회원가입 페이지 | 2026-08-19 |
 
 ---
 

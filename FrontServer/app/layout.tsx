@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import "./globals.css";
@@ -30,9 +31,11 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col font-sans">
         <ThemeProvider>
-          <Navbar />
-          <div className="flex flex-1 flex-col">{children}</div>
-          <Footer />
+          <AuthProvider>
+            <Navbar />
+            <div className="flex flex-1 flex-col">{children}</div>
+            <Footer />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
