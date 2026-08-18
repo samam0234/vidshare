@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `023` |
 | **파일명** | `023-add-root-plan.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `eefcdda` |
 | **날짜** | `2026-08-19` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |
