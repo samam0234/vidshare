@@ -17,6 +17,7 @@
 - 고객센터 문의 메시지 (`/support`, `/support/:id`)
 - Backend 인메모리 인증 (bcrypt + HttpOnly 세션, `demo`/`demo1234`)
 - 로그인·회원가입 페이지 (`/login`, `/register`)
+- Navbar·프로필 세션 사용자 표시
 
 ### Changed
 - 프로젝트 문서를 `FrontServer/docs/` 에서 루트 `docs/` 로 이동

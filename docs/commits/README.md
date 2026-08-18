@@ -95,6 +95,7 @@ NNN-짧은-영문-slug.md
 | 019 | [019-lan-dev-access.md](./019-lan-dev-access.md) | `fa96be5` | 개발 서버 LAN 접속 | 2026-08-15 |
 | 020 | [020-backend-auth-session.md](./020-backend-auth-session.md) | `TBD` | Backend 회원가입·로그인·세션 API | 2026-08-19 |
 | 021 | [021-front-auth-pages.md](./021-front-auth-pages.md) | `TBD` | 로그인·회원가입 페이지 | 2026-08-19 |
+| 022 | [022-navbar-session-user.md](./022-navbar-session-user.md) | `TBD` | Navbar·프로필 세션 연결 | 2026-08-19 |
 
 ---
 

@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { toggleStoredTheme, useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { useContentStore } from "@/lib/content-store";
 import NotificationPopup from "./NotificationPopup";
@@ -34,6 +35,7 @@ function pathActive(pathname: string, href: string) {
 
 export default function Navbar() {
   const { theme } = useTheme();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const { unreadCount } = useContentStore();
@@ -181,19 +183,38 @@ export default function Navbar() {
             {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          <Link
-            href="/profile/u-me"
-            className="hidden rounded-full border border-[var(--border)] bg-[var(--btn)] px-3 py-1.5 text-sm font-medium hover:border-[var(--accent)] sm:inline-flex"
-          >
-            내 프로필
-          </Link>
-
-          <button
-            type="button"
-            className="hidden rounded-full border border-[var(--border)] px-3 py-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text)] md:inline-flex"
-          >
-            로그인
-          </button>
+          {user ? (
+            <>
+              <Link
+                href={`/profile/${user.id}`}
+                className="hidden max-w-[8rem] truncate rounded-full border border-[var(--border)] bg-[var(--btn)] px-3 py-1.5 text-sm font-medium hover:border-[var(--accent)] sm:inline-flex"
+              >
+                @{user.handle}
+              </Link>
+              <button
+                type="button"
+                onClick={() => void logout()}
+                className="hidden rounded-full border border-[var(--border)] px-3 py-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text)] md:inline-flex"
+              >
+                로그아웃
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/register"
+                className="hidden rounded-full border border-[var(--border)] px-3 py-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text)] sm:inline-flex"
+              >
+                회원가입
+              </Link>
+              <Link
+                href="/login"
+                className="hidden rounded-full border border-[var(--border)] bg-[var(--btn)] px-3 py-1.5 text-sm font-medium hover:border-[var(--accent)] md:inline-flex"
+              >
+                로그인
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -229,13 +250,44 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/profile/u-me"
-              onClick={() => setMenuOpen(false)}
-              className="rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--btn)]"
-            >
-              내 프로필
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href={`/profile/${user.id}`}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--btn)]"
+                >
+                  @{user.handle}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void logout();
+                    setMenuOpen(false);
+                  }}
+                  className="rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--btn)]"
+                >
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--btn)]"
+                >
+                  로그인
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--btn)]"
+                >
+                  회원가입
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

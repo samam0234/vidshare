@@ -8,6 +8,7 @@ import {
   profileVideosAll,
   toProfileVideos,
 } from "@/lib/mock-data";
+import { useAuth } from "@/context/AuthContext";
 import ProfileHeader from "./ProfileHeader";
 import ProfileTabs, { type SortKey, type TabKey } from "./ProfileTabs";
 import VideoGrid from "./VideoGrid";
@@ -15,8 +16,13 @@ import VideoGrid from "./VideoGrid";
 type Props = { id: string };
 
 export default function ProfilePageClient({ id }: Props) {
-  const author = getAuthorById(id) ?? currentUser;
-  const isMe = author.id === currentUser.id;
+  const { user } = useAuth();
+  const me = user ?? currentUser;
+  const author =
+    id === "u-me" || id === "me" || (user && id === user.id)
+      ? me
+      : (getAuthorById(id) ?? me);
+  const isMe = author.id === me.id;
 
   const authorShorts = getShortsByAuthor(author.id);
   const fallbackShorts =
