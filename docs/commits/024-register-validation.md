@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `024` |
 | **파일명** | `024-register-validation.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `144966c` |
 | **날짜** | `2026-08-20` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

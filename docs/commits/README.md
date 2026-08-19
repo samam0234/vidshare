@@ -97,7 +97,7 @@ NNN-짧은-영문-slug.md
 | 021 | [021-front-auth-pages.md](./021-front-auth-pages.md) | `b59de8d` | 로그인·회원가입 페이지 | 2026-08-19 |
 | 022 | [022-navbar-session-user.md](./022-navbar-session-user.md) | `5709d20` | Navbar·프로필 세션 연결 | 2026-08-19 |
 | 023 | [023-add-root-plan.md](./023-add-root-plan.md) | `eefcdda` | 루트 계획서 plan.md | 2026-08-19 |
-| 024 | [024-register-validation.md](./024-register-validation.md) | `TBD` | 회원가입 검증·비밀번호 확인 | 2026-08-20 |
+| 024 | [024-register-validation.md](./024-register-validation.md) | `144966c` | 회원가입 검증·비밀번호 확인 | 2026-08-20 |
 
 ---
 
