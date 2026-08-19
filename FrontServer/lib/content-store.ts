@@ -208,6 +208,7 @@ export function addCommunity(input: {
 export function addChatbotThread(input?: {
   title?: string;
   model?: ChatbotThread["model"];
+  guest?: boolean;
 }): ChatbotThread {
   const prev = getSnapshot();
   const id = prev.next.chatbotThread;
@@ -216,6 +217,7 @@ export function addChatbotThread(input?: {
     id,
     title: input?.title?.trim() || `챗봇 대화 ${formatSerial(id)}`,
     model: input?.model ?? "locals",
+    ...(input?.guest ? { guest: true } : {}),
     createdAt: now,
     updatedAt: now,
   };
@@ -227,10 +229,24 @@ export function addChatbotThread(input?: {
   return item;
 }
 
+export function setChatbotModel(
+  id: number,
+  model: NonNullable<ChatbotThread["model"]>
+) {
+  const prev = getSnapshot();
+  setState({
+    ...prev,
+    chatbotThreads: prev.chatbotThreads.map((t) =>
+      t.id === id ? { ...t, model, updatedAt: isoNow() } : t
+    ),
+  });
+}
+
 export function addChatbotMessage(input: {
   threadId: number;
   role: "user" | "bot";
   content: string;
+  attachments?: ChatbotMessage["attachments"];
 }): ChatbotMessage | null {
   const prev = getSnapshot();
   const thread = prev.chatbotThreads.find((t) => t.id === input.threadId);
@@ -241,6 +257,7 @@ export function addChatbotMessage(input: {
     threadId: input.threadId,
     role: input.role,
     content: input.content,
+    ...(input.attachments?.length ? { attachments: input.attachments } : {}),
     createdAt: isoNow(),
   };
   const title =

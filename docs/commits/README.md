@@ -103,6 +103,7 @@ NNN-짧은-영문-slug.md
 | 027 | [027-message-thread-open.md](./027-message-thread-open.md) | `1ac1db3` | 메시지 상대 클릭 시 대화창 열기 | 2026-08-20 |
 | 028 | [028-guest-read-only.md](./028-guest-read-only.md) | `f6992a2` | 비회원은 쇼츠·롱폼·커뮤니티 열람만 | 2026-08-20 |
 | 029 | [029-chatbot-models.md](./029-chatbot-models.md) | `50bfe29` | 챗봇 Locals·Vide·Shape | 2026-08-20 |
+| 030 | [030-chatbot-workspace.md](./030-chatbot-workspace.md) | `TBD` | 챗봇 왼쪽 기록·아래 입력줄 | 2026-08-20 |
 
 ---
 

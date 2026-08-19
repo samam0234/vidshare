@@ -23,8 +23,17 @@ export type ChatbotThread = {
   id: number;
   title: string;
   model?: "locals" | "vide" | "shape";
+  guest?: boolean;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ChatbotAttachment = {
+  name: string;
+  mime: string;
+  size: number;
+  dataUrl?: string;
+  text?: string;
 };
 
 export type ChatbotMessage = {
@@ -32,6 +41,7 @@ export type ChatbotMessage = {
   threadId: number;
   role: "user" | "bot";
   content: string;
+  attachments?: ChatbotAttachment[];
   createdAt: string;
 };
 

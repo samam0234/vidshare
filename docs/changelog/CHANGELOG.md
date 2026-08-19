@@ -21,9 +21,11 @@
 - 루트 계획서 `plan.md` (계기·방식 비교)
 - Backend SQLite 영속화 (`data/vidshare.sqlite`, 계정·세션·쇼츠)
 - 챗봇 모델 Locals(무료·비회원) / Vide·Shape(회원)
+- 챗봇 워크스페이스 (왼쪽 저장 기록, 파일 첨부, 모델 선택)
 
 ### Changed
 - 비회원은 쇼츠·롱폼·커뮤니티 열람만 (작성·메시지·업로드는 로그인)
+- 비회원 챗봇은 저장 기록·새 방 없이 Locals만
 - 회원가입: 비밀번호 확인, 필드 검증, 핸들 소문자 정규화
 - 프로젝트 문서를 `FrontServer/docs/` 에서 루트 `docs/` 로 이동
 - Git 저장소 루트를 `FrontServer/` 에서 `vidshare/` 로 이동 (루트 docs 추적)
