@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `031` |
 | **파일명** | `031-locals-flash-memory.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `cd53689` |
 | **날짜** | `2026-08-20` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

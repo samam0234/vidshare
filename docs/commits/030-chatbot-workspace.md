@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `030` |
 | **파일명** | `030-chatbot-workspace.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `a974e9e` |
 | **날짜** | `2026-08-20` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |
