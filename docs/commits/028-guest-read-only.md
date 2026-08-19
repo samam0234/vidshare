@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `028` |
 | **파일명** | `028-guest-read-only.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `f6992a2` |
 | **날짜** | `2026-08-20` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

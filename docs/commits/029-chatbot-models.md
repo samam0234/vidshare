@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `029` |
 | **파일명** | `029-chatbot-models.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `50bfe29` |
 | **날짜** | `2026-08-20` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

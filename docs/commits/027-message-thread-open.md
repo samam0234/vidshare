@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `027` |
 | **파일명** | `027-message-thread-open.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `1ac1db3` |
 | **날짜** | `2026-08-20` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |
