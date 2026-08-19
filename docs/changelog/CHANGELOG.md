@@ -33,6 +33,7 @@
 - 네비가 세 줄 모드에 고정되던 문제 (`lg` 이상 메뉴 노출, 좁을 때 햄버거 클릭)
 - 알림 종·테마 버튼이 클릭되지 않던 문제 (댓글 패널 히트박스, 테마 래퍼)
 - localhost만 되고 LAN IP로 개발 서버에 접속되지 않던 문제
+- LAN으로 열면 API가 localhost로 고정되지 않게 (브라우저 호스트:4000)
 
 ### 예정
 - FrontServer UI ↔ BackendServer API 전면 연동

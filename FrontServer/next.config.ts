@@ -18,4 +18,13 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: lanDevHosts(),
 };
 
+const lanIps = lanDevHosts().filter(
+  (h) => h !== "localhost" && h !== "127.0.0.1"
+);
+if (lanIps.length) {
+  console.log(
+    `[vidshare] LAN front: ${lanIps.map((ip) => `http://${ip}:3000`).join("  ")}`
+  );
+}
+
 export default nextConfig;

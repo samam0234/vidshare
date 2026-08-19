@@ -4,18 +4,16 @@
  */
 
 function resolveApiUrl() {
-  const fromEnv = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
-  if (fromEnv) return fromEnv;
   if (typeof window !== "undefined") {
     const { protocol, hostname } = window.location;
     if (hostname !== "localhost" && hostname !== "127.0.0.1") {
       return `${protocol}//${hostname}:4000`;
     }
   }
+  const fromEnv = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
   return "http://localhost:4000";
 }
-
-const API_URL = resolveApiUrl();
 
 export type ApiResult<T> = {
   success: boolean;
@@ -27,7 +25,7 @@ export async function request<T>(
   path: string,
   init?: RequestInit
 ): Promise<ApiResult<T>> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${resolveApiUrl()}${path}`, {
     ...init,
     credentials: "include",
     headers: {
@@ -50,7 +48,9 @@ export async function request<T>(
 }
 
 export const api = {
-  baseUrl: API_URL,
+  get baseUrl() {
+    return resolveApiUrl();
+  },
 
   health: () => request<{ status: string }>("/api/health"),
 
