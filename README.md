@@ -77,9 +77,10 @@ CORS_ORIGIN=
 | 구분 | 상태 |
 |------|------|
 | FrontServer | UI 완성, 데이터는 주로 **클라이언트 mock** |
-| BackendServer | REST API + **인메모리 store** (재시작 시 초기화) |
+| BackendServer | REST API + **SQLite** (`data/vidshare.sqlite`) |
 | 연동 | `FrontServer/lib/api.ts` 클라이언트 스텁 준비, UI 전면 연동은 진행 중 |
-| 인증 / DB / 실파일 업로드 | 미구현 |
+| 인증 | bcrypt + HttpOnly 세션 (SQLite) |
+| 실파일 업로드 | 미구현 |
 
 ---
 

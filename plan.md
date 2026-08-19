@@ -3,7 +3,7 @@
 **작성일**: 2026-08-19  
 **성격**: 소규모 개인 프로젝트  
 
-**상태**: 프론트 UI + Express API + 인메모리 인증까지 구현. 영속 DB·실파일 업로드는 미착수.
+**상태**: 프론트 UI + Express API + SQLite 인증/콘텐츠까지 구현. Front 전면 연동·실파일 업로드는 미착수.
 
 관련 문서: [README.md](./README.md) · [docs/architecture/overview.md](./docs/architecture/overview.md) · [docs/features/roadmap.md](./docs/features/roadmap.md)
 
@@ -54,7 +54,7 @@
 | 알림 `/notifications` | 이벤트 목록 | 작성 시 생성 |
 | 챗봇 `/chatbot` | 이용 안내 대화 | 로컬 응답 |
 | 고객센터 `/support` | FAQ + 문의 | 유저 자가해결 + 문의 번호 |
-| 인증 `/login` `/register` | 가입·로그인 | 인메모리 + 쿠키 세션 |
+| 인증 `/login` `/register` | 가입·로그인 | SQLite + 쿠키 세션 |
 
 ---
 
@@ -74,9 +74,9 @@
 | 서버 구조 | Front / Backend 폴더 분리 | 역할이 보이고 나중에 붙이기도 쉽다 |
 | 프론트 | Next.js App Router + React | 페이지·라우트가 명확하다 |
 | 백엔드 | Express + TypeScript | 가볍고 REST를 바로 보여 준다 |
-| 지금 데이터 | mock + 메모리 + 브라우저 localStorage | 먼저 화면과 흐름을 완성 |
+| 지금 데이터 | Backend SQLite + 프론트 mock/localStorage | API는 재시작 후에도 남음. UI 전면 연동은 다음 |
 | 인증 | bcrypt + HttpOnly 세션 쿠키 | JWT보다 데모에서 단순하다 |
-| 다음 DB | SQLite 우선 (논의됨) | 설치 없이 영속화, 이후 Maria로 이전 가능 |
+| 다음 DB | Maria (필요 시) | SQLite로 영속화한 뒤 이전 가능 |
 
 ---
 
@@ -113,9 +113,9 @@
 
 | 방식 | 설명 | 비고 |
 |------|------|------|
-| 브라우저만 (localStorage) | 지금 일부 기능 | PC를 바꾸면 없음 |
-| 서버 메모리 | 지금 Backend store | 재시작 시 초기화 |
-| **SQLite (다음 후보)** | 파일 DB | 설치 없음, SQL 연습 가능 |
+| 브라우저만 (localStorage) | 지금 프론트 일부 | PC를 바꾸면 없음 |
+| 서버 메모리 | 예전 Backend store | 재시작 시 초기화 |
+| **SQLite (채택)** | 파일 DB | 설치 없음, 계정·세션·쇼츠 영속 |
 | MariaDB / MySQL | 서버형 SQL | 여러 PC가 같은 DB를 쓸 때 |
 | MongoDB | 문서형 | 유저–영상–댓글 관계와는 잘 안 맞음 |
 | Postgres | 실서비스에 흔함 | 혼자 쓰기엔 설치가 SQLite보다 큼 |
@@ -126,7 +126,7 @@
 |------|------|------|
 | UI만 로그인 | 버튼만 존재 | 초기에 그랬음. 보안 경계가 아님 |
 | JWT를 localStorage | 구현은 단순 | XSS에 토큰이 노출되기 쉬움 |
-| **세션 쿠키 (채택)** | HttpOnly | 개인 데모에 충분. 서버 재시작 시 세션 소실 |
+| **세션 쿠키 (채택)** | HttpOnly | 개인 데모에 충분. 세션은 SQLite에 저장 |
 | OAuth (구글 등) | 실서비스 | 키·동의 화면이 지금 범위를 넘음 |
 
 ### 6.6 영상 저장·공유
@@ -146,13 +146,14 @@
 ### 끝난 것
 - 화면 흐름 (쇼츠, 롱폼, 커뮤니티, 메시지, 알림, 고객센터, 챗봇)
 - Front / Backend 폴더 분리
-- 인메모리 REST + 로그인 세션
+- REST + 로그인 세션
 - LAN에서 개발 서버 접속
+- Backend SQLite 영속화 (계정·세션·쇼츠·댓글·알림·메시지)
 
 ### 바로 다음
-1. **SQLite로 영속화** — 계정·세션·쇼츠·커뮤니티 글이 재시작 후에도 남음
-2. **Front ↔ API 전면 연동** — mock / localStorage 를 서버 데이터로 교체
-3. **커뮤니티 ↔ 영상 연결** — 글에서 쇼츠/롱폼 일련번호를 걸어 바로 재생
+1. **Front ↔ API 전면 연동** — mock / localStorage 를 서버 데이터로 교체
+2. **커뮤니티 ↔ 영상 연결** — 글에서 쇼츠/롱폼 일련번호를 걸어 바로 재생
+3. 커뮤니티 글을 Backend SQLite로 이전
 
 ### 그다음
 - 실파일 업로드 (영상·썸네일)

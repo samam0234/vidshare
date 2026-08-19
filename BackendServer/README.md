@@ -2,8 +2,8 @@
 
 프론트엔드(`../FrontServer`)와 분리된 **REST API 서버**입니다.
 
-현재는 **인메모리 store** (서버 재시작 시 데이터 초기화)로 동작합니다.  
-인증은 인메모리 계정 + HttpOnly 세션 쿠키입니다. 테스트 계정: `demo` / `demo1234`.
+데이터는 **SQLite** (`data/vidshare.sqlite`)에 저장됩니다. 서버를 재시작해도 계정·세션·쇼츠가 남습니다.  
+인증은 bcrypt + HttpOnly 세션 쿠키입니다. 테스트 계정: `demo` / `demo1234`.
 
 ---
 
@@ -14,7 +14,8 @@
 | 런타임 | Node.js |
 | 프레임워크 | Express |
 | 언어 | TypeScript (`tsx` 개발 실행) |
-| CORS | `cors` (기본 FrontServer `http://localhost:3000`) |
+| CORS | `cors` (localhost + 사설망, `CORS_ORIGIN`으로 추가) |
+| DB | SQLite (`better-sqlite3`) |
 
 ---
 
@@ -37,7 +38,8 @@ npm run dev
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
 | `PORT` | `4000` | 서버 포트 |
-| `CORS_ORIGIN` | `http://localhost:3000` | 허용 프론트 오리진 |
+| `CORS_ORIGIN` | (비움) | 추가 허용 오리진. 비우면 localhost + 사설망 |
+| `SQLITE_PATH` | `data/vidshare.sqlite` | DB 파일 경로 |
 | `NODE_ENV` | `development` | 환경 |
 
 ### 기타 명령
@@ -100,7 +102,9 @@ BackendServer/
 ├── src/
 │   ├── index.ts           # 엔트리
 │   ├── app.ts             # Express 앱 조립
-│   ├── data/store.ts      # 인메모리 데이터
+│   ├── db/                # SQLite 연결·스키마·시드
+│   ├── data/              # 시드 데이터 + 쿼리
+│   ├── auth/              # 계정·세션
 │   ├── middleware/
 │   ├── routes/
 │   └── types/
@@ -130,7 +134,8 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 
 ## 다음 단계
 
-- [ ] DB (PostgreSQL / Mongo 등) 연결
-- [ ] 인증 (JWT / 세션)
+- [x] SQLite 영속화
+- [x] 인증 (세션 쿠키)
 - [ ] 파일 업로드 스토리지
 - [ ] FrontServer mock → API fetch 전환
+- [ ] (필요 시) SQLite → Maria

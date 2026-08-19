@@ -25,14 +25,14 @@
 
 | 기능 | 설명 | 우선순위 | 상태 |
 |------|------|----------|------|
-| 서버 폴더 분리 | FrontServer / BackendServer | P0 | 완료 (인메모리 API) |
+| 서버 폴더 분리 | FrontServer / BackendServer | P0 | 완료 |
 | Front ↔ API 연동 | mock 제거, `lib/api.ts` 사용 | P0 | 진행 예정 |
-| 인증 | 회원가입, 로그인, 세션/JWT | P0 | 미착수 |
-| 사용자 프로필 API | id·핸들·아바타 DB 연동 | P0 | 인메모리만 |
-| 쇼츠 CRUD | 목록·상세·생성·삭제 | P0 | 인메모리 REST 있음 |
+| 인증 | 회원가입, 로그인, 세션 | P0 | 완료 (SQLite + 쿠키) |
+| 사용자 프로필 API | id·핸들·아바타 DB 연동 | P0 | SQLite |
+| 쇼츠 CRUD | 목록·상세·생성·삭제 | P0 | SQLite REST |
 | 파일 스토리지 | 영상·썸네일 업로드 | P0 | 미착수 |
-| 댓글 API | 영속 댓글 | P1 | 인메모리 REST 있음 |
-| 좋아요 API | 사용자별 토글, 카운트 | P1 | 인메모리 REST 있음 |
+| 댓글 API | 영속 댓글 | P1 | SQLite REST |
+| 좋아요 API | 사용자별 토글, 카운트 | P1 | SQLite 카운트 |
 
 ---
 

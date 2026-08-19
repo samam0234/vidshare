@@ -1,6 +1,10 @@
 import { Router } from "express";
-import { v4 as uuid } from "uuid";
-import { store } from "../data/store";
+import {
+  getChatUser,
+  listChatUsers,
+  listMessages,
+  sendMessage,
+} from "../data/store";
 import { HttpError } from "../middleware/errorHandler";
 
 const router = Router();
@@ -16,41 +20,31 @@ function nowTimeLabel(): string {
 
 /** GET /api/messages/users */
 router.get("/users", (_req, res) => {
-  res.json({ success: true, data: store.chatUsers });
+  res.json({ success: true, data: listChatUsers() });
 });
 
 /** GET /api/messages/:userId */
 router.get("/:userId", (req, res) => {
-  const user = store.chatUsers.find((u) => u.id === req.params.userId);
+  const user = getChatUser(req.params.userId);
   if (!user) throw new HttpError(404, "Chat user not found");
-  const messages = store.messages[req.params.userId] ?? [];
+  const messages = listMessages(req.params.userId);
   res.json({ success: true, data: { user, messages } });
 });
 
 /** POST /api/messages/:userId  body: { content, isImage? } */
 router.post("/:userId", (req, res) => {
-  const user = store.chatUsers.find((u) => u.id === req.params.userId);
-  if (!user) throw new HttpError(404, "Chat user not found");
-
   const { content, isImage } = req.body ?? {};
   if (!content || typeof content !== "string") {
     throw new HttpError(400, "content is required");
   }
 
-  const msg = {
-    id: `m-${uuid().slice(0, 8)}`,
-    userId: req.params.userId,
-    type: "me" as const,
+  const msg = sendMessage({
+    peerId: req.params.userId,
     content,
     isImage: Boolean(isImage),
     time: nowTimeLabel(),
-  };
-
-  if (!store.messages[req.params.userId]) {
-    store.messages[req.params.userId] = [];
-  }
-  store.messages[req.params.userId].push(msg);
-  user.lastMessage = isImage ? "(이미지)" : content;
+  });
+  if (!msg) throw new HttpError(404, "Chat user not found");
 
   res.status(201).json({ success: true, data: msg });
 });

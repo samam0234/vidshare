@@ -10,9 +10,13 @@ node_modules/
 .next/
 out/
 
-# backend build / uploads
+# backend build / uploads / sqlite
 dist/
 uploads/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 
 # logs / OS
 *.log

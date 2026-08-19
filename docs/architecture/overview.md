@@ -20,8 +20,8 @@ VidShare는 **프론트(FrontServer)** 와 **백엔드(BackendServer)** 를 폴�
     │
     ▼ (예정: 전면 연동)
 [BackendServer :4000]  Express REST API
-    │  routes + in-memory store
-    └── (예정) DB / Auth / Storage
+    │  routes + SQLite (data/vidshare.sqlite)
+    └── (예정) Front 전면 연동 / 실파일 업로드
 ```
 
 | 폴더 | 역할 | 포트 |

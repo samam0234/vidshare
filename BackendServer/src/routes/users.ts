@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authors, store } from "../data/store";
+import { findAuthor, listAuthors, listShortsByAuthor } from "../data/store";
 import { HttpError } from "../middleware/errorHandler";
 import { getRequestPublicUser } from "../auth/requestUser";
 
@@ -14,30 +14,21 @@ router.get("/me", (req, res) => {
 
 /** GET /api/users */
 router.get("/", (_req, res) => {
-  res.json({ success: true, data: authors });
+  res.json({ success: true, data: listAuthors() });
 });
-
-function findPublicUser(idOrHandle: string) {
-  const key = idOrHandle.replace(/^@/, "").trim().toLowerCase();
-  return authors.find(
-    (a) => a.id === idOrHandle || a.handle.toLowerCase() === key
-  );
-}
 
 /** GET /api/users/:id */
 router.get("/:id", (req, res) => {
-  const user = findPublicUser(req.params.id);
+  const user = findAuthor(req.params.id);
   if (!user) throw new HttpError(404, "User not found");
   res.json({ success: true, data: user });
 });
 
 /** GET /api/users/:id/shorts */
 router.get("/:id/shorts", (req, res) => {
-  const user = findPublicUser(req.params.id);
+  const user = findAuthor(req.params.id);
   if (!user) throw new HttpError(404, "User not found");
-
-  const list = store.shorts.filter((s) => s.author.id === user.id);
-  res.json({ success: true, data: list });
+  res.json({ success: true, data: listShortsByAuthor(user.id) });
 });
 
 export default router;

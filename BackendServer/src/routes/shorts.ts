@@ -1,32 +1,26 @@
 import { Router } from "express";
-import { v4 as uuid } from "uuid";
-import { authors, currentUser, store } from "../data/store";
+import {
+  createShort,
+  findAuthor,
+  getShort,
+  likeShort,
+  listShorts,
+  listShortsByAuthor,
+} from "../data/store";
+import { getRequestPublicUser } from "../auth/requestUser";
 import { HttpError } from "../middleware/errorHandler";
 
 const router = Router();
 
 /** GET /api/shorts?q= */
 router.get("/", (req, res) => {
-  const q = String(req.query.q ?? "")
-    .trim()
-    .toLowerCase();
-  let list = [...store.shorts];
-
-  if (q) {
-    list = list.filter(
-      (s) =>
-        s.title.toLowerCase().includes(q) ||
-        s.author.handle.toLowerCase().includes(q) ||
-        (s.description ?? "").toLowerCase().includes(q)
-    );
-  }
-
-  res.json({ success: true, data: list });
+  const q = String(req.query.q ?? "").trim();
+  res.json({ success: true, data: listShorts(q) });
 });
 
 /** GET /api/shorts/:id */
 router.get("/:id", (req, res) => {
-  const item = store.shorts.find((s) => s.id === req.params.id);
+  const item = getShort(req.params.id);
   if (!item) throw new HttpError(404, "Short not found");
   res.json({ success: true, data: item });
 });
@@ -38,48 +32,38 @@ router.post("/", (req, res) => {
     throw new HttpError(400, "title is required");
   }
 
-  const short = {
-    id: `s-${uuid().slice(0, 8)}`,
+  const sessionUser = getRequestPublicUser(req);
+  const authorId = sessionUser?.id ?? "u-me";
+  if (!findAuthor(authorId)) {
+    throw new HttpError(400, "작성자 계정이 없습니다.");
+  }
+
+  const short = createShort({
     title: title.trim(),
     description: typeof description === "string" ? description : "",
-    author: currentUser,
-    likes: 0,
-    comments: 0,
-    views: "0",
-    gradient:
-      typeof gradient === "string" && gradient
-        ? gradient
-        : "linear-gradient(160deg, #7c3aed, #3ea6ff)",
-    createdAt: new Date().toISOString().slice(0, 10),
+    gradient: typeof gradient === "string" ? gradient : undefined,
     videoUrl: typeof videoUrl === "string" ? videoUrl : undefined,
-  };
-
-  store.shorts.unshift(short);
+    authorId,
+  });
   res.status(201).json({ success: true, data: short });
 });
 
 /** POST /api/shorts/:id/like */
 router.post("/:id/like", (req, res) => {
-  const item = store.shorts.find((s) => s.id === req.params.id);
-  if (!item) throw new HttpError(404, "Short not found");
   const { action } = req.body ?? {};
-  if (action === "unlike") {
-    item.likes = Math.max(0, item.likes - 1);
-  } else {
-    item.likes += 1;
-  }
-  res.json({ success: true, data: { id: item.id, likes: item.likes } });
+  const data = likeShort(req.params.id, action === "unlike");
+  if (!data) throw new HttpError(404, "Short not found");
+  res.json({ success: true, data });
 });
 
-/** GET /api/shorts/author/:authorId — registered below carefully */
 export function getShortsByAuthor(authorId: string) {
-  return store.shorts.filter(
-    (s) => s.author.id === authorId || s.author.handle === authorId
-  );
+  const author = findAuthor(authorId);
+  if (!author) return [];
+  return listShortsByAuthor(author.id);
 }
 
 export function resolveAuthor(id: string) {
-  return authors.find((a) => a.id === id || a.handle === id);
+  return findAuthor(id);
 }
 
 export default router;

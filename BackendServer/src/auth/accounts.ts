@@ -1,47 +1,49 @@
 import bcrypt from "bcrypt";
 import { randomUUID } from "crypto";
-import { authors } from "../data/store";
+import { getDb } from "../db/client";
 import type { Author } from "../types";
 
 export type AuthAccount = Author & { passwordHash: string };
 
-export const accounts: AuthAccount[] = [
-  {
-    id: "u-demo",
-    handle: "demo",
-    name: "Demo User",
-    bio: "테스트 계정 (비밀번호 demo1234)",
-    passwordHash: bcrypt.hashSync("demo1234", 10),
-  },
-  {
-    id: "u-me",
-    handle: "usernumber02345",
-    name: "Usernumber 02345",
-    bio: "VidShare 크리에이터",
-    passwordHash: bcrypt.hashSync("demo1234", 10),
-  },
-];
+type UserRow = {
+  id: string;
+  handle: string;
+  name: string;
+  bio: string;
+  avatar: string | null;
+  password_hash: string | null;
+};
+
+function toAccount(row: UserRow): AuthAccount {
+  return {
+    id: row.id,
+    handle: row.handle,
+    name: row.name,
+    bio: row.bio,
+    ...(row.avatar ? { avatar: row.avatar } : {}),
+    passwordHash: row.password_hash ?? "",
+  };
+}
 
 export function toPublicUser(account: AuthAccount): Author {
   const { passwordHash: _hidden, ...pub } = account;
   return pub;
 }
 
-export function findAccount(handleOrId: string) {
-  const key = handleOrId.replace(/^@/, "").trim().toLowerCase();
-  return accounts.find(
-    (a) => a.handle.toLowerCase() === key || a.id === handleOrId
-  );
-}
-
-for (const a of accounts) {
-  if (!authors.some((x) => x.id === a.id)) {
-    authors.push(toPublicUser(a));
-  }
-}
-
 export function normalizeHandle(raw: string) {
   return raw.replace(/^@/, "").trim().toLowerCase();
+}
+
+export function findAccount(handleOrId: string): AuthAccount | undefined {
+  const key = handleOrId.replace(/^@/, "").trim();
+  const row = getDb()
+    .prepare(
+      `SELECT id, handle, name, bio, avatar, password_hash
+       FROM users
+       WHERE id = ? OR lower(handle) = lower(?)`
+    )
+    .get(key, key) as UserRow | undefined;
+  return row ? toAccount(row) : undefined;
 }
 
 export function createAccount(input: {
@@ -57,7 +59,13 @@ export function createAccount(input: {
     bio: "",
     passwordHash: bcrypt.hashSync(input.password, 10),
   };
-  accounts.push(account);
-  authors.push(toPublicUser(account));
+
+  getDb()
+    .prepare(
+      `INSERT INTO users (id, handle, name, bio, avatar, password_hash, created_at)
+       VALUES (?, ?, ?, '', NULL, ?, ?)`
+    )
+    .run(account.id, account.handle, account.name, account.passwordHash, new Date().toISOString());
+
   return account;
 }

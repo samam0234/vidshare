@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { v4 as uuid } from "uuid";
-import { store } from "../data/store";
+import { addComment, listComments } from "../data/store";
 import { HttpError } from "../middleware/errorHandler";
 
 const router = Router({ mergeParams: true });
@@ -11,8 +10,7 @@ router.get("/", (req, res) => {
   if (!shortId || typeof shortId !== "string") {
     throw new HttpError(400, "shortId is required");
   }
-  const list = store.comments.filter((c) => c.shortId === shortId);
-  res.json({ success: true, data: list });
+  res.json({ success: true, data: listComments(shortId) });
 });
 
 /** POST body: { shortId?, text, author? } */
@@ -28,19 +26,12 @@ router.post("/", (req, res) => {
     throw new HttpError(400, "text is required");
   }
 
-  const short = store.shorts.find((s) => s.id === shortId);
-  if (!short) throw new HttpError(404, "Short not found");
-
-  const comment = {
-    id: `c-${uuid().slice(0, 8)}`,
+  const comment = addComment({
     shortId,
-    author: typeof author === "string" && author.trim() ? author : "사용자",
     text: text.trim(),
-    time: "방금 전",
-  };
-
-  store.comments.push(comment);
-  short.comments += 1;
+    author: typeof author === "string" && author.trim() ? author : "사용자",
+  });
+  if (!comment) throw new HttpError(404, "Short not found");
 
   res.status(201).json({ success: true, data: comment });
 });

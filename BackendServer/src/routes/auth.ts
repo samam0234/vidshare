@@ -78,7 +78,11 @@ router.post("/login", (req, res) => {
   const handle = normalizeHandle(String(body.handle));
   const password = String(body.password);
   const account = findAccount(handle);
-  if (!account || !bcrypt.compareSync(password, account.passwordHash)) {
+  if (
+    !account ||
+    !account.passwordHash ||
+    !bcrypt.compareSync(password, account.passwordHash)
+  ) {
     throw new HttpError(401, "핸들 또는 비밀번호가 올바르지 않습니다.");
   }
   const sid = createSession(account.id);

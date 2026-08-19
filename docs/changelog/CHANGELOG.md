@@ -19,6 +19,7 @@
 - 로그인·회원가입 페이지 (`/login`, `/register`)
 - Navbar·프로필 세션 사용자 표시
 - 루트 계획서 `plan.md` (계기·방식 비교)
+- Backend SQLite 영속화 (`data/vidshare.sqlite`, 계정·세션·쇼츠)
 
 ### Changed
 - 회원가입: 비밀번호 확인, 필드 검증, 핸들 소문자 정규화
@@ -37,7 +38,7 @@
 
 ### 예정
 - FrontServer UI ↔ BackendServer API 전면 연동
-- DB·실업로드 (로드맵 참고)
+- 실파일 업로드 (로드맵 참고)
 
 ---
 

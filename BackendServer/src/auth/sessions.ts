@@ -1,30 +1,33 @@
 import { randomUUID } from "crypto";
 import type { Response } from "express";
+import { getDb } from "../db/client";
 
 export const SESSION_COOKIE = "vidshare_sid";
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-const sessions = new Map<string, { userId: string; createdAt: number }>();
-
 export function createSession(userId: string) {
   const id = randomUUID();
-  sessions.set(id, { userId, createdAt: Date.now() });
+  getDb()
+    .prepare("INSERT INTO sessions (id, user_id, created_at) VALUES (?, ?, ?)")
+    .run(id, userId, Date.now());
   return id;
 }
 
 export function getSessionUserId(sid?: string | null) {
   if (!sid) return null;
-  const row = sessions.get(sid);
+  const row = getDb()
+    .prepare("SELECT user_id, created_at FROM sessions WHERE id = ?")
+    .get(sid) as { user_id: string; created_at: number } | undefined;
   if (!row) return null;
-  if (Date.now() - row.createdAt > MAX_AGE_MS) {
-    sessions.delete(sid);
+  if (Date.now() - row.created_at > MAX_AGE_MS) {
+    getDb().prepare("DELETE FROM sessions WHERE id = ?").run(sid);
     return null;
   }
-  return row.userId;
+  return row.user_id;
 }
 
 export function destroySession(sid?: string | null) {
-  if (sid) sessions.delete(sid);
+  if (sid) getDb().prepare("DELETE FROM sessions WHERE id = ?").run(sid);
 }
 
 export function setSessionCookie(res: Response, sid: string) {
