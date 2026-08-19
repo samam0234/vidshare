@@ -11,6 +11,7 @@ import notificationsRouter from "./routes/notifications";
 import messagesRouter from "./routes/messages";
 import supportRouter from "./routes/support";
 import authRouter from "./routes/auth";
+import chatbotRouter from "./routes/chatbot";
 
 function isPrivateHostname(hostname: string) {
   if (hostname === "localhost" || hostname === "127.0.0.1") return true;
@@ -81,6 +82,7 @@ export function createApp() {
         "GET  /api/messages/:userId",
         "POST /api/messages/:userId",
         "GET  /api/support/faq",
+        "POST /api/chatbot/complete",
       ],
     });
   });
@@ -94,6 +96,7 @@ export function createApp() {
   app.use("/api/notifications", notificationsRouter);
   app.use("/api/messages", messagesRouter);
   app.use("/api/support", supportRouter);
+  app.use("/api/chatbot", chatbotRouter);
 
   app.use(notFound);
   app.use(errorHandler);

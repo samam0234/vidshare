@@ -20,6 +20,7 @@
 - Navbar·프로필 세션 사용자 표시
 - 루트 계획서 `plan.md` (계기·방식 비교)
 - Backend SQLite 영속화 (`data/vidshare.sqlite`, 계정·세션·쇼츠)
+- 챗봇 모델 Locals(무료·비회원) / Vide·Shape(회원)
 
 ### Changed
 - 비회원은 쇼츠·롱폼·커뮤니티 열람만 (작성·메시지·업로드는 로그인)

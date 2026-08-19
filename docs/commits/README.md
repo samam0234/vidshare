@@ -102,6 +102,7 @@ NNN-짧은-영문-slug.md
 | 026 | [026-sqlite-persist.md](./026-sqlite-persist.md) | `f8733fc` | Backend SQLite 영속화 | 2026-08-20 |
 | 027 | [027-message-thread-open.md](./027-message-thread-open.md) | `TBD` | 메시지 상대 클릭 시 대화창 열기 | 2026-08-20 |
 | 028 | [028-guest-read-only.md](./028-guest-read-only.md) | `TBD` | 비회원은 쇼츠·롱폼·커뮤니티 열람만 | 2026-08-20 |
+| 029 | [029-chatbot-models.md](./029-chatbot-models.md) | `TBD` | 챗봇 Locals·Vide·Shape | 2026-08-20 |
 
 ---
 

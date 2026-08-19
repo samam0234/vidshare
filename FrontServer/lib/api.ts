@@ -105,4 +105,14 @@ export const api = {
     }),
 
   getFaq: () => request<unknown[]>("/api/support/faq"),
+
+  chatbotComplete: (payload: {
+    product: "locals" | "vide" | "shape";
+    messages: Array<{ role: "user" | "assistant"; content: string }>;
+    memories?: string[];
+  }) =>
+    request<{ text: string; product: string; model: string }>(
+      "/api/chatbot/complete",
+      { method: "POST", body: JSON.stringify(payload) }
+    ),
 };
