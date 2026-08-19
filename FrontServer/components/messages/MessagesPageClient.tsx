@@ -80,6 +80,11 @@ export default function MessagesPageClient() {
             <li key={c.id}>
               <Link
                 href={`/messages/${c.id}`}
+                prefetch={false}
+                onClick={(e) => {
+                  e.preventDefault();
+                  router.push(`/messages/${c.id}`);
+                }}
                 className="surface flex items-center gap-3 rounded-2xl px-4 py-3.5 transition hover:border-[var(--accent)]/40"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-violet-500 text-sm font-bold text-white">

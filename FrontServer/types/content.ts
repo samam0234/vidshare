@@ -22,6 +22,7 @@ export type CommunityPost = {
 export type ChatbotThread = {
   id: number;
   title: string;
+  model?: "locals" | "vide" | "shape";
   createdAt: string;
   updatedAt: string;
 };

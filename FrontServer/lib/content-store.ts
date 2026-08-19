@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { NotificationCategory } from "@/types";
 import type {
   AppNotification,
@@ -205,13 +205,17 @@ export function addCommunity(input: {
   return item;
 }
 
-export function addChatbotThread(title?: string): ChatbotThread {
+export function addChatbotThread(input?: {
+  title?: string;
+  model?: ChatbotThread["model"];
+}): ChatbotThread {
   const prev = getSnapshot();
   const id = prev.next.chatbotThread;
   const now = isoNow();
   const item: ChatbotThread = {
     id,
-    title: title?.trim() || `챗봇 대화 ${formatSerial(id)}`,
+    title: input?.title?.trim() || `챗봇 대화 ${formatSerial(id)}`,
+    model: input?.model ?? "locals",
     createdAt: now,
     updatedAt: now,
   };
@@ -359,6 +363,37 @@ export function removeNotification(id: number) {
   });
 }
 
+export function searchChatMemory(
+  query: string,
+  excludeThreadId?: number,
+  limit = 6
+): string[] {
+  const words = query
+    .toLowerCase()
+    .split(/[\s,./?!'"]+/)
+    .map((w) => w.trim())
+    .filter((w) => w.length >= 2);
+  if (!words.length) return [];
+  const prev = getSnapshot();
+  const scored: Array<{ score: number; text: string }> = [];
+  for (const m of prev.chatbotMessages) {
+    if (excludeThreadId && m.threadId === excludeThreadId) continue;
+    const hay = m.content.toLowerCase();
+    const score = words.reduce((n, w) => n + (hay.includes(w) ? 1 : 0), 0);
+    if (score > 0) {
+      scored.push({ score, text: m.content.trim().slice(0, 280) });
+    }
+  }
+  scored.sort((a, b) => b.score - a.score);
+  const out: string[] = [];
+  for (const row of scored) {
+    if (out.includes(row.text)) continue;
+    out.push(row.text);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
 export function botReply(userText: string): string {
   const t = userText.toLowerCase();
   if (t.includes("안녕") || t.includes("hello")) {
@@ -374,6 +409,16 @@ export function botReply(userText: string): string {
     return "글 작성 → 일련번호 부여 → 상세 페이지에서 확인하는 흐름입니다. 무엇을 올릴지 말씀해 주세요.";
   }
   return `확인했어요. “${userText.slice(0, 80)}”에 대한 답변을 기록했습니다. 더 구체적으로 물어보시면 이어서 도와드릴게요.`;
+}
+
+/** localStorage 시드는 클라이언트에서만 있다. 상세 페이지는 이게 true일 때까지 비어 있다고 보면 안 된다. */
+export function useStoreHydrated() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    ensureLoaded();
+    setHydrated(true);
+  }, []);
+  return hydrated;
 }
 
 export function useContentStore() {

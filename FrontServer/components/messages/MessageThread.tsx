@@ -7,12 +7,14 @@ import {
   addChatLine,
   formatWhen,
   useContentStore,
+  useStoreHydrated,
 } from "@/lib/content-store";
 import SerialBadge from "@/components/ui/SerialBadge";
 import { cn } from "@/lib/utils";
 
 export default function MessageThread({ id }: { id: string }) {
   const num = Number(id);
+  const hydrated = useStoreHydrated();
   const { getConversation, getChatLines } = useContentStore();
   const user = Number.isFinite(num) ? getConversation(num) : undefined;
   const messages = Number.isFinite(num) ? getChatLines(num) : [];
@@ -25,6 +27,14 @@ export default function MessageThread({ id }: { id: string }) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
   }, [messages.length]);
+
+  if (!hydrated) {
+    return (
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 text-center">
+        <p className="text-sm text-[var(--text-muted)]">대화를 불러오는 중...</p>
+      </main>
+    );
+  }
 
   if (!user) {
     return (

@@ -100,6 +100,7 @@ NNN-짧은-영문-slug.md
 | 024 | [024-register-validation.md](./024-register-validation.md) | `144966c` | 회원가입 검증·비밀번호 확인 | 2026-08-20 |
 | 025 | [025-lan-api-host.md](./025-lan-api-host.md) | `7496ff3` | LAN 접속 시 호스트 IP로 API 호출 | 2026-08-20 |
 | 026 | [026-sqlite-persist.md](./026-sqlite-persist.md) | `f8733fc` | Backend SQLite 영속화 | 2026-08-20 |
+| 027 | [027-message-thread-open.md](./027-message-thread-open.md) | `TBD` | 메시지 상대 클릭 시 대화창 열기 | 2026-08-20 |
 
 ---
 
