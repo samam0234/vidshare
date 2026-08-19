@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `026` |
 | **파일명** | `026-sqlite-persist.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `f8733fc` |
 | **날짜** | `2026-08-20` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |

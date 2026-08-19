@@ -99,7 +99,7 @@ NNN-짧은-영문-slug.md
 | 023 | [023-add-root-plan.md](./023-add-root-plan.md) | `eefcdda` | 루트 계획서 plan.md | 2026-08-19 |
 | 024 | [024-register-validation.md](./024-register-validation.md) | `144966c` | 회원가입 검증·비밀번호 확인 | 2026-08-20 |
 | 025 | [025-lan-api-host.md](./025-lan-api-host.md) | `7496ff3` | LAN 접속 시 호스트 IP로 API 호출 | 2026-08-20 |
-| 026 | [026-sqlite-persist.md](./026-sqlite-persist.md) | `TBD` | Backend SQLite 영속화 | 2026-08-20 |
+| 026 | [026-sqlite-persist.md](./026-sqlite-persist.md) | `f8733fc` | Backend SQLite 영속화 | 2026-08-20 |
 
 ---
 
