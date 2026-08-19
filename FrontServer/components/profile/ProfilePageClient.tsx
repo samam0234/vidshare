@@ -17,12 +17,11 @@ type Props = { id: string };
 
 export default function ProfilePageClient({ id }: Props) {
   const { user } = useAuth();
-  const me = user ?? currentUser;
   const author =
-    id === "u-me" || id === "me" || (user && id === user.id)
-      ? me
-      : (getAuthorById(id) ?? me);
-  const isMe = author.id === me.id;
+    user && (id === user.id || id === "me" || id === "u-me")
+      ? user
+      : (getAuthorById(id) ?? getAuthorById("u1") ?? currentUser);
+  const isMe = Boolean(user && author.id === user.id);
 
   const authorShorts = getShortsByAuthor(author.id);
   const fallbackShorts =
@@ -63,6 +62,7 @@ export default function ProfilePageClient({ id }: Props) {
       <ProfileHeader
         author={author}
         isMe={isMe}
+        signedIn={Boolean(user)}
         videoCount={baseVideos.length}
       />
       <div className="mt-8 space-y-5">

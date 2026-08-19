@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { safeNextPath } from "@/lib/guest-routes";
 
-export default function LoginForm() {
+function LoginFormInner() {
   const router = useRouter();
+  const search = useSearchParams();
   const { login } = useAuth();
   const [handle, setHandle] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +24,7 @@ export default function LoginForm() {
       setError(err);
       return;
     }
-    router.push("/");
+    router.push(safeNextPath(search.get("next")));
   }
 
   return (
@@ -73,5 +75,19 @@ export default function LoginForm() {
         </p>
       </section>
     </main>
+  );
+}
+
+export default function LoginForm() {
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto w-full max-w-md flex-1 px-4 py-8">
+          <h1 className="text-2xl font-bold">로그인</h1>
+        </main>
+      }
+    >
+      <LoginFormInner />
+    </Suspense>
   );
 }

@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { initialComments, shorts as allShorts } from "@/lib/mock-data";
 import type { Comment } from "@/types";
+import { useAuth } from "@/context/AuthContext";
+import { loginHref } from "@/lib/guest-routes";
 import ShortCard from "./ShortCard";
 import ScrollNav from "./ScrollNav";
 import CommentPanel from "./CommentPanel";
@@ -13,6 +16,15 @@ type Props = {
 };
 
 export default function ShortsFeed({ query, focusId }: Props) {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  function requireMember() {
+    if (user) return true;
+    router.push(loginHref("/"));
+    return false;
+  }
+
   const list = useMemo(() => {
     let data = allShorts;
     if (query) {
@@ -105,16 +117,19 @@ export default function ShortsFeed({ query, focusId }: Props) {
   }, [index, list.length, scrollToIndex]);
 
   function toggleLike(id: string) {
+    if (!requireMember()) return;
     setLiked((prev) => ({ ...prev, [id]: !prev[id] }));
     setDisliked((prev) => ({ ...prev, [id]: false }));
   }
 
   function toggleDislike(id: string) {
+    if (!requireMember()) return;
     setDisliked((prev) => ({ ...prev, [id]: !prev[id] }));
     setLiked((prev) => ({ ...prev, [id]: false }));
   }
 
   function addComment(text: string) {
+    if (!user) return;
     setComments((prev) => [
       ...prev,
       {
@@ -128,6 +143,7 @@ export default function ShortsFeed({ query, focusId }: Props) {
   }
 
   function share() {
+    if (!requireMember()) return;
     const url = typeof window !== "undefined" ? window.location.href : "";
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).catch(() => undefined);
@@ -182,6 +198,7 @@ export default function ShortsFeed({ query, focusId }: Props) {
         onClose={() => setPanelOpen(false)}
         comments={activeComments}
         onAdd={addComment}
+        canWrite={Boolean(user)}
       />
 
       {shareToast && (

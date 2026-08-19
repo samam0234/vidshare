@@ -19,7 +19,14 @@ import { cn } from "@/lib/utils";
 import { useContentStore } from "@/lib/content-store";
 import NotificationPopup from "./NotificationPopup";
 
-const navLinks = [
+const guestNavLinks = [
+  { href: "/longform", label: "롱폼 영상" },
+  { href: "/community", label: "커뮤니티" },
+  { href: "/chatbot", label: "챗봇" },
+  { href: "/", label: "쇼츠" },
+];
+
+const memberNavLinks = [
   { href: "/longform", label: "롱폼 영상" },
   { href: "/community", label: "커뮤니티" },
   { href: "/chatbot", label: "챗봇" },
@@ -38,6 +45,7 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const navLinks = user ? memberNavLinks : guestNavLinks;
   const { unreadCount } = useContentStore();
   const [query, setQuery] = useState("");
   const [notifOpen, setNotifOpen] = useState(false);
@@ -136,43 +144,47 @@ export default function Navbar() {
         </div>
 
         <div className="relative z-[310] flex shrink-0 items-center gap-0.5 sm:gap-1">
-          <Link
-            href="/upload"
-            className="hidden items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 sm:inline-flex"
-          >
-            <Upload size={16} />
-            업로드
-          </Link>
+          {user && (
+            <>
+              <Link
+                href="/upload"
+                className="hidden items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 sm:inline-flex"
+              >
+                <Upload size={16} />
+                업로드
+              </Link>
 
-          <Link
-            href="/messages"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text)] hover:bg-[var(--btn)]"
-            aria-label="메시지"
-          >
-            <MessageCircle size={20} />
-          </Link>
+              <Link
+                href="/messages"
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text)] hover:bg-[var(--btn)]"
+                aria-label="메시지"
+              >
+                <MessageCircle size={20} />
+              </Link>
 
-          <div className="relative" ref={notifRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setNotifOpen((v) => !v);
-                setMenuOpen(false);
-              }}
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text)] hover:bg-[var(--btn)]"
-              aria-label="알림"
-              aria-expanded={notifOpen}
-            >
-              <Bell size={20} />
-              {unreadCount > 0 && (
-                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--accent-hot)]" />
-              )}
-            </button>
-            <NotificationPopup
-              open={notifOpen}
-              onClose={() => setNotifOpen(false)}
-            />
-          </div>
+              <div className="relative" ref={notifRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNotifOpen((v) => !v);
+                    setMenuOpen(false);
+                  }}
+                  className="relative flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text)] hover:bg-[var(--btn)]"
+                  aria-label="알림"
+                  aria-expanded={notifOpen}
+                >
+                  <Bell size={20} />
+                  {unreadCount > 0 && (
+                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--accent-hot)]" />
+                  )}
+                </button>
+                <NotificationPopup
+                  open={notifOpen}
+                  onClose={() => setNotifOpen(false)}
+                />
+              </div>
+            </>
+          )}
 
           <button
             type="button"

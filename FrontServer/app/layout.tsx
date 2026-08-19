@@ -3,6 +3,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import GuestRouteGuard from "@/components/auth/GuestRouteGuard";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -33,7 +34,9 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <Navbar />
-            <div className="flex flex-1 flex-col">{children}</div>
+            <GuestRouteGuard>
+              <div className="flex flex-1 flex-col">{children}</div>
+            </GuestRouteGuard>
             <Footer />
           </AuthProvider>
         </ThemeProvider>

@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { Clapperboard, Plus } from "lucide-react";
 import { formatWhen, useContentStore } from "@/lib/content-store";
+import { useAuth } from "@/context/AuthContext";
+import { loginHref } from "@/lib/guest-routes";
 import SerialBadge from "@/components/ui/SerialBadge";
 
 export default function LongformList() {
   const { longform } = useContentStore();
+  const { user } = useAuth();
+  const writeHref = user ? "/longform/write" : loginHref("/longform/write");
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
@@ -17,27 +21,40 @@ export default function LongformList() {
             작성하면 일련번호가 붙고 상세 페이지로 열립니다.
           </p>
         </div>
-        <Link
-          href="/longform/write"
-          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-        >
-          <Plus size={16} />
-          롱폼 등록
-        </Link>
+        {user ? (
+          <Link
+            href="/longform/write"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+          >
+            <Plus size={16} />
+            롱폼 등록
+          </Link>
+        ) : null}
       </div>
 
       {longform.length === 0 ? (
         <div className="surface mt-8 flex flex-col items-center gap-3 rounded-3xl px-6 py-16 text-center">
           <Clapperboard className="text-[var(--text-muted)]" size={36} />
           <p className="text-sm text-[var(--text-muted)]">
-            아직 등록된 롱폼이 없습니다. 첫 영상을 올려 보세요.
+            {user
+              ? "아직 등록된 롱폼이 없습니다. 첫 영상을 올려 보세요."
+              : "아직 등록된 롱폼이 없습니다."}
           </p>
-          <Link
-            href="/longform/write"
-            className="text-sm font-medium text-[var(--accent)] hover:underline"
-          >
-            지금 등록하기
-          </Link>
+          {user ? (
+            <Link
+              href="/longform/write"
+              className="text-sm font-medium text-[var(--accent)] hover:underline"
+            >
+              지금 등록하기
+            </Link>
+          ) : (
+            <Link
+              href={writeHref}
+              className="text-sm font-medium text-[var(--accent)] hover:underline"
+            >
+              로그인하고 등록하기
+            </Link>
+          )}
         </div>
       ) : (
         <ul className="mt-6 space-y-3">

@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { MessageSquareText, Plus } from "lucide-react";
 import { formatWhen, useContentStore } from "@/lib/content-store";
+import { useAuth } from "@/context/AuthContext";
+import { loginHref } from "@/lib/guest-routes";
 import SerialBadge from "@/components/ui/SerialBadge";
 
 export default function CommunityList() {
   const { community } = useContentStore();
+  const { user } = useAuth();
+  const writeHref = user ? "/community/write" : loginHref("/community/write");
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
@@ -17,13 +21,22 @@ export default function CommunityList() {
             글을 쓰면 일련번호가 생기고 상세에서 확인할 수 있습니다.
           </p>
         </div>
-        <Link
-          href="/community/write"
-          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-        >
-          <Plus size={16} />
-          글쓰기
-        </Link>
+        {user ? (
+          <Link
+            href="/community/write"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+          >
+            <Plus size={16} />
+            글쓰기
+          </Link>
+        ) : (
+          <Link
+            href={writeHref}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] px-4 py-2 text-sm font-semibold hover:border-[var(--accent)]"
+          >
+            로그인하고 글쓰기
+          </Link>
+        )}
       </div>
 
       {community.length === 0 ? (
@@ -33,10 +46,10 @@ export default function CommunityList() {
             아직 작성된 글이 없습니다.
           </p>
           <Link
-            href="/community/write"
+            href={writeHref}
             className="text-sm font-medium text-[var(--accent)] hover:underline"
           >
-            첫 글 작성하기
+            {user ? "첫 글 작성하기" : "로그인하고 글쓰기"}
           </Link>
         </div>
       ) : (

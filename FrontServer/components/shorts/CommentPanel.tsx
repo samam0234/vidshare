@@ -9,6 +9,7 @@ type Props = {
   onClose: () => void;
   comments: Comment[];
   onAdd: (text: string) => void;
+  canWrite?: boolean;
 };
 
 export default function CommentPanel({
@@ -16,16 +17,17 @@ export default function CommentPanel({
   onClose,
   comments,
   onAdd,
+  canWrite = true,
 }: Props) {
   const [text, setText] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open) {
+    if (open && canWrite) {
       inputRef.current?.focus();
     }
-  }, [open]);
+  }, [open, canWrite]);
 
   useEffect(() => {
     if (listRef.current) {
@@ -90,25 +92,35 @@ export default function CommentPanel({
           ))}
         </div>
 
-        <div className="flex gap-2 border-t border-[var(--border)] bg-[var(--bg-card)] p-3">
-          <input
-            ref={inputRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") submit();
-            }}
-            placeholder="댓글을 입력하세요..."
-            className="flex-1 rounded-full border-none bg-white px-4 py-2.5 text-sm text-black placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-          />
-          <button
-            type="button"
-            onClick={submit}
-            className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-          >
-            등록
-          </button>
-        </div>
+        {canWrite ? (
+          <div className="flex gap-2 border-t border-[var(--border)] bg-[var(--bg-card)] p-3">
+            <input
+              ref={inputRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submit();
+              }}
+              placeholder="댓글을 입력하세요..."
+              className="flex-1 rounded-full border-none bg-white px-4 py-2.5 text-sm text-black placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            />
+            <button
+              type="button"
+              onClick={submit}
+              className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            >
+              등록
+            </button>
+          </div>
+        ) : (
+          <div className="border-t border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-center text-sm text-[var(--text-muted)]">
+            댓글을 쓰려면{" "}
+            <a href="/login?next=/" className="font-medium text-[var(--accent)] hover:underline">
+              로그인
+            </a>
+            이 필요합니다.
+          </div>
+        )}
       </aside>
     </>
   );

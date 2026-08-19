@@ -3,14 +3,21 @@
 import Link from "next/link";
 import { Settings, Upload, UserRound } from "lucide-react";
 import type { Author } from "@/types";
+import { loginHref } from "@/lib/guest-routes";
 
 type Props = {
   author: Author;
   isMe?: boolean;
   videoCount: number;
+  signedIn?: boolean;
 };
 
-export default function ProfileHeader({ author, isMe, videoCount }: Props) {
+export default function ProfileHeader({
+  author,
+  isMe,
+  videoCount,
+  signedIn = false,
+}: Props) {
   return (
     <section className="flex flex-col gap-5 sm:flex-row sm:items-center">
       <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-sky-500 to-pink-500 text-3xl font-bold text-white shadow-lg sm:h-32 sm:w-32">
@@ -54,7 +61,7 @@ export default function ProfileHeader({ author, isMe, videoCount }: Props) {
                 <Settings size={18} />
               </button>
             </>
-          ) : (
+          ) : signedIn ? (
             <>
               <button
                 type="button"
@@ -69,6 +76,13 @@ export default function ProfileHeader({ author, isMe, videoCount }: Props) {
                 메시지
               </Link>
             </>
+          ) : (
+            <Link
+              href={loginHref(`/profile/${author.id}`)}
+              className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            >
+              로그인하고 팔로우
+            </Link>
           )}
         </div>
       </div>
