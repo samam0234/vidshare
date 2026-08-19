@@ -40,12 +40,16 @@ for (const a of accounts) {
   }
 }
 
+export function normalizeHandle(raw: string) {
+  return raw.replace(/^@/, "").trim().toLowerCase();
+}
+
 export function createAccount(input: {
   handle: string;
   name: string;
   password: string;
 }): AuthAccount {
-  const handle = input.handle.replace(/^@/, "").trim();
+  const handle = normalizeHandle(input.handle);
   const account: AuthAccount = {
     id: `u-${randomUUID().slice(0, 8)}`,
     handle,

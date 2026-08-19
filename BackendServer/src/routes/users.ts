@@ -17,20 +17,23 @@ router.get("/", (_req, res) => {
   res.json({ success: true, data: authors });
 });
 
+function findPublicUser(idOrHandle: string) {
+  const key = idOrHandle.replace(/^@/, "").trim().toLowerCase();
+  return authors.find(
+    (a) => a.id === idOrHandle || a.handle.toLowerCase() === key
+  );
+}
+
 /** GET /api/users/:id */
 router.get("/:id", (req, res) => {
-  const user = authors.find(
-    (a) => a.id === req.params.id || a.handle === req.params.id
-  );
+  const user = findPublicUser(req.params.id);
   if (!user) throw new HttpError(404, "User not found");
   res.json({ success: true, data: user });
 });
 
 /** GET /api/users/:id/shorts */
 router.get("/:id/shorts", (req, res) => {
-  const user = authors.find(
-    (a) => a.id === req.params.id || a.handle === req.params.id
-  );
+  const user = findPublicUser(req.params.id);
   if (!user) throw new HttpError(404, "User not found");
 
   const list = store.shorts.filter((s) => s.author.id === user.id);
