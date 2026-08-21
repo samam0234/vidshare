@@ -74,4 +74,24 @@ CREATE INDEX IF NOT EXISTS idx_shorts_author ON shorts(author_id);
 CREATE INDEX IF NOT EXISTS idx_comments_short ON comments(short_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_messages_peer ON messages(peer_id);
+
+CREATE TABLE IF NOT EXISTS chatbot_docs (
+  id TEXT PRIMARY KEY,
+  owner TEXT NOT NULL,
+  thread_key TEXT NOT NULL,
+  title TEXT NOT NULL DEFAULT '',
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chatbot_docs_owner ON chatbot_docs(owner);
+CREATE INDEX IF NOT EXISTS idx_chatbot_docs_thread ON chatbot_docs(owner, thread_key);
+
+CREATE TABLE IF NOT EXISTS chatbot_summaries (
+  owner TEXT NOT NULL,
+  thread_key TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (owner, thread_key)
+);
 `;

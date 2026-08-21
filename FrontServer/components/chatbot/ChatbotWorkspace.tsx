@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Bot, Paperclip, PanelLeft, Plus, Send, X } from "lucide-react";
+import { Bot, Paperclip, PanelLeft, Pencil, Plus, Send, Trash2, X } from "lucide-react";
 import {
   addChatbotMessage,
   addChatbotThread,
+  collectChatCorpus,
   formatWhen,
-  searchChatMemory,
+  removeChatbotThread,
+  renameChatbotThread,
   setChatbotModel,
   useContentStore,
   useStoreHydrated,
@@ -98,8 +100,11 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const renameRef = useRef<HTMLInputElement>(null);
 
   const activeProduct: ChatbotProduct = isMember
     ? (thread?.model ?? product)
@@ -129,6 +134,10 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
     }
   }, [messages.length, busy, thread?.id]);
 
+  useEffect(() => {
+    if (editingId != null) renameRef.current?.focus();
+  }, [editingId]);
+
   function goThread(id: number) {
     setSidebarOpen(false);
     router.push(`/chatbot/${id}`);
@@ -153,6 +162,35 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
     }
     setProduct(next);
     if (thread) setChatbotModel(thread.id, next);
+  }
+
+  function startRename(id: number, title: string) {
+    setEditingId(id);
+    setEditTitle(title);
+  }
+
+  function saveRename() {
+    if (editingId == null) return;
+    renameChatbotThread(editingId, editTitle);
+    setEditingId(null);
+    setEditTitle("");
+  }
+
+  function cancelRename() {
+    setEditingId(null);
+    setEditTitle("");
+  }
+
+  function deleteThread(id: number) {
+    const t = savedThreads.find((x) => x.id === id);
+    const label = t?.title ?? "이 대화";
+    if (!window.confirm(`“${label}” 대화를 삭제할까요?`)) return;
+    removeChatbotThread(id);
+    if (editingId === id) cancelRename();
+    if (thread?.id === id) {
+      setSidebarOpen(false);
+      router.push("/chatbot");
+    }
   }
 
   async function onFiles(list: FileList | null) {
@@ -219,26 +257,32 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
       })),
       { role: "user" as const, content: prompt },
     ];
-    const memories =
+    const corpus =
       activeProduct === "shape"
-        ? searchChatMemory(prompt, current.id)
+        ? collectChatCorpus(current.id)
         : undefined;
 
-    const res = await api.chatbotComplete({
-      product: activeProduct,
-      messages: history,
-      memories,
-    });
-    setBusy(false);
-    if (!res.success || !res.data?.text) {
-      setError(res.error ?? "답변을 받지 못했습니다.");
-      return;
+    try {
+      const res = await api.chatbotComplete({
+        product: activeProduct,
+        threadKey: String(current.id),
+        messages: history,
+        corpus,
+      });
+      if (!res.success || !res.data?.text) {
+        setError(res.error ?? "답변을 받지 못했습니다.");
+        return;
+      }
+      addChatbotMessage({
+        threadId: current.id,
+        role: "bot",
+        content: res.data.text,
+      });
+    } catch {
+      setError("서버에 연결하지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.");
+    } finally {
+      setBusy(false);
     }
-    addChatbotMessage({
-      threadId: current.id,
-      role: "bot",
-      content: res.data.text,
-    });
   }
 
   const sidebar = (
@@ -262,28 +306,83 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
         ) : (
           <ul className="space-y-1">
             {savedThreads.map((t) => (
-              <li key={t.id}>
-                <button
-                  type="button"
-                  onClick={() => goThread(t.id)}
-                  className={cn(
-                    "w-full rounded-xl px-3 py-2.5 text-left transition",
-                    thread?.id === t.id
-                      ? "bg-[var(--btn)]"
-                      : "hover:bg-[var(--btn)]/60"
+              <li
+                key={t.id}
+                className={cn(
+                  "rounded-xl px-2 py-2 transition",
+                  thread?.id === t.id
+                    ? "bg-[var(--btn)]"
+                    : "hover:bg-[var(--btn)]/60"
+                )}
+              >
+                <div className="flex items-start gap-1">
+                  {editingId === t.id ? (
+                    <input
+                      ref={renameRef}
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onBlur={saveRename}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          saveRename();
+                        }
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          cancelRename();
+                        }
+                      }}
+                      className="min-w-0 flex-1 rounded-lg border border-[var(--accent)] bg-[var(--bg)] px-2 py-1 text-sm focus:outline-none"
+                      aria-label="방 이름"
+                      maxLength={60}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => goThread(t.id)}
+                      className="min-w-0 flex-1 px-1 text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <SerialBadge id={t.id} />
+                        <span className="truncate text-[10px] text-[var(--accent)]">
+                          {productLabel(t.model)}
+                        </span>
+                      </div>
+                      <p className="mt-1 truncate text-sm font-medium">
+                        {t.title}
+                      </p>
+                      <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">
+                        {formatWhen(t.updatedAt)}
+                      </p>
+                    </button>
                   )}
-                >
-                  <div className="flex items-center gap-2">
-                    <SerialBadge id={t.id} />
-                    <span className="truncate text-[10px] text-[var(--accent)]">
-                      {productLabel(t.model)}
-                    </span>
+                  <div className="flex shrink-0 flex-col gap-0.5 pt-0.5">
+                    <button
+                      type="button"
+                      className="rounded-md p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text)]"
+                      aria-label="이름 수정"
+                      title="이름 수정"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startRename(t.id, t.title);
+                      }}
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-md p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--danger)]"
+                      aria-label="대화 삭제"
+                      title="삭제"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteThread(t.id);
+                      }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
                   </div>
-                  <p className="mt-1 truncate text-sm font-medium">{t.title}</p>
-                  <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">
-                    {formatWhen(t.updatedAt)}
-                  </p>
-                </button>
+                </div>
               </li>
             ))}
           </ul>

@@ -108,11 +108,23 @@ export const api = {
 
   chatbotComplete: (payload: {
     product: "locals" | "vide" | "shape";
+    threadKey?: string;
     messages: Array<{ role: "user" | "assistant"; content: string }>;
-    memories?: string[];
+    corpus?: Array<{
+      threadKey: string;
+      title?: string;
+      role: "user" | "assistant";
+      content: string;
+    }>;
   }) =>
-    request<{ text: string; product: string; model: string }>(
-      "/api/chatbot/complete",
-      { method: "POST", body: JSON.stringify(payload) }
-    ),
+    request<{
+      text: string;
+      product: string;
+      model: string;
+      pipeline?: string;
+      retrieved?: number;
+    }>("/api/chatbot/complete", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 };

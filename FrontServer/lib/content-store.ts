@@ -242,6 +242,31 @@ export function setChatbotModel(
   });
 }
 
+export function renameChatbotThread(id: number, title: string) {
+  const next = title.trim().slice(0, 60);
+  if (!next) return false;
+  const prev = getSnapshot();
+  if (!prev.chatbotThreads.some((t) => t.id === id)) return false;
+  setState({
+    ...prev,
+    chatbotThreads: prev.chatbotThreads.map((t) =>
+      t.id === id ? { ...t, title: next, updatedAt: isoNow() } : t
+    ),
+  });
+  return true;
+}
+
+export function removeChatbotThread(id: number) {
+  const prev = getSnapshot();
+  if (!prev.chatbotThreads.some((t) => t.id === id)) return false;
+  setState({
+    ...prev,
+    chatbotThreads: prev.chatbotThreads.filter((t) => t.id !== id),
+    chatbotMessages: prev.chatbotMessages.filter((m) => m.threadId !== id),
+  });
+  return true;
+}
+
 export function addChatbotMessage(input: {
   threadId: number;
   role: "user" | "bot";
@@ -380,52 +405,28 @@ export function removeNotification(id: number) {
   });
 }
 
-export function searchChatMemory(
-  query: string,
-  excludeThreadId?: number,
-  limit = 6
-): string[] {
-  const words = query
-    .toLowerCase()
-    .split(/[\s,./?!'"]+/)
-    .map((w) => w.trim())
-    .filter((w) => w.length >= 2);
-  if (!words.length) return [];
+export function collectChatCorpus(excludeThreadId?: number, limit = 400) {
   const prev = getSnapshot();
-  const scored: Array<{ score: number; text: string }> = [];
+  const out: Array<{
+    threadKey: string;
+    title: string;
+    role: "user" | "assistant";
+    content: string;
+  }> = [];
   for (const m of prev.chatbotMessages) {
     if (excludeThreadId && m.threadId === excludeThreadId) continue;
-    const hay = m.content.toLowerCase();
-    const score = words.reduce((n, w) => n + (hay.includes(w) ? 1 : 0), 0);
-    if (score > 0) {
-      scored.push({ score, text: m.content.trim().slice(0, 280) });
-    }
+    const thread = prev.chatbotThreads.find((t) => t.id === m.threadId);
+    if (thread?.guest) continue;
+    const content = m.content.trim();
+    if (content.length < 2) continue;
+    out.push({
+      threadKey: String(m.threadId),
+      title: thread?.title ?? "",
+      role: m.role === "bot" ? "assistant" : "user",
+      content,
+    });
   }
-  scored.sort((a, b) => b.score - a.score);
-  const out: string[] = [];
-  for (const row of scored) {
-    if (out.includes(row.text)) continue;
-    out.push(row.text);
-    if (out.length >= limit) break;
-  }
-  return out;
-}
-
-export function botReply(userText: string): string {
-  const t = userText.toLowerCase();
-  if (t.includes("안녕") || t.includes("hello")) {
-    return "안녕하세요! VidShare 챗봇입니다. 롱폼·커뮤니티·메시지 이용을 도와드릴게요.";
-  }
-  if (t.includes("롱폼")) {
-    return "롱폼은 상단 ‘롱폼 영상’에서 작성하면 일련번호가 붙고 상세 페이지로 열립니다.";
-  }
-  if (t.includes("커뮤니티")) {
-    return "커뮤니티 글을 작성하면 글 번호가 부여되고, 알림에도 같은 번호로 남습니다.";
-  }
-  if (t.includes("도움") || t.includes("help")) {
-    return "글 작성 → 일련번호 부여 → 상세 페이지에서 확인하는 흐름입니다. 무엇을 올릴지 말씀해 주세요.";
-  }
-  return `확인했어요. “${userText.slice(0, 80)}”에 대한 답변을 기록했습니다. 더 구체적으로 물어보시면 이어서 도와드릴게요.`;
+  return out.slice(-limit);
 }
 
 /** localStorage 시드는 클라이언트에서만 있다. 상세 페이지는 이게 true일 때까지 비어 있다고 보면 안 된다. */

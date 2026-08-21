@@ -9,19 +9,19 @@ export const CHATBOT_PRODUCTS: Array<{
   {
     id: "locals",
     name: "VidShare Locals",
-    blurb: "비회원도 가능. 이 채팅방은 Flash급으로 기억. 다른 방 검색은 안 하고, 답은 짧게 안내합니다.",
+    blurb: "비회원도 가능. 이 방만 짧게 이어서 대화합니다.",
     memberOnly: false,
   },
   {
     id: "vide",
     name: "VidShare Vide",
-    blurb: "회원 전용. Locals보다 이 대화를 더 정밀하게 기억하고, 일반 질문도 이어서 답합니다.",
+    blurb: "회원 전용. 이 방을 요약해 더 길게 기억하고, 질문을 깊게 풀어 답합니다.",
     memberOnly: true,
   },
   {
     id: "shape",
     name: "VidShare Shape",
-    blurb: "회원 전용. 저장된 챗봇 대화를 검색해 기억하고, 추론이 Locals·Vide보다 깊습니다.",
+    blurb: "회원 전용. 저장된 대화를 찾아 최대한 많이 기억하고, 근거를 붙여 깊게 추론합니다.",
     memberOnly: true,
   },
 ];
