@@ -105,10 +105,10 @@ NNN-짧은-영문-slug.md
 | 029 | [029-chatbot-models.md](./029-chatbot-models.md) | `50bfe29` | 챗봇 Locals·Vide·Shape | 2026-08-20 |
 | 030 | [030-chatbot-workspace.md](./030-chatbot-workspace.md) | `a974e9e` | 챗봇 왼쪽 기록·아래 입력줄 | 2026-08-20 |
 | 031 | [031-locals-flash-memory.md](./031-locals-flash-memory.md) | `cd53689` | Locals 이 방 Flash급 기억 | 2026-08-20 |
-| 032 | [032-chatbot-model-tiers.md](./032-chatbot-model-tiers.md) | `TBD` | Locals·Vide·Shape 프롬프트 | 2026-08-20 |
-| 033 | [033-chatbot-conversation-engine.md](./033-chatbot-conversation-engine.md) | `TBD` | Locals·Vide·Shape 대화 엔진 | 2026-08-20 |
-| 034 | [034-chatbot-real-llm.md](./034-chatbot-real-llm.md) | `TBD` | 챗봇 실제 LLM 호출 | 2026-08-20 |
-| 035 | [035-chatbot-langgraph-rag.md](./035-chatbot-langgraph-rag.md) | `TBD` | LangChain·LangGraph·RAG | 2026-08-20 |
+| 032 | [032-chatbot-model-tiers.md](./032-chatbot-model-tiers.md) | `c044ca5` | Locals·Vide·Shape 프롬프트 | 2026-08-20 |
+| 033 | [033-chatbot-conversation-engine.md](./033-chatbot-conversation-engine.md) | `c044ca5` | Locals·Vide·Shape 대화 엔진 | 2026-08-20 |
+| 034 | [034-chatbot-real-llm.md](./034-chatbot-real-llm.md) | `c044ca5` | 챗봇 실제 LLM 호출 | 2026-08-20 |
+| 035 | [035-chatbot-langgraph-rag.md](./035-chatbot-langgraph-rag.md) | `c044ca5` | LangChain·LangGraph·RAG | 2026-08-20 |
 
 ---
 

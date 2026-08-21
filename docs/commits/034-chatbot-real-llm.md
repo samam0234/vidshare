@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `034` |
 | **파일명** | `034-chatbot-real-llm.md` |
-| **Git 커밋 (short)** | `TBD` |
+| **Git 커밋 (short)** | `c044ca5` |
 | **날짜** | `2026-08-20` |
 | **브랜치** | `master` |
 | **관련 CHANGELOG** | `Unreleased` |
