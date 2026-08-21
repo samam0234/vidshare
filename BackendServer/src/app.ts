@@ -51,7 +51,8 @@ export function createApp() {
       credentials: true,
     })
   );
-  app.use(express.json({ limit: "2mb" }));
+  // 챗봇 이미지 첨부가 base64로 실려 온다.
+  app.use(express.json({ limit: "12mb" }));
   app.use(cookieParser());
   app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 

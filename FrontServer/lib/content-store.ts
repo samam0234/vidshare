@@ -429,6 +429,23 @@ export function collectChatCorpus(excludeThreadId?: number, limit = 400) {
   return out.slice(-limit);
 }
 
+/** 커뮤니티·롱폼은 프론트 localStorage 전용이라 백엔드 챗봇에게는 매 요청 이렇게 실어 보내야 보인다. */
+export function collectPlatformCorpus(limit = 200) {
+  const prev = getSnapshot();
+  const out: Array<{
+    kind: "longform" | "community";
+    title: string;
+    content: string;
+  }> = [];
+  for (const v of prev.longform) {
+    out.push({ kind: "longform", title: v.title, content: v.description });
+  }
+  for (const p of prev.community) {
+    out.push({ kind: "community", title: p.title, content: p.body });
+  }
+  return out.slice(0, limit);
+}
+
 /** localStorage 시드는 클라이언트에서만 있다. 상세 페이지는 이게 true일 때까지 비어 있다고 보면 안 된다. */
 export function useStoreHydrated() {
   const [hydrated, setHydrated] = useState(false);

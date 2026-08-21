@@ -116,6 +116,12 @@ export const api = {
       role: "user" | "assistant";
       content: string;
     }>;
+    platformDocs?: Array<{
+      kind: "longform" | "community";
+      title: string;
+      content: string;
+    }>;
+    images?: Array<{ mime: string; dataBase64: string }>;
   }) =>
     request<{
       text: string;

@@ -17,7 +17,7 @@ function docId(owner: string, doc: CorpusDoc) {
     .slice(0, 24);
 }
 
-function tokens(raw: string) {
+export function tokens(raw: string) {
   const s = raw.toLowerCase();
   const words = s.split(/[^a-z0-9가-힣]+/i).filter((w) => w.length >= 2);
   const hangul = s.replace(/[^\uac00-\ud7a3]/g, "");

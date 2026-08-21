@@ -6,6 +6,8 @@ import {
   hasLlmKey,
   productSpec,
   type CorpusDoc,
+  type ImageInput,
+  type PlatformDoc,
   type Product,
   type Turn,
 } from "../chatbot/complete";
@@ -65,7 +67,41 @@ router.post("/complete", (req, res, next) => {
         content: d.content.trim().slice(0, 4000),
       }));
 
+    const rawPlatformDocs = Array.isArray(req.body?.platformDocs)
+      ? (req.body.platformDocs as PlatformDoc[])
+      : [];
+    const platformDocs = rawPlatformDocs
+      .filter(
+        (d) =>
+          d &&
+          (d.kind === "longform" || d.kind === "community") &&
+          typeof d.content === "string" &&
+          d.content.trim()
+      )
+      .slice(0, 300)
+      .map((d) => ({
+        kind: d.kind,
+        title: typeof d.title === "string" ? d.title.slice(0, 120) : "",
+        content: d.content.trim().slice(0, 600),
+      }));
+
     const threadKey = String(req.body?.threadKey ?? "").slice(0, 64);
+
+    const rawImages = Array.isArray(req.body?.images)
+      ? (req.body.images as ImageInput[])
+      : [];
+    const images = rawImages
+      .filter(
+        (i) =>
+          i &&
+          typeof i.mime === "string" &&
+          i.mime.startsWith("image/") &&
+          typeof i.dataBase64 === "string" &&
+          i.dataBase64.length > 0 &&
+          i.dataBase64.length <= 8_000_000
+      )
+      .slice(0, 4)
+      .map((i) => ({ mime: i.mime, dataBase64: i.dataBase64 }));
 
     const data = await completeChat({
       product,
@@ -73,6 +109,8 @@ router.post("/complete", (req, res, next) => {
       threadKey: threadKey || undefined,
       owner: user?.id,
       corpus,
+      platformDocs,
+      images,
     });
     res.json({ success: true, data: { ...data, product } });
   })().catch(next);

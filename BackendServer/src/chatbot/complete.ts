@@ -3,9 +3,9 @@ import { hasLlmKey, productLlmSpec } from "./llm";
 import { runLocals } from "./locals";
 import { runVide } from "./vide";
 import { runShape } from "./shape";
-import { isProduct, type CorpusDoc, type Product, type Turn } from "./types";
+import { isProduct, type CorpusDoc, type ImageInput, type PlatformDoc, type Product, type Turn } from "./types";
 
-export type { CorpusDoc, Product, Turn };
+export type { CorpusDoc, ImageInput, PlatformDoc, Product, Turn };
 export { hasLlmKey, isProduct };
 
 export function productSpec(product: string) {
@@ -24,6 +24,8 @@ export async function completeChat(input: {
   threadKey?: string;
   owner?: string;
   corpus?: CorpusDoc[];
+  platformDocs?: PlatformDoc[];
+  images?: ImageInput[];
 }): Promise<{
   text: string;
   model: string;
@@ -32,10 +34,12 @@ export async function completeChat(input: {
 }> {
   const lastUser = [...input.turns].reverse().find((m) => m.role === "user");
   if (!lastUser) throw new HttpError(400, "질문을 입력해 주세요.");
+  const platformDocs = input.platformDocs ?? [];
+  const images = input.images ?? [];
 
   try {
     if (input.product === "locals") {
-      return await runLocals(input.turns);
+      return await runLocals(input.turns, platformDocs, images);
     }
 
     const owner = input.owner?.trim();
@@ -43,7 +47,7 @@ export async function completeChat(input: {
     const threadKey = (input.threadKey ?? "default").slice(0, 64);
 
     if (input.product === "vide") {
-      return await runVide({ owner, threadKey, turns: input.turns });
+      return await runVide({ owner, threadKey, turns: input.turns, platformDocs, images });
     }
 
     return await runShape({
@@ -51,6 +55,8 @@ export async function completeChat(input: {
       threadKey,
       turns: input.turns,
       corpus: input.corpus ?? [],
+      platformDocs,
+      images,
     });
   } catch (err) {
     if (err instanceof HttpError) throw err;

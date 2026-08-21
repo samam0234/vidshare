@@ -8,6 +8,7 @@ import {
   addChatbotMessage,
   addChatbotThread,
   collectChatCorpus,
+  collectPlatformCorpus,
   formatWhen,
   removeChatbotThread,
   renameChatbotThread,
@@ -24,11 +25,13 @@ import {
   type ChatbotProduct,
 } from "@/lib/chatbot-models";
 import SerialBadge from "@/components/ui/SerialBadge";
+import ChatMarkdown from "@/components/chatbot/ChatMarkdown";
+import { attachmentsToImages, fileToAttachment } from "@/lib/chat-files";
 import { cn } from "@/lib/utils";
 import type { ChatbotAttachment } from "@/types/content";
 
 const ACCEPT =
-  "image/*,.pdf,.txt,.md,.csv,.json,.doc,.docx,application/pdf,text/plain";
+  "image/*,.pdf,.txt,.md,.csv,.json,.log,.xml,.yml,.yaml,.docx,application/pdf,text/plain";
 const MAX_FILES = 4;
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -40,36 +43,6 @@ function formatSize(n: number) {
 
 function isImage(mime: string) {
   return mime.startsWith("image/");
-}
-
-async function fileToAttachment(file: File): Promise<ChatbotAttachment> {
-  const mime = file.type || "application/octet-stream";
-  const base: ChatbotAttachment = {
-    name: file.name,
-    mime,
-    size: file.size,
-  };
-  const lower = file.name.toLowerCase();
-  const textLike =
-    mime.startsWith("text/") ||
-    lower.endsWith(".md") ||
-    lower.endsWith(".csv") ||
-    lower.endsWith(".json") ||
-    lower.endsWith(".txt");
-  if (textLike) {
-    const text = (await file.text()).slice(0, 8000);
-    return { ...base, text };
-  }
-  if (isImage(mime)) {
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
-    return { ...base, dataUrl };
-  }
-  return base;
 }
 
 function withFileNote(text: string, files: ChatbotAttachment[]) {
@@ -261,6 +234,8 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
       activeProduct === "shape"
         ? collectChatCorpus(current.id)
         : undefined;
+    const platformDocs = collectPlatformCorpus();
+    const images = attachmentsToImages(attachments);
 
     try {
       const res = await api.chatbotComplete({
@@ -268,6 +243,8 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
         threadKey: String(current.id),
         messages: history,
         corpus,
+        platformDocs,
+        images,
       });
       if (!res.success || !res.data?.text) {
         setError(res.error ?? "답변을 받지 못했습니다.");
@@ -508,7 +485,11 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
                         ))}
                     </ul>
                   )}
-                  <p className="whitespace-pre-wrap">{m.content}</p>
+                  {m.role === "bot" ? (
+                    <ChatMarkdown content={m.content} />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{m.content}</p>
+                  )}
                 </div>
               ))}
               {busy && (
