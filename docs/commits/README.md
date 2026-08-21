@@ -109,6 +109,7 @@ NNN-짧은-영문-slug.md
 | 033 | [033-chatbot-conversation-engine.md](./033-chatbot-conversation-engine.md) | `c044ca5` | Locals·Vide·Shape 대화 엔진 | 2026-08-20 |
 | 034 | [034-chatbot-real-llm.md](./034-chatbot-real-llm.md) | `c044ca5` | 챗봇 실제 LLM 호출 | 2026-08-20 |
 | 035 | [035-chatbot-langgraph-rag.md](./035-chatbot-langgraph-rag.md) | `c044ca5` | LangChain·LangGraph·RAG | 2026-08-20 |
+| 036 | [036-chatbot-rag-multimodal.md](./036-chatbot-rag-multimodal.md) | `a5927ad` | 챗봇 RAG 고도화 & 멀티모달 지원 | 2026-08-22 |
 
 ---
 

@@ -24,6 +24,9 @@
 - 챗봇 워크스페이스 (왼쪽 저장 기록, 파일 첨부, 모델 선택)
 - 챗봇 Locals·Vide·Shape가 원격 LLM을 직접 호출 (핸드북 매칭 제거)
 - 챗봇 LangChain·LangGraph·RAG: Locals 단순 체인, Vide 요약 그래프, Shape 저장 대화 검색
+- 챗봇 플랫폼 JSON 스냅샷 + 커뮤니티/롱폼 RAG 검색 (실시간 쇼츠·유저·FAQ 현황 반영)
+- 챗봇 이미지/PDF/DOCX 첨부 읽기 (Locals·Vide는 Gemini 비전 직접, Shape는 Gemini 설명 경유)
+- 챗봇 봇 답변 마크다운 렌더링 (굵게·이탤릭·취소선·목록)
 
 ### Changed
 - 챗봇 저장 기록에서 방 이름 수정·삭제
