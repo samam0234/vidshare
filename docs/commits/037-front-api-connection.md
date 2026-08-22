@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `037` |
 | **파일명** | `037-front-api-connection.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `204c3c7` |
+| **Git 커밋 (full)** | `204c3c7917e4ffbf0e18fb6d61b97bbecfb8e0db` |
 | **날짜** | `2026-08-23` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |
