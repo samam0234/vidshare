@@ -8,6 +8,9 @@
 ## [Unreleased]
 
 ### Added
+- Front ↔ API 전면 연동: ShortsFeed·ProfilePageClient·UploadForm을 mock에서 서버 API로 교체
+- 쇼츠 목록/댓글 로드, 댓글 작성, 좋아요 토글, 사용자 프로필 조회, 쇼츠 생성 모두 API 호출
+- 로딩·에러·빈 목록 상태 UI 피드백
 - BackendServer 소스를 저장소에 추가 (Express REST, 인메모리 store)
 - 작성 콘텐츠 일련번호 스토어 (`content-store`, SerialBadge)
 - 롱폼 영상 목록·작성·상세 (`/longform`)

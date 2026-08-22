@@ -1,7 +1,8 @@
 /**
- * BackendServer HTTP client 스텁.
- * UI는 아직 mock-data를 주로 쓰며, 점진적으로 이 모듈로 교체합니다.
+ * BackendServer HTTP client.
  */
+
+import type { Author, Comment, Short } from "@/types";
 
 function resolveApiUrl() {
   if (typeof window !== "undefined") {
@@ -25,15 +26,20 @@ export async function request<T>(
   path: string,
   init?: RequestInit
 ): Promise<ApiResult<T>> {
-  const res = await fetch(`${resolveApiUrl()}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${resolveApiUrl()}${path}`, {
+      ...init,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+      cache: "no-store",
+    });
+  } catch {
+    return { success: false, error: "서버에 연결할 수 없습니다." };
+  }
 
   const body = (await res.json().catch(() => ({}))) as ApiResult<T>;
 
@@ -55,11 +61,11 @@ export const api = {
   health: () => request<{ status: string }>("/api/health"),
 
   getShorts: (q?: string) =>
-    request<unknown[]>(
+    request<Short[]>(
       q ? `/api/shorts?q=${encodeURIComponent(q)}` : "/api/shorts"
     ),
 
-  getShort: (id: string) => request<unknown>(`/api/shorts/${id}`),
+  getShort: (id: string) => request<Short>(`/api/shorts/${id}`),
 
   createShort: (payload: {
     title: string;
@@ -67,24 +73,30 @@ export const api = {
     gradient?: string;
     videoUrl?: string;
   }) =>
-    request<unknown>("/api/shorts", {
+    request<Short>("/api/shorts", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
 
+  likeShort: (id: string, action: "like" | "unlike") =>
+    request<{ id: string; likes: number }>(`/api/shorts/${id}/like`, {
+      method: "POST",
+      body: JSON.stringify({ action }),
+    }),
+
   getComments: (shortId: string) =>
-    request<unknown[]>(`/api/shorts/${shortId}/comments`),
+    request<Comment[]>(`/api/shorts/${shortId}/comments`),
 
   postComment: (shortId: string, text: string, author?: string) =>
-    request<unknown>(`/api/shorts/${shortId}/comments`, {
+    request<Comment>(`/api/shorts/${shortId}/comments`, {
       method: "POST",
       body: JSON.stringify({ text, author }),
     }),
 
-  getUser: (id: string) => request<unknown>(`/api/users/${id}`),
+  getUser: (id: string) => request<Author>(`/api/users/${id}`),
 
   getUserShorts: (id: string) =>
-    request<unknown[]>(`/api/users/${id}/shorts`),
+    request<Short[]>(`/api/users/${id}/shorts`),
 
   getNotifications: (category?: string) =>
     request<unknown[]>(

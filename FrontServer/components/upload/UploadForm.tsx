@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Shuffle, Upload } from "lucide-react";
+import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { randomGradient } from "@/lib/utils";
 import UploadPreview from "./UploadPreview";
 
@@ -12,6 +14,7 @@ const DEFAULT_GRADIENT = "linear-gradient(160deg, hsl(220 70% 45%), hsl(260 65% 
 
 export default function UploadForm() {
   const router = useRouter();
+  const { user } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
@@ -19,6 +22,7 @@ export default function UploadForm() {
   const [gradient, setGradient] = useState(DEFAULT_GRADIENT);
   const [uploading, setUploading] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: randomize only after hydration to avoid SSR/client mismatch
@@ -40,17 +44,28 @@ export default function UploadForm() {
     setGradient(randomGradient());
   }
 
-  function onUpload() {
+  async function onUpload() {
     if (!title.trim()) {
       alert("제목을 입력해 주세요.");
       return;
     }
+    setError(null);
     setUploading(true);
-    setTimeout(() => {
-      setUploading(false);
-      setDone(true);
-      setTimeout(() => router.push("/profile/u-me"), 1200);
-    }, 900);
+    const res = await api.createShort({
+      title: title.trim(),
+      description: desc.trim() || undefined,
+      gradient,
+    });
+    setUploading(false);
+    if (!res.success || !res.data) {
+      setError(res.error ?? "업로드에 실패했습니다.");
+      return;
+    }
+    setDone(true);
+    setTimeout(
+      () => router.push(`/profile/${res.data!.author.id ?? user?.id ?? "u-me"}`),
+      1200
+    );
   }
 
   return (
@@ -138,6 +153,9 @@ export default function UploadForm() {
           <p className="text-center text-sm text-[var(--success)]">
             쇼츠 업로드가 완료되었습니다. 프로필로 이동합니다…
           </p>
+        )}
+        {error && (
+          <p className="text-center text-sm text-red-500">{error}</p>
         )}
       </section>
     </main>

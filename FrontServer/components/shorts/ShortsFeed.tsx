@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { initialComments, shorts as allShorts } from "@/lib/mock-data";
-import type { Comment } from "@/types";
+import { api } from "@/lib/api";
+import type { Comment, Short } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { loginHref } from "@/lib/guest-routes";
 import ShortCard from "./ShortCard";
@@ -25,39 +25,69 @@ export default function ShortsFeed({ query, focusId }: Props) {
     return false;
   }
 
-  const list = useMemo(() => {
-    let data = allShorts;
-    if (query) {
-      const q = query.toLowerCase();
-      data = data.filter(
-        (s) =>
-          s.title.toLowerCase().includes(q) ||
-          s.author.handle.toLowerCase().includes(q) ||
-          s.description?.toLowerCase().includes(q)
-      );
-    }
-    if (focusId) {
-      const idx = data.findIndex((s) => s.id === focusId);
-      if (idx > 0) {
-        const copy = [...data];
-        const [item] = copy.splice(idx, 1);
-        copy.unshift(item);
-        data = copy;
+  const [shorts, setShorts] = useState<Short[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => setLoading(true));
+    api.getShorts(query).then((res) => {
+      if (cancelled) return;
+      if (res.success && res.data) {
+        setShorts(res.data);
+        setLoadError(null);
+      } else {
+        setShorts([]);
+        setLoadError(res.error ?? "쇼츠를 불러오지 못했습니다.");
       }
-    }
-    return data.length ? data : allShorts;
-  }, [query, focusId]);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [query]);
+
+  const list = useMemo(() => {
+    if (!focusId) return shorts;
+    const idx = shorts.findIndex((s) => s.id === focusId);
+    if (idx <= 0) return shorts;
+    const copy = [...shorts];
+    const [item] = copy.splice(idx, 1);
+    copy.unshift(item);
+    return copy;
+  }, [shorts, focusId]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [disliked, setDisliked] = useState<Record<string, boolean>>({});
-  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
-  const [activeShortId, setActiveShortId] = useState(list[0]?.id ?? "");
+  const [activeShortId, setActiveShortId] = useState("");
   const [shareToast, setShareToast] = useState(false);
 
-  const activeComments = comments.filter((c) => c.shortId === activeShortId);
+  useEffect(() => {
+    queueMicrotask(() => {
+      setIndex(0);
+      setActiveShortId(list[0]?.id ?? "");
+    });
+  }, [list]);
+
+  useEffect(() => {
+    if (!activeShortId) {
+      queueMicrotask(() => setComments([]));
+      return;
+    }
+    let cancelled = false;
+    api.getComments(activeShortId).then((res) => {
+      if (cancelled) return;
+      setComments(res.success && res.data ? res.data : []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeShortId]);
 
   const scrollToIndex = useCallback((i: number) => {
     const el = containerRef.current;
@@ -116,10 +146,18 @@ export default function ShortsFeed({ query, focusId }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [index, list.length, scrollToIndex]);
 
-  function toggleLike(id: string) {
+  async function toggleLike(id: string) {
     if (!requireMember()) return;
-    setLiked((prev) => ({ ...prev, [id]: !prev[id] }));
+    const willLike = !liked[id];
+    setLiked((prev) => ({ ...prev, [id]: willLike }));
     setDisliked((prev) => ({ ...prev, [id]: false }));
+    const res = await api.likeShort(id, willLike ? "like" : "unlike");
+    if (res.success && res.data) {
+      const nextLikes = res.data.likes;
+      setShorts((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, likes: nextLikes } : s))
+      );
+    }
   }
 
   function toggleDislike(id: string) {
@@ -128,18 +166,18 @@ export default function ShortsFeed({ query, focusId }: Props) {
     setLiked((prev) => ({ ...prev, [id]: false }));
   }
 
-  function addComment(text: string) {
-    if (!user) return;
-    setComments((prev) => [
-      ...prev,
-      {
-        id: `c-${Date.now()}`,
-        shortId: activeShortId,
-        author: "사용자",
-        text,
-        time: "방금 전",
-      },
-    ]);
+  async function addComment(text: string) {
+    if (!user || !activeShortId) return;
+    const res = await api.postComment(activeShortId, text, user.name);
+    if (res.success && res.data) {
+      const created = res.data;
+      setComments((prev) => [...prev, created]);
+      setShorts((prev) =>
+        prev.map((s) =>
+          s.id === activeShortId ? { ...s, comments: s.comments + 1 } : s
+        )
+      );
+    }
   }
 
   function share() {
@@ -160,43 +198,57 @@ export default function ShortsFeed({ query, focusId }: Props) {
         </div>
       )}
 
-      <div className="relative mx-auto flex w-full max-w-5xl flex-1">
-        <div
-          ref={containerRef}
-          className="shorts-snap hide-scrollbar h-[calc(100dvh-3.5rem)] w-full flex-1 overflow-y-scroll"
-        >
-          {list.map((short, i) => (
-            <ShortCard
-              key={short.id}
-              short={short}
-              active={i === index}
-              liked={!!liked[short.id]}
-              disliked={!!disliked[short.id]}
-              onLike={() => toggleLike(short.id)}
-              onDislike={() => toggleDislike(short.id)}
-              onComment={() => {
-                setActiveShortId(short.id);
-                setPanelOpen(true);
-              }}
-              onShare={share}
-            />
-          ))}
+      {loading ? (
+        <div className="flex flex-1 items-center justify-center text-sm text-[var(--text-muted)]">
+          쇼츠를 불러오는 중...
         </div>
+      ) : loadError ? (
+        <div className="flex flex-1 items-center justify-center text-sm text-[var(--text-muted)]">
+          {loadError}
+        </div>
+      ) : list.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center text-sm text-[var(--text-muted)]">
+          표시할 쇼츠가 없습니다.
+        </div>
+      ) : (
+        <div className="relative mx-auto flex w-full max-w-5xl flex-1">
+          <div
+            ref={containerRef}
+            className="shorts-snap hide-scrollbar h-[calc(100dvh-3.5rem)] w-full flex-1 overflow-y-scroll"
+          >
+            {list.map((short, i) => (
+              <ShortCard
+                key={short.id}
+                short={short}
+                active={i === index}
+                liked={!!liked[short.id]}
+                disliked={!!disliked[short.id]}
+                onLike={() => toggleLike(short.id)}
+                onDislike={() => toggleDislike(short.id)}
+                onComment={() => {
+                  setActiveShortId(short.id);
+                  setPanelOpen(true);
+                }}
+                onShare={share}
+              />
+            ))}
+          </div>
 
-        <div className="pointer-events-none absolute right-4 top-1/2 z-20 hidden -translate-y-1/2 md:block lg:right-8">
-          <ScrollNav
-            onUp={() => index > 0 && scrollToIndex(index - 1)}
-            onDown={() => index < list.length - 1 && scrollToIndex(index + 1)}
-            canUp={index > 0}
-            canDown={index < list.length - 1}
-          />
+          <div className="pointer-events-none absolute right-4 top-1/2 z-20 hidden -translate-y-1/2 md:block lg:right-8">
+            <ScrollNav
+              onUp={() => index > 0 && scrollToIndex(index - 1)}
+              onDown={() => index < list.length - 1 && scrollToIndex(index + 1)}
+              canUp={index > 0}
+              canDown={index < list.length - 1}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <CommentPanel
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
-        comments={activeComments}
+        comments={comments}
         onAdd={addComment}
         canWrite={Boolean(user)}
       />

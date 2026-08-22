@@ -49,7 +49,7 @@ export default function ShortActions({
           <ThumbsUp size={22} fill={liked ? "currentColor" : "none"} />
         </button>
         <span className="text-xs font-medium text-white drop-shadow">
-          {formatCount(likes + (liked ? 1 : 0))}
+          {formatCount(likes)}
         </span>
       </div>
 
