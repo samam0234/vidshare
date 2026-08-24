@@ -94,4 +94,85 @@ CREATE TABLE IF NOT EXISTS chatbot_summaries (
   updated_at TEXT NOT NULL,
   PRIMARY KEY (owner, thread_key)
 );
+
+CREATE TABLE IF NOT EXISTS longform (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  video_url TEXT NOT NULL DEFAULT '',
+  thumb TEXT,
+  gradient TEXT NOT NULL,
+  author_id TEXT NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_longform_author ON longform(author_id);
+
+CREATE TABLE IF NOT EXISTS community_posts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  author_id TEXT NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_community_author ON community_posts(author_id);
+
+CREATE TABLE IF NOT EXISTS chatbot_threads (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id TEXT NOT NULL REFERENCES users(id),
+  title TEXT NOT NULL,
+  model TEXT NOT NULL DEFAULT 'locals',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chatbot_threads_owner ON chatbot_threads(owner_id);
+
+CREATE TABLE IF NOT EXISTS chatbot_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  thread_id INTEGER NOT NULL REFERENCES chatbot_threads(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  attachments TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chatbot_messages_thread ON chatbot_messages(thread_id);
+
+CREATE TABLE IF NOT EXISTS conversations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id TEXT NOT NULL REFERENCES users(id),
+  target_name TEXT NOT NULL,
+  target_handle TEXT NOT NULL,
+  last_message TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_conversations_owner ON conversations(owner_id);
+
+CREATE TABLE IF NOT EXISTS chat_lines (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  conversation_id INTEGER NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_image INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chat_lines_conversation ON chat_lines(conversation_id);
+
+CREATE TABLE IF NOT EXISTS support_inquiries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id TEXT NOT NULL REFERENCES users(id),
+  subject TEXT NOT NULL,
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_support_inquiries_owner ON support_inquiries(owner_id);
+
+CREATE TABLE IF NOT EXISTS activity_notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id TEXT NOT NULL REFERENCES users(id),
+  category TEXT NOT NULL,
+  message TEXT NOT NULL,
+  href TEXT,
+  read INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_activity_notifications_owner ON activity_notifications(owner_id);
 `;
