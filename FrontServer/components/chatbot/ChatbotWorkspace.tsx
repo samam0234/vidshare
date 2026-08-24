@@ -4,19 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Bot, Paperclip, PanelLeft, Pencil, Plus, Send, Trash2, X } from "lucide-react";
-import {
-  addChatbotMessage,
-  addChatbotThread,
-  collectChatCorpus,
-  collectPlatformCorpus,
-  formatWhen,
-  removeChatbotThread,
-  renameChatbotThread,
-  setChatbotModel,
-  useContentStore,
-  useStoreHydrated,
-} from "@/lib/content-store";
+import { formatWhen } from "@/lib/content-store";
 import { api } from "@/lib/api";
+import { collectChatCorpus, collectPlatformCorpus } from "@/lib/chatbot-corpus";
 import { useAuth } from "@/context/AuthContext";
 import { loginHref } from "@/lib/guest-routes";
 import {
@@ -28,7 +18,7 @@ import SerialBadge from "@/components/ui/SerialBadge";
 import ChatMarkdown from "@/components/chatbot/ChatMarkdown";
 import { attachmentsToImages, fileToAttachment } from "@/lib/chat-files";
 import { cn } from "@/lib/utils";
-import type { ChatbotAttachment } from "@/types/content";
+import type { ChatbotAttachment, ChatbotMessage, ChatbotThread } from "@/types/content";
 
 const ACCEPT =
   "image/*,.pdf,.txt,.md,.csv,.json,.log,.xml,.yml,.yaml,.docx,application/pdf,text/plain";
@@ -57,16 +47,19 @@ function withFileNote(text: string, files: ChatbotAttachment[]) {
 
 export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
   const router = useRouter();
-  const hydrated = useStoreHydrated();
   const { user, ready } = useAuth();
   const isMember = Boolean(user);
-  const { chatbotThreads, getThread, getThreadMessages } = useContentStore();
   const num = threadId ? Number(threadId) : NaN;
-  const guestThread = chatbotThreads.find((t) => t.guest);
-  const memberThread = Number.isFinite(num) ? getThread(num) : undefined;
-  const thread = isMember ? memberThread : guestThread;
-  const messages = thread ? getThreadMessages(thread.id) : [];
-  const savedThreads = chatbotThreads.filter((t) => !t.guest);
+
+  const [savedThreads, setSavedThreads] = useState<ChatbotThread[]>([]);
+  const [thread, setThread] = useState<ChatbotThread | null>(null);
+  const [messages, setMessages] = useState<ChatbotMessage[]>([]);
+  const [threadLoading, setThreadLoading] = useState(false);
+
+  const guestIdRef = useRef(1);
+  const [guestThread, setGuestThread] = useState<ChatbotThread | null>(null);
+  const [guestMessages, setGuestMessages] = useState<ChatbotMessage[]>([]);
+
   const [product, setProduct] = useState<ChatbotProduct>("locals");
   const [text, setText] = useState("");
   const [files, setFiles] = useState<ChatbotAttachment[]>([]);
@@ -79,33 +72,94 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const renameRef = useRef<HTMLInputElement>(null);
 
+  const activeThread = isMember ? thread : guestThread;
+  const activeMessages = isMember ? messages : guestMessages;
+
   const activeProduct: ChatbotProduct = isMember
-    ? (thread?.model ?? product)
+    ? (activeThread?.model ?? product)
     : "locals";
   const memberLocked =
     (activeProduct === "vide" || activeProduct === "shape") && !user;
 
+  // 회원: 저장된 대화 목록 로드
   useEffect(() => {
-    if (thread?.model) setProduct(thread.model);
-  }, [thread?.id, thread?.model]);
+    if (!ready) return;
+    if (!user) {
+      queueMicrotask(() => setSavedThreads([]));
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const res = await api.getChatbotThreads();
+      if (cancelled) return;
+      queueMicrotask(() => {
+        if (res.success && res.data) setSavedThreads(res.data);
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, ready]);
+
+  // 회원: URL의 threadId에 맞는 대화 + 메시지 로드
+  useEffect(() => {
+    if (!user || !Number.isFinite(num)) {
+      queueMicrotask(() => {
+        setThread(null);
+        setMessages([]);
+      });
+      return;
+    }
+    let cancelled = false;
+    queueMicrotask(() => setThreadLoading(true));
+    (async () => {
+      const res = await api.getChatbotThread(num);
+      if (cancelled) return;
+      queueMicrotask(() => {
+        if (res.success && res.data) {
+          setThread(res.data.thread);
+          setMessages(res.data.messages);
+        } else {
+          setThread(null);
+          setMessages([]);
+        }
+        setThreadLoading(false);
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, num]);
 
   useEffect(() => {
-    if (!hydrated || !ready || user) return;
-    if (!chatbotThreads.some((t) => t.guest)) {
-      addChatbotThread({
-        title: "VidShare Locals",
-        model: "locals",
-        guest: true,
+    if (activeThread?.model) queueMicrotask(() => setProduct(activeThread.model!));
+  }, [activeThread?.id, activeThread?.model]);
+
+  // 비회원: 로컬 전용(비영속) 스레드 하나만 유지
+  useEffect(() => {
+    if (!ready || user) return;
+    queueMicrotask(() => {
+      setGuestThread((prev) => {
+        if (prev) return prev;
+        const now = new Date().toISOString();
+        return {
+          id: 0,
+          title: "VidShare Locals",
+          model: "locals",
+          guest: true,
+          createdAt: now,
+          updatedAt: now,
+        };
       });
-    }
+    });
     if (threadId) router.replace("/chatbot");
-  }, [hydrated, ready, user, chatbotThreads, threadId, router]);
+  }, [ready, user, threadId, router]);
 
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
-  }, [messages.length, busy, thread?.id]);
+  }, [activeMessages.length, busy, activeThread?.id]);
 
   useEffect(() => {
     if (editingId != null) renameRef.current?.focus();
@@ -116,15 +170,21 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
     router.push(`/chatbot/${id}`);
   }
 
-  function startThread(model: ChatbotProduct) {
+  async function startThread(model: ChatbotProduct) {
     if (!user) return;
     const spec = CHATBOT_PRODUCTS.find((p) => p.id === model);
     if (spec?.memberOnly && !user) {
       router.push(loginHref("/chatbot"));
       return;
     }
-    const t = addChatbotThread({ model });
-    goThread(t.id);
+    const res = await api.createChatbotThread({ model });
+    if (!res.success || !res.data) {
+      setError(res.error ?? "새 대화를 만들지 못했습니다.");
+      return;
+    }
+    const created = res.data;
+    setSavedThreads((prev) => [created, ...prev]);
+    goThread(created.id);
   }
 
   function onPickModel(next: ChatbotProduct) {
@@ -134,7 +194,17 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
       return;
     }
     setProduct(next);
-    if (thread) setChatbotModel(thread.id, next);
+    if (!thread) return;
+    const threadId = thread.id;
+    void api.patchChatbotThread(threadId, { model: next }).then((res) => {
+      if (res.success && res.data) {
+        const updated = res.data;
+        setThread(updated);
+        setSavedThreads((prev) =>
+          prev.map((t) => (t.id === threadId ? updated : t))
+        );
+      }
+    });
   }
 
   function startRename(id: number, title: string) {
@@ -142,11 +212,19 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
     setEditTitle(title);
   }
 
-  function saveRename() {
+  async function saveRename() {
     if (editingId == null) return;
-    renameChatbotThread(editingId, editTitle);
+    const id = editingId;
+    const title = editTitle.trim().slice(0, 60);
     setEditingId(null);
     setEditTitle("");
+    if (!title) return;
+    const res = await api.patchChatbotThread(id, { title });
+    if (res.success && res.data) {
+      const updated = res.data;
+      setSavedThreads((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      setThread((prev) => (prev?.id === id ? updated : prev));
+    }
   }
 
   function cancelRename() {
@@ -154,11 +232,16 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
     setEditTitle("");
   }
 
-  function deleteThread(id: number) {
+  async function deleteThread(id: number) {
     const t = savedThreads.find((x) => x.id === id);
     const label = t?.title ?? "이 대화";
-    if (!window.confirm(`“${label}” 대화를 삭제할까요?`)) return;
-    removeChatbotThread(id);
+    if (!window.confirm(`"${label}" 대화를 삭제할까요?`)) return;
+    const res = await api.deleteChatbotThread(id);
+    if (!res.success) {
+      setError(res.error ?? "삭제하지 못했습니다.");
+      return;
+    }
+    setSavedThreads((prev) => prev.filter((x) => x.id !== id));
     if (editingId === id) cancelRename();
     if (thread?.id === id) {
       setSidebarOpen(false);
@@ -190,21 +273,33 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
     if ((!t && files.length === 0) || busy) return;
     if (memberLocked) return;
 
-    let current = thread;
+    let current = activeThread;
     if (!current) {
       if (!user) {
-        current = addChatbotThread({
+        const now = new Date().toISOString();
+        current = {
+          id: 0,
           title: "VidShare Locals",
           model: "locals",
           guest: true,
-        });
+          createdAt: now,
+          updatedAt: now,
+        };
+        setGuestThread(current);
       } else {
         const spec = CHATBOT_PRODUCTS.find((p) => p.id === activeProduct);
         if (spec?.memberOnly && !user) {
           router.push(loginHref("/chatbot"));
           return;
         }
-        current = addChatbotThread({ model: activeProduct });
+        const res = await api.createChatbotThread({ model: activeProduct });
+        if (!res.success || !res.data) {
+          setError(res.error ?? "새 대화를 만들지 못했습니다.");
+          return;
+        }
+        current = res.data;
+        setSavedThreads((prev) => [current!, ...prev]);
+        setThread(current);
         router.push(`/chatbot/${current.id}`);
       }
     }
@@ -212,29 +307,46 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
     setError(null);
     const attachments = files;
     const content = t || (attachments.length ? "(첨부 파일)" : "");
-    addChatbotMessage({
-      threadId: current.id,
-      role: "user",
-      content,
-      attachments,
-    });
+    const priorMessages = isMember ? messages : guestMessages;
+
+    if (isMember && !current.guest) {
+      const res = await api.addChatbotThreadMessage(current.id, {
+        role: "user",
+        content,
+        attachments,
+      });
+      if (res.success && res.data) {
+        setMessages((prev) => [...prev, res.data!]);
+      }
+    } else {
+      const msg: ChatbotMessage = {
+        id: guestIdRef.current++,
+        threadId: current.id,
+        role: "user",
+        content,
+        ...(attachments.length ? { attachments } : {}),
+        createdAt: new Date().toISOString(),
+      };
+      setGuestMessages((prev) => [...prev, msg]);
+    }
+
     setText("");
     setFiles([]);
     setBusy(true);
 
     const prompt = withFileNote(t, attachments);
     const history = [
-      ...messages.map((m) => ({
+      ...priorMessages.map((m) => ({
         role: (m.role === "bot" ? "assistant" : "user") as "user" | "assistant",
         content: m.content,
       })),
       { role: "user" as const, content: prompt },
     ];
     const corpus =
-      activeProduct === "shape"
-        ? collectChatCorpus(current.id)
+      activeProduct === "shape" && isMember
+        ? await collectChatCorpus(current.id)
         : undefined;
-    const platformDocs = collectPlatformCorpus();
+    const platformDocs = await collectPlatformCorpus();
     const images = attachmentsToImages(attachments);
 
     try {
@@ -250,11 +362,26 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
         setError(res.error ?? "답변을 받지 못했습니다.");
         return;
       }
-      addChatbotMessage({
-        threadId: current.id,
-        role: "bot",
-        content: res.data.text,
-      });
+      if (isMember && !current.guest) {
+        const botRes = await api.addChatbotThreadMessage(current.id, {
+          role: "bot",
+          content: res.data.text,
+        });
+        if (botRes.success && botRes.data) {
+          setMessages((prev) => [...prev, botRes.data!]);
+        }
+      } else {
+        setGuestMessages((prev) => [
+          ...prev,
+          {
+            id: guestIdRef.current++,
+            threadId: current!.id,
+            role: "bot",
+            content: res.data!.text,
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+      }
     } catch {
       setError("서버에 연결하지 못했습니다. 백엔드가 켜져 있는지 확인해 주세요.");
     } finally {
@@ -268,7 +395,7 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
         <span className="text-sm font-bold">저장 기록</span>
         <button
           type="button"
-          onClick={() => startThread(activeProduct)}
+          onClick={() => void startThread(activeProduct)}
           className="inline-flex items-center gap-1 rounded-lg bg-[var(--accent)] px-2.5 py-1.5 text-xs font-semibold text-white hover:opacity-90"
         >
           <Plus size={14} />
@@ -298,11 +425,11 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
                       ref={renameRef}
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
-                      onBlur={saveRename}
+                      onBlur={() => void saveRename()}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
-                          saveRename();
+                          void saveRename();
                         }
                         if (e.key === "Escape") {
                           e.preventDefault();
@@ -353,7 +480,7 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
                       title="삭제"
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteThread(t.id);
+                        void deleteThread(t.id);
                       }}
                     >
                       <Trash2 size={13} />
@@ -368,7 +495,7 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
     </aside>
   );
 
-  if (!hydrated) {
+  if (!ready || threadLoading) {
     return (
       <main className="flex h-[calc(100dvh-3.5rem)] items-center justify-center">
         <p className="text-sm text-[var(--text-muted)]">대화를 불러오는 중...</p>
@@ -404,12 +531,12 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
               <PanelLeft size={18} />
             </button>
           )}
-          {thread ? (
+          {activeThread ? (
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                {isMember && <SerialBadge id={thread.id} />}
+                {isMember && <SerialBadge id={activeThread.id} />}
                 <h1 className="truncate text-sm font-bold">
-                  {isMember ? thread.title : "VidShare Locals"}
+                  {isMember ? activeThread.title : "VidShare Locals"}
                 </h1>
               </div>
             </div>
@@ -421,7 +548,7 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
         </div>
 
         <div ref={listRef} className="custom-scroll flex-1 overflow-y-auto px-4 py-4">
-          {!thread ? (
+          {!activeThread ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
               <Bot className="text-[var(--text-muted)]" size={36} />
               <p className="text-sm text-[var(--text-muted)]">
@@ -430,13 +557,13 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
                   : "VidShare Locals에게 물어보세요. 채팅방 저장은 회원만 가능합니다."}
               </p>
             </div>
-          ) : messages.length === 0 ? (
+          ) : activeMessages.length === 0 ? (
             <p className="py-16 text-center text-sm text-[var(--text-muted)]">
               {productLabel(activeProduct)}에게 물어보세요.
             </p>
           ) : (
             <div className="mx-auto flex max-w-3xl flex-col gap-3">
-              {messages.map((m) => (
+              {activeMessages.map((m) => (
                 <div
                   key={m.id}
                   className={cn(
@@ -560,11 +687,10 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   disabled={busy}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--btn)] text-[var(--text)] hover:border-[var(--accent)] disabled:opacity-60"
-                  aria-label="파일 업로드"
-                  title="이미지나 문서 첨부"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--btn)] disabled:opacity-60"
+                  aria-label="파일 첨부"
                 >
-                  <Paperclip size={18} />
+                  <Paperclip size={20} />
                 </button>
                 <textarea
                   value={text}
@@ -583,9 +709,7 @@ export default function ChatbotWorkspace({ threadId }: { threadId?: string }) {
                 {isMember ? (
                   <select
                     value={activeProduct}
-                    onChange={(e) =>
-                      onPickModel(e.target.value as ChatbotProduct)
-                    }
+                    onChange={(e) => onPickModel(e.target.value as ChatbotProduct)}
                     disabled={busy}
                     className="h-11 shrink-0 rounded-xl border border-[var(--border)] bg-[var(--btn)] px-2 text-xs font-semibold focus:border-[var(--accent)] focus:outline-none disabled:opacity-60"
                     aria-label="모델 선택"
