@@ -13,7 +13,7 @@ type Props = {
 };
 
 export default function NotificationPopup({ open, onClose }: Props) {
-  const { notifications } = useNotifications();
+  const { notifications, unreadCount } = useNotifications();
 
   if (!open || typeof document === "undefined") return null;
 
@@ -26,7 +26,14 @@ export default function NotificationPopup({ open, onClose }: Props) {
       aria-label="알림"
     >
       <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
-        <span className="text-sm font-semibold">알림</span>
+        <span className="flex items-center gap-1.5 text-sm font-semibold">
+          알림
+          {unreadCount > 0 && (
+            <span className="rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              {unreadCount}
+            </span>
+          )}
+        </span>
         <div className="flex items-center gap-1">
           <Link
             href="/notifications"
@@ -58,14 +65,31 @@ export default function NotificationPopup({ open, onClose }: Props) {
             href={`/notifications/${n.id}`}
             onClick={onClose}
             className={cn(
-              "block border-b border-[var(--border)] px-4 py-3 text-sm transition-colors hover:bg-[var(--btn)]",
-              !n.read && "bg-[var(--accent)]/5"
+              "flex items-start gap-2 border-b border-[var(--border)] px-4 py-3 text-sm transition-colors hover:bg-[var(--btn)]",
+              !n.read && "bg-[var(--accent)]/[0.06]"
             )}
           >
-            <span className="mr-1.5 font-mono text-[11px] text-[var(--accent)]">
-              {formatSerial(n.id)}
+            <span
+              className={cn(
+                "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
+                n.read ? "bg-transparent" : "bg-[var(--accent)]"
+              )}
+              aria-hidden
+            />
+            <span className="min-w-0 flex-1">
+              <span className="mr-1.5 font-mono text-[11px] text-[var(--accent)]">
+                {formatSerial(n.id)}
+              </span>
+              <span
+                className={cn(
+                  n.read
+                    ? "text-[var(--text-muted)]"
+                    : "font-semibold text-[var(--text)]"
+                )}
+              >
+                {n.message}
+              </span>
             </span>
-            {n.message}
           </Link>
         ))}
       </div>

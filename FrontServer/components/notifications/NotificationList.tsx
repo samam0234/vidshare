@@ -23,7 +23,7 @@ const tabs: { key: "all" | NotificationCategory; label: string }[] = [
 ];
 
 export default function NotificationList() {
-  const { notifications } = useNotifications();
+  const { notifications, unreadCount } = useNotifications();
   const [tab, setTab] = useState<(typeof tabs)[number]["key"]>("all");
   const [menuId, setMenuId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -68,6 +68,18 @@ export default function NotificationList() {
             )}
           >
             {t.label}
+            {t.key === "all" && unreadCount > 0 && (
+              <span
+                className={cn(
+                  "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                  tab === t.key
+                    ? "bg-white/25 text-white"
+                    : "bg-[var(--accent)] text-white"
+                )}
+              >
+                {unreadCount}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -86,17 +98,40 @@ export default function NotificationList() {
             key={n.id}
             className={cn(
               "surface relative flex items-start gap-3 rounded-2xl px-4 py-3.5 transition hover:border-[var(--accent)]/40",
-              !n.read && "ring-1 ring-[var(--accent)]/20"
+              n.read
+                ? "opacity-70"
+                : "bg-[var(--accent)]/[0.05] ring-1 ring-[var(--accent)]/30"
             )}
           >
-            <Link href={`/notifications/${n.id}`} className="min-w-0 flex-1">
+            {!n.read && (
+              <span
+                className="absolute left-2 top-4 h-2 w-2 rounded-full bg-[var(--accent)]"
+                aria-hidden
+              />
+            )}
+            <Link
+              href={`/notifications/${n.id}`}
+              className={cn("min-w-0 flex-1", !n.read && "pl-3")}
+            >
               <div className="mb-1 flex items-center gap-2">
                 <SerialBadge id={n.id} />
                 <span className="text-[11px] text-[var(--text-muted)]">
                   {formatWhen(n.createdAt)}
                 </span>
+                {!n.read && (
+                  <span className="rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    NEW
+                  </span>
+                )}
               </div>
-              <div className="text-sm leading-relaxed">{n.message}</div>
+              <div
+                className={cn(
+                  "text-sm leading-relaxed",
+                  !n.read && "font-semibold text-[var(--text)]"
+                )}
+              >
+                {n.message}
+              </div>
             </Link>
             <div className="relative shrink-0">
               <button
