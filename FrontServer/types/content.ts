@@ -78,24 +78,3 @@ export type SupportInquiry = {
   authorName: string;
   createdAt: string;
 };
-
-export type ContentState = {
-  next: {
-    longform: number;
-    community: number;
-    chatbotThread: number;
-    chatbotMessage: number;
-    conversation: number;
-    chatLine: number;
-    notification: number;
-    inquiry: number;
-  };
-  longform: LongformVideo[];
-  community: CommunityPost[];
-  chatbotThreads: ChatbotThread[];
-  chatbotMessages: ChatbotMessage[];
-  conversations: Conversation[];
-  chatLines: ChatLine[];
-  notifications: AppNotification[];
-  inquiries: SupportInquiry[];
-};
