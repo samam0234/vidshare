@@ -2,26 +2,56 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MessageCircle, Plus } from "lucide-react";
-import { addConversation, formatWhen, useContentStore } from "@/lib/content-store";
+import { formatWhen } from "@/lib/content-store";
+import { api } from "@/lib/api";
 import SerialBadge from "@/components/ui/SerialBadge";
+import type { Conversation } from "@/types/content";
 
 export default function MessagesPageClient() {
   const router = useRouter();
-  const { conversations } = useContentStore();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  function createTarget() {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await api.getConversations();
+      if (cancelled) return;
+      queueMicrotask(() => {
+        if (res.success && res.data) {
+          setConversations(res.data);
+        } else {
+          setLoadError(res.error ?? "대화 목록을 불러오지 못했습니다.");
+        }
+        setLoading(false);
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function createTarget() {
     if (!name.trim()) {
       alert("상대 이름을 입력해 주세요.");
       return;
     }
-    const conv = addConversation({ targetName: name });
+    setBusy(true);
+    const res = await api.createConversation({ targetName: name });
+    setBusy(false);
+    if (!res.success || !res.data) {
+      alert(res.error ?? "대화 상대 추가에 실패했습니다.");
+      return;
+    }
     setName("");
     setOpen(false);
-    router.push(`/messages/${conv.id}`);
+    router.push(`/messages/${res.data.id}`);
   }
 
   return (
@@ -51,7 +81,7 @@ export default function MessagesPageClient() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") createTarget();
+                if (e.key === "Enter") void createTarget();
               }}
               placeholder="예: 깃털유머"
               className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 py-2.5 text-sm focus:border-[var(--accent)] focus:outline-none"
@@ -59,15 +89,24 @@ export default function MessagesPageClient() {
           </label>
           <button
             type="button"
-            onClick={createTarget}
-            className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white"
+            onClick={() => void createTarget()}
+            disabled={busy}
+            className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
-            추가하고 채팅 열기
+            {busy ? "추가 중..." : "추가하고 채팅 열기"}
           </button>
         </div>
       )}
 
-      {conversations.length === 0 ? (
+      {loading ? (
+        <p className="mt-8 text-center text-sm text-[var(--text-muted)]">
+          불러오는 중...
+        </p>
+      ) : loadError ? (
+        <p className="mt-8 text-center text-sm text-[var(--danger)]">
+          {loadError}
+        </p>
+      ) : conversations.length === 0 ? (
         <div className="surface mt-8 flex flex-col items-center gap-3 rounded-3xl px-6 py-16 text-center">
           <MessageCircle className="text-[var(--text-muted)]" size={36} />
           <p className="text-sm text-[var(--text-muted)]">

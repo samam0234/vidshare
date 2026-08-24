@@ -3,24 +3,42 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Paperclip, Send } from "lucide-react";
-import {
-  addChatLine,
-  formatWhen,
-  useContentStore,
-  useStoreHydrated,
-} from "@/lib/content-store";
+import { formatWhen } from "@/lib/content-store";
+import { api } from "@/lib/api";
 import SerialBadge from "@/components/ui/SerialBadge";
 import { cn } from "@/lib/utils";
+import type { ChatLine, Conversation } from "@/types/content";
 
 export default function MessageThread({ id }: { id: string }) {
   const num = Number(id);
-  const hydrated = useStoreHydrated();
-  const { getConversation, getChatLines } = useContentStore();
-  const user = Number.isFinite(num) ? getConversation(num) : undefined;
-  const messages = Number.isFinite(num) ? getChatLines(num) : [];
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<ChatLine[]>([]);
   const [text, setText] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!Number.isFinite(num)) {
+      queueMicrotask(() => setLoading(false));
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const res = await api.getConversation(num);
+      if (cancelled) return;
+      queueMicrotask(() => {
+        if (res.success && res.data) {
+          setUser(res.data.conversation);
+          setMessages(res.data.lines);
+        }
+        setLoading(false);
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [num]);
 
   useEffect(() => {
     if (listRef.current) {
@@ -28,7 +46,7 @@ export default function MessageThread({ id }: { id: string }) {
     }
   }, [messages.length]);
 
-  if (!hydrated) {
+  if (loading) {
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 text-center">
         <p className="text-sm text-[var(--text-muted)]">대화를 불러오는 중...</p>
@@ -47,21 +65,23 @@ export default function MessageThread({ id }: { id: string }) {
     );
   }
 
-  function send(content: string, isImage = false) {
-    if (!user) return;
-    addChatLine({
-      conversationId: user.id,
-      type: "me",
-      content,
-      isImage,
-    });
+  async function send(content: string, isImage = false) {
+    const res = await api.sendChatLine(num, { type: "me", content, isImage });
+    if (res.success && res.data) {
+      setMessages((prev) => [...prev, res.data!]);
+      setUser((prev) =>
+        prev
+          ? { ...prev, lastMessage: isImage ? "(이미지)" : content.slice(0, 40) }
+          : prev
+      );
+    }
   }
 
   function onImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => send(String(reader.result), true);
+    reader.onload = () => void send(String(reader.result), true);
     reader.readAsDataURL(file);
     e.target.value = "";
   }
@@ -151,7 +171,7 @@ export default function MessageThread({ id }: { id: string }) {
                 e.preventDefault();
                 const t = text.trim();
                 if (!t) return;
-                send(t);
+                void send(t);
                 setText("");
               }
             }}
@@ -163,7 +183,7 @@ export default function MessageThread({ id }: { id: string }) {
             onClick={() => {
               const t = text.trim();
               if (!t) return;
-              send(t);
+              void send(t);
               setText("");
             }}
             className="rounded-full bg-[var(--accent)] p-2.5 text-white hover:opacity-90"
