@@ -3,12 +3,22 @@ import { getDb } from "../db/client";
 import type {
   Author,
   ChatUser,
+  ChatLine,
+  ChatbotAttachment,
+  ChatbotThread,
+  ChatbotThreadMessage,
+  ChatbotThreadModel,
   Comment,
+  CommunityPost,
+  Conversation,
+  AppNotification,
   FaqItem,
+  LongformVideo,
   Message,
   Notification,
   NotificationCategory,
   Short,
+  SupportInquiry,
 } from "../types";
 
 type UserRow = {
@@ -407,4 +417,605 @@ export function sendMessage(input: {
   });
   tx();
   return msg;
+}
+
+// ---------------------------------------------------------------------------
+// Longform
+// ---------------------------------------------------------------------------
+
+type LongformRow = {
+  id: number;
+  title: string;
+  description: string;
+  video_url: string;
+  thumb: string | null;
+  gradient: string;
+  author_id: string;
+  created_at: string;
+  author_name: string;
+};
+
+const LONGFORM_SELECT = `
+  SELECT l.id, l.title, l.description, l.video_url, l.thumb, l.gradient,
+         l.author_id, l.created_at, u.name AS author_name
+  FROM longform l
+  JOIN users u ON u.id = l.author_id
+`;
+
+function toLongform(row: LongformRow): LongformVideo {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    videoUrl: row.video_url,
+    ...(row.thumb ? { thumb: row.thumb } : {}),
+    gradient: row.gradient,
+    authorName: row.author_name,
+    createdAt: row.created_at,
+  };
+}
+
+export function listLongform(): LongformVideo[] {
+  const rows = getDb()
+    .prepare(`${LONGFORM_SELECT} ORDER BY l.id DESC`)
+    .all() as LongformRow[];
+  return rows.map(toLongform);
+}
+
+export function getLongformById(id: number): LongformVideo | undefined {
+  const row = getDb()
+    .prepare(`${LONGFORM_SELECT} WHERE l.id = ?`)
+    .get(id) as LongformRow | undefined;
+  return row ? toLongform(row) : undefined;
+}
+
+export function createLongform(input: {
+  title: string;
+  description?: string;
+  videoUrl?: string;
+  thumb?: string;
+  gradient?: string;
+  authorId: string;
+}): LongformVideo {
+  const createdAt = new Date().toISOString();
+  const info = getDb()
+    .prepare(
+      `INSERT INTO longform (title, description, video_url, thumb, gradient, author_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(
+      input.title,
+      input.description ?? "",
+      input.videoUrl ?? "",
+      input.thumb ?? null,
+      input.gradient || "linear-gradient(160deg, #7c3aed, #3ea6ff)",
+      input.authorId,
+      createdAt
+    );
+  return getLongformById(Number(info.lastInsertRowid))!;
+}
+
+// ---------------------------------------------------------------------------
+// Community
+// ---------------------------------------------------------------------------
+
+type CommunityRow = {
+  id: number;
+  title: string;
+  body: string;
+  author_id: string;
+  created_at: string;
+  author_name: string;
+};
+
+const COMMUNITY_SELECT = `
+  SELECT c.id, c.title, c.body, c.author_id, c.created_at, u.name AS author_name
+  FROM community_posts c
+  JOIN users u ON u.id = c.author_id
+`;
+
+function toCommunity(row: CommunityRow): CommunityPost {
+  return {
+    id: row.id,
+    title: row.title,
+    body: row.body,
+    authorName: row.author_name,
+    createdAt: row.created_at,
+  };
+}
+
+export function listCommunity(): CommunityPost[] {
+  const rows = getDb()
+    .prepare(`${COMMUNITY_SELECT} ORDER BY c.id DESC`)
+    .all() as CommunityRow[];
+  return rows.map(toCommunity);
+}
+
+export function getCommunityById(id: number): CommunityPost | undefined {
+  const row = getDb()
+    .prepare(`${COMMUNITY_SELECT} WHERE c.id = ?`)
+    .get(id) as CommunityRow | undefined;
+  return row ? toCommunity(row) : undefined;
+}
+
+export function createCommunity(input: {
+  title: string;
+  body: string;
+  authorId: string;
+}): CommunityPost {
+  const createdAt = new Date().toISOString();
+  const info = getDb()
+    .prepare(
+      `INSERT INTO community_posts (title, body, author_id, created_at) VALUES (?, ?, ?, ?)`
+    )
+    .run(input.title, input.body, input.authorId, createdAt);
+  return getCommunityById(Number(info.lastInsertRowid))!;
+}
+
+// ---------------------------------------------------------------------------
+// Chatbot threads / messages
+// ---------------------------------------------------------------------------
+
+type ChatbotThreadRow = {
+  id: number;
+  owner_id: string;
+  title: string;
+  model: ChatbotThreadModel;
+  created_at: string;
+  updated_at: string;
+};
+
+function toChatbotThread(row: ChatbotThreadRow): ChatbotThread {
+  return {
+    id: row.id,
+    title: row.title,
+    model: row.model,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function listChatbotThreads(ownerId: string): ChatbotThread[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT id, owner_id, title, model, created_at, updated_at
+       FROM chatbot_threads WHERE owner_id = ? ORDER BY updated_at DESC, id DESC`
+    )
+    .all(ownerId) as ChatbotThreadRow[];
+  return rows.map(toChatbotThread);
+}
+
+export function getChatbotThread(
+  id: number,
+  ownerId: string
+): ChatbotThread | undefined {
+  const row = getDb()
+    .prepare(
+      `SELECT id, owner_id, title, model, created_at, updated_at
+       FROM chatbot_threads WHERE id = ? AND owner_id = ?`
+    )
+    .get(id, ownerId) as ChatbotThreadRow | undefined;
+  return row ? toChatbotThread(row) : undefined;
+}
+
+export function createChatbotThread(
+  ownerId: string,
+  input: { title?: string; model?: ChatbotThreadModel }
+): ChatbotThread {
+  const now = new Date().toISOString();
+  const model = input.model ?? "locals";
+  const db = getDb();
+  const info = db
+    .prepare(
+      `INSERT INTO chatbot_threads (owner_id, title, model, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)`
+    )
+    .run(ownerId, "", model, now, now);
+  const id = Number(info.lastInsertRowid);
+  const title = input.title?.trim() || `챗봇 대화 #${String(id).padStart(3, "0")}`;
+  db.prepare("UPDATE chatbot_threads SET title = ? WHERE id = ?").run(title, id);
+  return getChatbotThread(id, ownerId)!;
+}
+
+export function renameChatbotThread(
+  id: number,
+  ownerId: string,
+  title: string
+): ChatbotThread | undefined {
+  const db = getDb();
+  const info = db
+    .prepare(
+      "UPDATE chatbot_threads SET title = ?, updated_at = ? WHERE id = ? AND owner_id = ?"
+    )
+    .run(title, new Date().toISOString(), id, ownerId);
+  if (info.changes === 0) return undefined;
+  return getChatbotThread(id, ownerId);
+}
+
+export function setChatbotThreadModel(
+  id: number,
+  ownerId: string,
+  model: ChatbotThreadModel
+): ChatbotThread | undefined {
+  const db = getDb();
+  const info = db
+    .prepare(
+      "UPDATE chatbot_threads SET model = ?, updated_at = ? WHERE id = ? AND owner_id = ?"
+    )
+    .run(model, new Date().toISOString(), id, ownerId);
+  if (info.changes === 0) return undefined;
+  return getChatbotThread(id, ownerId);
+}
+
+export function deleteChatbotThread(id: number, ownerId: string): boolean {
+  const info = getDb()
+    .prepare("DELETE FROM chatbot_threads WHERE id = ? AND owner_id = ?")
+    .run(id, ownerId);
+  return info.changes > 0;
+}
+
+type ChatbotMessageRow = {
+  id: number;
+  thread_id: number;
+  role: "user" | "bot";
+  content: string;
+  attachments: string | null;
+  created_at: string;
+};
+
+function toChatbotMessage(row: ChatbotMessageRow): ChatbotThreadMessage {
+  return {
+    id: row.id,
+    threadId: row.thread_id,
+    role: row.role,
+    content: row.content,
+    ...(row.attachments
+      ? { attachments: JSON.parse(row.attachments) as ChatbotAttachment[] }
+      : {}),
+    createdAt: row.created_at,
+  };
+}
+
+export function listChatbotMessages(threadId: number): ChatbotThreadMessage[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT id, thread_id, role, content, attachments, created_at
+       FROM chatbot_messages WHERE thread_id = ? ORDER BY id`
+    )
+    .all(threadId) as ChatbotMessageRow[];
+  return rows.map(toChatbotMessage);
+}
+
+export function addChatbotThreadMessage(
+  threadId: number,
+  ownerId: string,
+  input: {
+    role: "user" | "bot";
+    content: string;
+    attachments?: ChatbotAttachment[];
+  }
+): ChatbotThreadMessage | undefined {
+  const db = getDb();
+  const thread = getChatbotThread(threadId, ownerId);
+  if (!thread) return undefined;
+
+  const createdAt = new Date().toISOString();
+  const info = db
+    .prepare(
+      `INSERT INTO chatbot_messages (thread_id, role, content, attachments, created_at)
+       VALUES (?, ?, ?, ?, ?)`
+    )
+    .run(
+      threadId,
+      input.role,
+      input.content,
+      input.attachments?.length ? JSON.stringify(input.attachments) : null,
+      createdAt
+    );
+
+  const autoTitle =
+    input.role === "user" && thread.title.startsWith("챗봇 대화")
+      ? input.content.trim().slice(0, 28) || thread.title
+      : thread.title;
+  db.prepare(
+    "UPDATE chatbot_threads SET title = ?, updated_at = ? WHERE id = ?"
+  ).run(autoTitle, createdAt, threadId);
+
+  const row = db
+    .prepare(
+      `SELECT id, thread_id, role, content, attachments, created_at
+       FROM chatbot_messages WHERE id = ?`
+    )
+    .get(Number(info.lastInsertRowid)) as ChatbotMessageRow;
+  return toChatbotMessage(row);
+}
+
+// ---------------------------------------------------------------------------
+// Conversations / chat lines
+// ---------------------------------------------------------------------------
+
+type ConversationRow = {
+  id: number;
+  owner_id: string;
+  target_name: string;
+  target_handle: string;
+  last_message: string;
+  created_at: string;
+};
+
+function toConversation(row: ConversationRow): Conversation {
+  return {
+    id: row.id,
+    targetName: row.target_name,
+    targetHandle: row.target_handle,
+    lastMessage: row.last_message,
+    createdAt: row.created_at,
+  };
+}
+
+export function listConversations(ownerId: string): Conversation[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT id, owner_id, target_name, target_handle, last_message, created_at
+       FROM conversations WHERE owner_id = ? ORDER BY id DESC`
+    )
+    .all(ownerId) as ConversationRow[];
+  return rows.map(toConversation);
+}
+
+export function getConversationById(
+  id: number,
+  ownerId: string
+): Conversation | undefined {
+  const row = getDb()
+    .prepare(
+      `SELECT id, owner_id, target_name, target_handle, last_message, created_at
+       FROM conversations WHERE id = ? AND owner_id = ?`
+    )
+    .get(id, ownerId) as ConversationRow | undefined;
+  return row ? toConversation(row) : undefined;
+}
+
+export function createConversation(
+  ownerId: string,
+  input: { targetName: string; targetHandle?: string }
+): Conversation {
+  const name = input.targetName.trim();
+  const handle = (input.targetHandle ?? name).replace(/^@/, "").trim() || name;
+  const createdAt = new Date().toISOString();
+  const info = getDb()
+    .prepare(
+      `INSERT INTO conversations (owner_id, target_name, target_handle, last_message, created_at)
+       VALUES (?, ?, ?, '', ?)`
+    )
+    .run(ownerId, name, handle, createdAt);
+  return getConversationById(Number(info.lastInsertRowid), ownerId)!;
+}
+
+type ChatLineRow = {
+  id: number;
+  conversation_id: number;
+  type: "me" | "other";
+  content: string;
+  is_image: number;
+  created_at: string;
+};
+
+function toChatLine(row: ChatLineRow): ChatLine {
+  return {
+    id: row.id,
+    conversationId: row.conversation_id,
+    type: row.type,
+    content: row.content,
+    ...(row.is_image ? { isImage: true } : {}),
+    createdAt: row.created_at,
+  };
+}
+
+export function listChatLines(conversationId: number): ChatLine[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT id, conversation_id, type, content, is_image, created_at
+       FROM chat_lines WHERE conversation_id = ? ORDER BY id`
+    )
+    .all(conversationId) as ChatLineRow[];
+  return rows.map(toChatLine);
+}
+
+export function addChatLine(
+  conversationId: number,
+  ownerId: string,
+  input: { type: "me" | "other"; content: string; isImage?: boolean }
+): ChatLine | undefined {
+  const db = getDb();
+  const conv = getConversationById(conversationId, ownerId);
+  if (!conv) return undefined;
+
+  const createdAt = new Date().toISOString();
+  const info = db
+    .prepare(
+      `INSERT INTO chat_lines (conversation_id, type, content, is_image, created_at)
+       VALUES (?, ?, ?, ?, ?)`
+    )
+    .run(conversationId, input.type, input.content, input.isImage ? 1 : 0, createdAt);
+
+  const preview = input.isImage ? "(이미지)" : input.content.slice(0, 40);
+  db.prepare("UPDATE conversations SET last_message = ? WHERE id = ?").run(
+    preview,
+    conversationId
+  );
+
+  const row = db
+    .prepare(
+      `SELECT id, conversation_id, type, content, is_image, created_at
+       FROM chat_lines WHERE id = ?`
+    )
+    .get(Number(info.lastInsertRowid)) as ChatLineRow;
+  return toChatLine(row);
+}
+
+// ---------------------------------------------------------------------------
+// Support inquiries
+// ---------------------------------------------------------------------------
+
+type InquiryRow = {
+  id: number;
+  subject: string;
+  body: string;
+  owner_id: string;
+  created_at: string;
+  author_name: string;
+};
+
+const INQUIRY_SELECT = `
+  SELECT i.id, i.subject, i.body, i.owner_id, i.created_at, u.name AS author_name
+  FROM support_inquiries i
+  JOIN users u ON u.id = i.owner_id
+`;
+
+function toInquiry(row: InquiryRow): SupportInquiry {
+  return {
+    id: row.id,
+    subject: row.subject,
+    body: row.body,
+    authorName: row.author_name,
+    createdAt: row.created_at,
+  };
+}
+
+export function listInquiries(ownerId: string): SupportInquiry[] {
+  const rows = getDb()
+    .prepare(`${INQUIRY_SELECT} WHERE i.owner_id = ? ORDER BY i.id DESC`)
+    .all(ownerId) as InquiryRow[];
+  return rows.map(toInquiry);
+}
+
+export function getInquiryById(
+  id: number,
+  ownerId: string
+): SupportInquiry | undefined {
+  const row = getDb()
+    .prepare(`${INQUIRY_SELECT} WHERE i.id = ? AND i.owner_id = ?`)
+    .get(id, ownerId) as InquiryRow | undefined;
+  return row ? toInquiry(row) : undefined;
+}
+
+export function createInquiry(
+  ownerId: string,
+  input: { subject: string; body: string }
+): SupportInquiry {
+  const createdAt = new Date().toISOString();
+  const info = getDb()
+    .prepare(
+      `INSERT INTO support_inquiries (owner_id, subject, body, created_at)
+       VALUES (?, ?, ?, ?)`
+    )
+    .run(ownerId, input.subject, input.body, createdAt);
+  return getInquiryById(Number(info.lastInsertRowid), ownerId)!;
+}
+
+// ---------------------------------------------------------------------------
+// Activity notifications (longform/community/conversation/inquiry side effects)
+// ---------------------------------------------------------------------------
+
+type ActivityNotificationRow = {
+  id: number;
+  owner_id: string;
+  category: NotificationCategory;
+  message: string;
+  href: string | null;
+  read: number;
+  created_at: string;
+};
+
+function toActivityNotification(
+  row: ActivityNotificationRow
+): AppNotification {
+  return {
+    id: row.id,
+    category: row.category,
+    message: row.message,
+    read: Boolean(row.read),
+    ...(row.href ? { href: row.href } : {}),
+    createdAt: row.created_at,
+  };
+}
+
+export function listActivityNotifications(
+  ownerId: string,
+  category?: string
+): AppNotification[] {
+  const rows = (
+    category && category !== "all"
+      ? getDb()
+          .prepare(
+            `SELECT id, owner_id, category, message, href, read, created_at
+             FROM activity_notifications WHERE owner_id = ? AND category = ?
+             ORDER BY id DESC`
+          )
+          .all(ownerId, category)
+      : getDb()
+          .prepare(
+            `SELECT id, owner_id, category, message, href, read, created_at
+             FROM activity_notifications WHERE owner_id = ? ORDER BY id DESC`
+          )
+          .all(ownerId)
+  ) as ActivityNotificationRow[];
+  return rows.map(toActivityNotification);
+}
+
+export function getActivityNotification(
+  id: number,
+  ownerId: string
+): AppNotification | undefined {
+  const row = getDb()
+    .prepare(
+      `SELECT id, owner_id, category, message, href, read, created_at
+       FROM activity_notifications WHERE id = ? AND owner_id = ?`
+    )
+    .get(id, ownerId) as ActivityNotificationRow | undefined;
+  return row ? toActivityNotification(row) : undefined;
+}
+
+export function createActivityNotification(
+  ownerId: string,
+  input: { category: NotificationCategory; message: string; href?: string }
+): AppNotification {
+  const createdAt = new Date().toISOString();
+  const info = getDb()
+    .prepare(
+      `INSERT INTO activity_notifications (owner_id, category, message, href, read, created_at)
+       VALUES (?, ?, ?, ?, 0, ?)`
+    )
+    .run(ownerId, input.category, input.message, input.href ?? null, createdAt);
+  return getActivityNotification(Number(info.lastInsertRowid), ownerId)!;
+}
+
+export function patchActivityNotification(
+  id: number,
+  ownerId: string,
+  read?: boolean
+): AppNotification | undefined {
+  const db = getDb();
+  if (typeof read === "boolean") {
+    const info = db
+      .prepare(
+        "UPDATE activity_notifications SET read = ? WHERE id = ? AND owner_id = ?"
+      )
+      .run(read ? 1 : 0, id, ownerId);
+    if (info.changes === 0) return undefined;
+  }
+  return getActivityNotification(id, ownerId);
+}
+
+export function deleteActivityNotification(
+  id: number,
+  ownerId: string
+): AppNotification | undefined {
+  const existing = getActivityNotification(id, ownerId);
+  if (!existing) return undefined;
+  getDb()
+    .prepare("DELETE FROM activity_notifications WHERE id = ? AND owner_id = ?")
+    .run(id, ownerId);
+  return existing;
 }
