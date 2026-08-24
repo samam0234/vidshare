@@ -2,26 +2,49 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Send } from "lucide-react";
-import { addInquiry, formatWhen, useContentStore } from "@/lib/content-store";
+import { formatWhen } from "@/lib/content-store";
+import { api } from "@/lib/api";
 import SerialBadge from "@/components/ui/SerialBadge";
+import type { SupportInquiry } from "@/types/content";
 
 export default function SupportContact() {
   const router = useRouter();
-  const { inquiries } = useContentStore();
+  const [inquiries, setInquiries] = useState<SupportInquiry[]>([]);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  function onSubmit() {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await api.getInquiries();
+      if (cancelled) return;
+      queueMicrotask(() => {
+        if (res.success && res.data) setInquiries(res.data);
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function onSubmit() {
     if (!subject.trim() || !body.trim()) {
       alert("제목과 내용을 입력해 주세요.");
       return;
     }
-    const item = addInquiry({ subject, body });
+    setBusy(true);
+    const res = await api.createInquiry({ subject, body });
+    setBusy(false);
+    if (!res.success || !res.data) {
+      alert(res.error ?? "문의 전송에 실패했습니다.");
+      return;
+    }
     setSubject("");
     setBody("");
-    router.push(`/support/${item.id}`);
+    router.push(`/support/${res.data.id}`);
   }
 
   return (
@@ -55,11 +78,12 @@ export default function SupportContact() {
         </label>
         <button
           type="button"
-          onClick={onSubmit}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-5 py-3 text-sm font-bold text-white hover:opacity-90"
+          onClick={() => void onSubmit()}
+          disabled={busy}
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-5 py-3 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
         >
           <Send size={16} />
-          메시지 보내기
+          {busy ? "보내는 중..." : "메시지 보내기"}
         </button>
       </div>
 
