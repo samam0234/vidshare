@@ -12,6 +12,10 @@ import messagesRouter from "./routes/messages";
 import supportRouter from "./routes/support";
 import authRouter from "./routes/auth";
 import chatbotRouter from "./routes/chatbot";
+import chatbotThreadsRouter from "./routes/chatbot-threads";
+import longformRouter from "./routes/longform";
+import communityRouter from "./routes/community";
+import conversationsRouter from "./routes/conversations";
 
 function isPrivateHostname(hostname: string) {
   if (hostname === "localhost" || hostname === "127.0.0.1") return true;
@@ -78,12 +82,32 @@ export function createApp() {
         "GET  /api/users/:id",
         "GET  /api/users/:id/shorts",
         "GET  /api/notifications",
+        "PATCH /api/notifications/:id",
         "DELETE /api/notifications/:id",
         "GET  /api/messages/users",
         "GET  /api/messages/:userId",
         "POST /api/messages/:userId",
+        "GET  /api/conversations",
+        "GET  /api/conversations/:id",
+        "POST /api/conversations",
+        "POST /api/conversations/:id/lines",
+        "GET  /api/longform",
+        "GET  /api/longform/:id",
+        "POST /api/longform",
+        "GET  /api/community",
+        "GET  /api/community/:id",
+        "POST /api/community",
         "GET  /api/support/faq",
+        "GET  /api/support/inquiries",
+        "GET  /api/support/inquiries/:id",
+        "POST /api/support/inquiries",
         "POST /api/chatbot/complete",
+        "GET  /api/chatbot/threads",
+        "GET  /api/chatbot/threads/:id",
+        "POST /api/chatbot/threads",
+        "PATCH /api/chatbot/threads/:id",
+        "DELETE /api/chatbot/threads/:id",
+        "POST /api/chatbot/threads/:id/messages",
       ],
     });
   });
@@ -96,7 +120,11 @@ export function createApp() {
   app.use("/api/users", usersRouter);
   app.use("/api/notifications", notificationsRouter);
   app.use("/api/messages", messagesRouter);
+  app.use("/api/conversations", conversationsRouter);
+  app.use("/api/longform", longformRouter);
+  app.use("/api/community", communityRouter);
   app.use("/api/support", supportRouter);
+  app.use("/api/chatbot/threads", chatbotThreadsRouter);
   app.use("/api/chatbot", chatbotRouter);
 
   app.use(notFound);
