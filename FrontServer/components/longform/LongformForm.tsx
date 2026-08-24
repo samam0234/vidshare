@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Shuffle, Upload } from "lucide-react";
-import { addLongform } from "@/lib/content-store";
+import { api } from "@/lib/api";
 import { randomGradient } from "@/lib/utils";
 
 // Stable default so server-rendered HTML matches the client's first render.
@@ -18,6 +18,8 @@ export default function LongformForm() {
   const [videoUrl, setVideoUrl] = useState("");
   const [thumb, setThumb] = useState<string | undefined>();
   const [gradient, setGradient] = useState(DEFAULT_GRADIENT);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: randomize only after hydration to avoid SSR/client mismatch
@@ -32,19 +34,26 @@ export default function LongformForm() {
     reader.readAsDataURL(file);
   }
 
-  function onSubmit() {
+  async function onSubmit() {
     if (!title.trim()) {
       alert("제목을 입력해 주세요.");
       return;
     }
-    const item = addLongform({
+    setBusy(true);
+    setError(null);
+    const res = await api.createLongform({
       title,
       description: desc,
       videoUrl,
       thumb,
       gradient,
     });
-    router.push(`/longform/${item.id}`);
+    if (!res.success || !res.data) {
+      setError(res.error ?? "등록에 실패했습니다.");
+      setBusy(false);
+      return;
+    }
+    router.push(`/longform/${res.data.id}`);
   }
 
   return (
@@ -55,6 +64,11 @@ export default function LongformForm() {
       </p>
 
       <section className="surface mt-6 flex flex-col gap-5 rounded-3xl p-6">
+        {error && (
+          <p className="rounded-xl bg-[var(--danger)]/10 px-4 py-2.5 text-sm text-[var(--danger)]">
+            {error}
+          </p>
+        )}
         <label className="block space-y-1.5">
           <span className="text-sm font-semibold">제목</span>
           <input
@@ -121,10 +135,11 @@ export default function LongformForm() {
         <button
           type="button"
           onClick={onSubmit}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-5 py-3.5 text-sm font-bold text-white hover:opacity-90"
+          disabled={busy}
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-5 py-3.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
         >
           <Upload size={18} />
-          등록하고 상세 보기
+          {busy ? "등록 중..." : "등록하고 상세 보기"}
         </button>
       </section>
     </main>

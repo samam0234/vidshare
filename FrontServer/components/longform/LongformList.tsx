@@ -1,16 +1,40 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Clapperboard, Plus } from "lucide-react";
-import { formatWhen, useContentStore } from "@/lib/content-store";
+import { formatWhen } from "@/lib/content-store";
+import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { loginHref } from "@/lib/guest-routes";
 import SerialBadge from "@/components/ui/SerialBadge";
+import type { LongformVideo } from "@/types/content";
 
 export default function LongformList() {
-  const { longform } = useContentStore();
   const { user } = useAuth();
   const writeHref = user ? "/longform/write" : loginHref("/longform/write");
+  const [longform, setLongform] = useState<LongformVideo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await api.getLongformList();
+      if (cancelled) return;
+      queueMicrotask(() => {
+        if (res.success && res.data) {
+          setLongform(res.data);
+        } else {
+          setLoadError(res.error ?? "롱폼 목록을 불러오지 못했습니다.");
+        }
+        setLoading(false);
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
@@ -32,7 +56,15 @@ export default function LongformList() {
         ) : null}
       </div>
 
-      {longform.length === 0 ? (
+      {loading ? (
+        <p className="mt-8 text-center text-sm text-[var(--text-muted)]">
+          불러오는 중...
+        </p>
+      ) : loadError ? (
+        <p className="mt-8 text-center text-sm text-[var(--danger)]">
+          {loadError}
+        </p>
+      ) : longform.length === 0 ? (
         <div className="surface mt-8 flex flex-col items-center gap-3 rounded-3xl px-6 py-16 text-center">
           <Clapperboard className="text-[var(--text-muted)]" size={36} />
           <p className="text-sm text-[var(--text-muted)]">

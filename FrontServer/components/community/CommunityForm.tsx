@@ -2,20 +2,29 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { addCommunity } from "@/lib/content-store";
+import { api } from "@/lib/api";
 
 export default function CommunityForm() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  function onSubmit() {
+  async function onSubmit() {
     if (!title.trim() || !body.trim()) {
       alert("제목과 내용을 입력해 주세요.");
       return;
     }
-    const item = addCommunity({ title, body });
-    router.push(`/community/${item.id}`);
+    setBusy(true);
+    setError(null);
+    const res = await api.createCommunityPost({ title, body });
+    if (!res.success || !res.data) {
+      setError(res.error ?? "작성에 실패했습니다.");
+      setBusy(false);
+      return;
+    }
+    router.push(`/community/${res.data.id}`);
   }
 
   return (
@@ -25,6 +34,11 @@ export default function CommunityForm() {
         작성 후 일련번호 상세 페이지로 이동합니다.
       </p>
       <section className="surface mt-6 flex flex-col gap-5 rounded-3xl p-6">
+        {error && (
+          <p className="rounded-xl bg-[var(--danger)]/10 px-4 py-2.5 text-sm text-[var(--danger)]">
+            {error}
+          </p>
+        )}
         <label className="block space-y-1.5">
           <span className="text-sm font-semibold">제목</span>
           <input
@@ -47,9 +61,10 @@ export default function CommunityForm() {
         <button
           type="button"
           onClick={onSubmit}
-          className="rounded-2xl bg-[var(--accent)] px-5 py-3.5 text-sm font-bold text-white hover:opacity-90"
+          disabled={busy}
+          className="rounded-2xl bg-[var(--accent)] px-5 py-3.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
         >
-          작성하고 상세 보기
+          {busy ? "작성 중..." : "작성하고 상세 보기"}
         </button>
       </section>
     </main>

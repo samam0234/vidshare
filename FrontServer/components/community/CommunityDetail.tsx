@@ -1,13 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { formatWhen, useContentStore } from "@/lib/content-store";
+import { useEffect, useState } from "react";
+import { formatWhen } from "@/lib/content-store";
+import { api } from "@/lib/api";
 import SerialBadge from "@/components/ui/SerialBadge";
+import type { CommunityPost } from "@/types/content";
 
 export default function CommunityDetail({ id }: { id: string }) {
   const num = Number(id);
-  const { getCommunity } = useContentStore();
-  const item = Number.isFinite(num) ? getCommunity(num) : undefined;
+  const [item, setItem] = useState<CommunityPost | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (!Number.isFinite(num)) {
+      queueMicrotask(() => setItem(null));
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const res = await api.getCommunityPost(num);
+      if (cancelled) return;
+      queueMicrotask(() => {
+        setItem(res.success && res.data ? res.data : null);
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [num]);
+
+  if (item === undefined) {
+    return (
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 text-center">
+        <p className="text-sm text-[var(--text-muted)]">불러오는 중...</p>
+      </main>
+    );
+  }
 
   if (!item) {
     return (
