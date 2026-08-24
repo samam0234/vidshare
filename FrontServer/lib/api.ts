@@ -3,6 +3,17 @@
  */
 
 import type { Author, Comment, Short } from "@/types";
+import type {
+  AppNotification,
+  ChatLine,
+  ChatbotAttachment,
+  ChatbotMessage,
+  ChatbotThread,
+  CommunityPost,
+  Conversation,
+  LongformVideo,
+  SupportInquiry,
+} from "@/types/content";
 
 function resolveApiUrl() {
   if (typeof window !== "undefined") {
@@ -99,11 +110,125 @@ export const api = {
     request<Short[]>(`/api/users/${id}/shorts`),
 
   getNotifications: (category?: string) =>
-    request<unknown[]>(
+    request<AppNotification[]>(
       category && category !== "all"
         ? `/api/notifications?category=${encodeURIComponent(category)}`
         : "/api/notifications"
     ),
+
+  patchNotification: (id: number, read: boolean) =>
+    request<AppNotification>(`/api/notifications/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ read }),
+    }),
+
+  deleteNotification: (id: number) =>
+    request<AppNotification>(`/api/notifications/${id}`, {
+      method: "DELETE",
+    }),
+
+  getLongformList: () => request<LongformVideo[]>("/api/longform"),
+
+  getLongform: (id: number) => request<LongformVideo>(`/api/longform/${id}`),
+
+  createLongform: (payload: {
+    title: string;
+    description?: string;
+    videoUrl?: string;
+    thumb?: string;
+    gradient?: string;
+  }) =>
+    request<LongformVideo>("/api/longform", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  getCommunityList: () => request<CommunityPost[]>("/api/community"),
+
+  getCommunityPost: (id: number) =>
+    request<CommunityPost>(`/api/community/${id}`),
+
+  createCommunityPost: (payload: { title: string; body: string }) =>
+    request<CommunityPost>("/api/community", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  getConversations: () => request<Conversation[]>("/api/conversations"),
+
+  getConversation: (id: number) =>
+    request<{ conversation: Conversation; lines: ChatLine[] }>(
+      `/api/conversations/${id}`
+    ),
+
+  createConversation: (payload: { targetName: string; targetHandle?: string }) =>
+    request<Conversation>("/api/conversations", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  sendChatLine: (
+    conversationId: number,
+    payload: { type: "me" | "other"; content: string; isImage?: boolean }
+  ) =>
+    request<ChatLine>(`/api/conversations/${conversationId}/lines`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  getInquiries: () => request<SupportInquiry[]>("/api/support/inquiries"),
+
+  getInquiry: (id: number) =>
+    request<SupportInquiry>(`/api/support/inquiries/${id}`),
+
+  createInquiry: (payload: { subject: string; body: string }) =>
+    request<SupportInquiry>("/api/support/inquiries", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  getChatbotThreads: () => request<ChatbotThread[]>("/api/chatbot/threads"),
+
+  getChatbotThread: (id: number) =>
+    request<{ thread: ChatbotThread; messages: ChatbotMessage[] }>(
+      `/api/chatbot/threads/${id}`
+    ),
+
+  createChatbotThread: (payload?: {
+    title?: string;
+    model?: "locals" | "vide" | "shape";
+  }) =>
+    request<ChatbotThread>("/api/chatbot/threads", {
+      method: "POST",
+      body: JSON.stringify(payload ?? {}),
+    }),
+
+  patchChatbotThread: (
+    id: number,
+    payload: { title?: string; model?: "locals" | "vide" | "shape" }
+  ) =>
+    request<ChatbotThread>(`/api/chatbot/threads/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+
+  deleteChatbotThread: (id: number) =>
+    request<{ id: number }>(`/api/chatbot/threads/${id}`, {
+      method: "DELETE",
+    }),
+
+  addChatbotThreadMessage: (
+    id: number,
+    payload: {
+      role: "user" | "bot";
+      content: string;
+      attachments?: ChatbotAttachment[];
+    }
+  ) =>
+    request<ChatbotMessage>(`/api/chatbot/threads/${id}/messages`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 
   getChatUsers: () => request<unknown[]>("/api/messages/users"),
 
