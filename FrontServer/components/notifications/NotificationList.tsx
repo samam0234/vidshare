@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Bell, MoreVertical } from "lucide-react";
+import { formatWhen } from "@/lib/content-store";
 import {
-  formatWhen,
+  refreshNotifications,
   removeNotification,
-  useContentStore,
-} from "@/lib/content-store";
+  useNotifications,
+} from "@/lib/notifications-store";
 import type { NotificationCategory } from "@/types";
 import SerialBadge from "@/components/ui/SerialBadge";
 import { cn } from "@/lib/utils";
@@ -22,10 +23,14 @@ const tabs: { key: "all" | NotificationCategory; label: string }[] = [
 ];
 
 export default function NotificationList() {
-  const { notifications } = useContentStore();
+  const { notifications } = useNotifications();
   const [tab, setTab] = useState<(typeof tabs)[number]["key"]>("all");
   const [menuId, setMenuId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    void refreshNotifications();
+  }, []);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -118,7 +123,7 @@ export default function NotificationList() {
                     type="button"
                     className="block w-full px-3 py-2.5 text-left text-sm text-[var(--danger)] hover:bg-[var(--btn)]"
                     onClick={() => {
-                      removeNotification(n.id);
+                      void removeNotification(n.id);
                       setMenuId(null);
                     }}
                   >

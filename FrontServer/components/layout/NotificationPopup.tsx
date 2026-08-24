@@ -3,7 +3,8 @@
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Settings, X } from "lucide-react";
-import { formatSerial, useContentStore } from "@/lib/content-store";
+import { formatSerial } from "@/lib/content-store";
+import { useNotifications } from "@/lib/notifications-store";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -12,7 +13,7 @@ type Props = {
 };
 
 export default function NotificationPopup({ open, onClose }: Props) {
-  const { notifications } = useContentStore();
+  const { notifications } = useNotifications();
 
   if (!open || typeof document === "undefined") return null;
 

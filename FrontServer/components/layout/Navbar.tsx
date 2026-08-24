@@ -16,7 +16,11 @@ import {
 import { toggleStoredTheme, useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
-import { useContentStore } from "@/lib/content-store";
+import {
+  refreshNotifications,
+  resetNotifications,
+  useNotifications,
+} from "@/lib/notifications-store";
 import NotificationPopup from "./NotificationPopup";
 
 const guestNavLinks = [
@@ -46,13 +50,18 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const navLinks = user ? memberNavLinks : guestNavLinks;
-  const { unreadCount } = useContentStore();
+  const { unreadCount } = useNotifications();
   const [query, setQuery] = useState("");
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pathForMenus, setPathForMenus] = useState(pathname);
   const notifRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (user) void refreshNotifications();
+    else resetNotifications();
+  }, [user]);
 
   if (pathForMenus !== pathname) {
     setPathForMenus(pathname);

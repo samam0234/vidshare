@@ -2,23 +2,27 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { formatWhen } from "@/lib/content-store";
 import {
-  formatWhen,
   markNotificationRead,
-  useContentStore,
-} from "@/lib/content-store";
+  refreshNotifications,
+  useNotifications,
+} from "@/lib/notifications-store";
 import SerialBadge from "@/components/ui/SerialBadge";
 
 export default function NotificationDetail({ id }: { id: string }) {
   const num = Number(id);
-  const { getNotification } = useContentStore();
-  const item = Number.isFinite(num) ? getNotification(num) : undefined;
+  const { notifications } = useNotifications();
+  const item = notifications.find((n) => n.id === num);
 
   useEffect(() => {
-    if (!Number.isFinite(num)) return;
-    const current = getNotification(num);
-    if (current && !current.read) markNotificationRead(current.id);
-  }, [num, getNotification]);
+    void refreshNotifications();
+  }, []);
+
+  useEffect(() => {
+    if (!item || item.read) return;
+    void markNotificationRead(item.id);
+  }, [item]);
 
   if (!item) {
     return (
