@@ -111,6 +111,24 @@ NNN-짧은-영문-slug.md
 | 035 | [035-chatbot-langgraph-rag.md](./035-chatbot-langgraph-rag.md) | `c044ca5` | LangChain·LangGraph·RAG | 2026-08-20 |
 | 036 | [036-chatbot-rag-multimodal.md](./036-chatbot-rag-multimodal.md) | `a5927ad` | 챗봇 RAG 고도화 & 멀티모달 지원 | 2026-08-22 |
 | 037 | [037-front-api-connection.md](./037-front-api-connection.md) | `204c3c7` | Front ↔ API 전면 연동 | 2026-08-23 |
+| 038 | [038-sqlite-schema-extend.md](./038-sqlite-schema-extend.md) | `f1b0388` | SQLite 스키마 확장 (8개 테이블) | 2026-08-24 |
+| 039 | [039-store-crud-functions.md](./039-store-crud-functions.md) | `88b7c2e` | store.ts CRUD 함수 확장 | 2026-08-24 |
+| 040 | [040-backend-routes-content.md](./040-backend-routes-content.md) | `9b11cc5` | 롱폼·커뮤니티 라우트 | 2026-08-24 |
+| 041 | [041-backend-routes-messages.md](./041-backend-routes-messages.md) | `645a9c1` | 대화(conversations) 라우트 | 2026-08-24 |
+| 042 | [042-backend-routes-chatbot.md](./042-backend-routes-chatbot.md) | `683f209` | 챗봇 스레드·메시지 라우트 | 2026-08-24 |
+| 043 | [043-backend-routes-support.md](./043-backend-routes-support.md) | `acd4ec4` | 고객센터·알림 라우트 + 인증 미들웨어 | 2026-08-24 |
+| 044 | [044-frontend-api-client.md](./044-frontend-api-client.md) | `187b0e0` | API 클라이언트 확장 | 2026-08-24 |
+| 045 | [045-frontend-notifications-store.md](./045-frontend-notifications-store.md) | `3673806` | 알림 스토어 (useSyncExternalStore) | 2026-08-24 |
+| 046 | [046-frontend-chatbot-corpus.md](./046-frontend-chatbot-corpus.md) | `6a9eb39` | 챗봇 RAG 코퍼스 수집 | 2026-08-24 |
+| 047 | [047-frontend-components-content.md](./047-frontend-components-content.md) | `29f0cd1` | 롱폼·커뮤니티 컴포넌트 API 연동 | 2026-08-24 |
+| 048 | [048-frontend-components-messages.md](./048-frontend-components-messages.md) | `40a202f` | 메시지 컴포넌트 API 연동 | 2026-08-24 |
+| 049 | [049-frontend-chatbot-workspace.md](./049-frontend-chatbot-workspace.md) | `0a271f1` | 챗봇 워크스페이스 게스트/회원 모드 | 2026-08-24 |
+| 050 | [050-frontend-finalization.md](./050-frontend-finalization.md) | `f975d80` | 고객센터 컴포넌트 API 연동 | 2026-08-24 |
+| 051 | [051-frontend-notification-components.md](./051-frontend-notification-components.md) | `b5265c9` | 알림 UI + Navbar 배지 통합 | 2026-08-24 |
+| 052 | [052-frontend-lint-finalization.md](./052-frontend-lint-finalization.md) | `015458d` | content-store 축약·ContentState 제거 | 2026-08-24 |
+| 053 | [053-notification-read-unread-visual.md](./053-notification-read-unread-visual.md) | `d28cda0` | 알림 읽음/안읽음 시각 구분 강화 | 2026-08-24 |
+| 054 | [054-notification-store-settings.md](./054-notification-store-settings.md) | `2be566d` | 알림 수신 on/off·전체 읽음·전체 삭제 | 2026-08-24 |
+| 055 | [055-notification-popup-settings-ui.md](./055-notification-popup-settings-ui.md) | `034ec73` | 알림 팝업 위치·설정 패널 개편 | 2026-08-24 |
 
 ---
 
