@@ -8,6 +8,15 @@
 ## [Unreleased]
 
 ### Added
+- **localStorage → SQLite 전면 이관** (커밋 038~052): 콘텐츠 상태를 전부 서버 영속화
+- SQLite 스키마 8개 테이블 추가: `longform`, `community_posts`, `chatbot_threads`, `chatbot_messages`, `conversations`, `chat_lines`, `support_inquiries`, `activity_notifications`
+- 백엔드 라우트 신설: `/api/longform`, `/api/community`, `/api/conversations`, `/api/chatbot/threads`, `/api/support/inquiries`
+- `requireRequestUser()` 인증 미들웨어 (401 일괄 처리)
+- `lib/notifications-store.ts` — `useSyncExternalStore` 기반 알림 전역 스토어
+- `lib/chatbot-corpus.ts` — Shape 모델용 RAG 코퍼스 수집
+- 알림 읽음/안읽음 시각 구분 (점 인디케이터, NEW 배지, 미읽 카운트)
+- 알림 수신 on/off 토글 (localStorage), 전체 읽음 처리, 전체 삭제
+- 알림 팝업 설정 패널 (톱니바퀴) + 목록 페이지 바로가기 (문서 아이콘)
 - Front ↔ API 전면 연동: ShortsFeed·ProfilePageClient·UploadForm을 mock에서 서버 API로 교체
 - 쇼츠 목록/댓글 로드, 댓글 작성, 좋아요 토글, 사용자 프로필 조회, 쇼츠 생성 모두 API 호출
 - 로딩·에러·빈 목록 상태 UI 피드백
@@ -32,6 +41,10 @@
 - 챗봇 봇 답변 마크다운 렌더링 (굵게·이탤릭·취소선·목록)
 
 ### Changed
+- 챗봇 워크스페이스 게스트/회원 모드 분리 (게스트는 메모리, 회원은 SQLite 영속화)
+- 알림 팝업을 포털/`fixed` 배치에서 벨 버튼 기준 `absolute` 배치로 변경
+- `lib/content-store.ts` 를 `formatSerial`/`formatWhen` 두 유틸만 남기고 축약 (~1000줄 → ~50줄)
+- `ContentState` 타입 및 `useContentStore` 계열 함수 제거
 - 챗봇 저장 기록에서 방 이름 수정·삭제
 - 챗봇 Locals·Vide·Shape 시스템 프롬프트 분리
 - 비회원은 쇼츠·롱폼·커뮤니티 열람만 (작성·메시지·업로드는 로그인)
@@ -43,6 +56,8 @@
 - 고객센터 FAQ를 유저가 직접 할 수 있는 짧은 안내로 변경
 
 ### Fixed
+- `support_inquiries` 컬럼 불일치 (`author_id` → `owner_id`)
+- `useEffect` 내 `setState` 린트 위반 (`queueMicrotask` 래핑으로 통일)
 - 버튼 안 SVG 클릭이 아이콘 선 사이로 빠지던 문제
 - Turbopack `next/font/google` 모듈 해석 오류 (Noto Sans KR CSS 링크로 우회)
 - 네비가 세 줄 모드에 고정되던 문제 (`lg` 이상 메뉴 노출, 좁을 때 햄버거 클릭)
@@ -51,9 +66,13 @@
 - LAN으로 열면 API가 localhost로 고정되지 않게 (브라우저 호스트:4000)
 - 메시지 상대를 눌러도 대화창이 안 열리던 문제 (localStorage 하이드)
 
-### 예정
-- FrontServer UI ↔ BackendServer API 전면 연동
-- 실파일 업로드 (로드맵 참고)
+### 예정 (다음 작업자용, 상세는 features/roadmap.md)
+- 실파일 업로드 / 파일 스토리지 (P0)
+- 알림 벌크 엔드포인트 `PATCH /read-all`, `DELETE /` (P0)
+- 알림 팝업 outside-click 닫기, 전체 삭제 확인 모달 (P0)
+- 레거시 `notifications` 테이블 정리 (P0)
+- 통합 검색, 팔로우, 실시간 알림/메시지 (P1)
+- 자동화 테스트 (현재 0건), 배포 파이프라인 (P1)
 
 ---
 
