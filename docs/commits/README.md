@@ -133,7 +133,7 @@ NNN-짧은-영문-slug.md
 | 057 | [057-file-storage-uploads.md](./057-file-storage-uploads.md) | `c0ddf13` | 로컬 디스크 파일 스토리지 (POST /api/uploads, 쇼츠·롱폼 실파일) | 2026-08-26 |
 | 058 | [058-notification-bulk-endpoints.md](./058-notification-bulk-endpoints.md) | `ee8612d` | 알림 전체 읽음/삭제 벌크 API | 2026-08-27 |
 | 059 | [059-notification-popup-outside-click.md](./059-notification-popup-outside-click.md) | `fb4f119` | 알림 팝업 바깥 클릭 닫기 | 2026-08-27 |
-| 060 | [060-sqlite-database-column-dump.md](./060-sqlite-database-column-dump.md) | `TBD` | SQLite 쓰기 시 DataBaseColumn.md 자동 덤프 | 2026-08-27 |
+| 060 | [060-sqlite-database-column-dump.md](./060-sqlite-database-column-dump.md) | `0b6ad0e` | SQLite 쓰기 시 DataBaseColumn.md 자동 덤프 | 2026-08-27 |
 
 ---
 

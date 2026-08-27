@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `060` |
 | **파일명** | `060-sqlite-database-column-dump.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `0b6ad0e` |
+| **Git 커밋 (full)** | `0b6ad0e0a238f2b6c74f51d4e00e5cbd58897f83` |
 | **날짜** | `2026-08-27` |
 | **작성자** | `Grok` |
 | **브랜치** | `master` |
