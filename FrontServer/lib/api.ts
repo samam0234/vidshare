@@ -162,6 +162,16 @@ export const api = {
       method: "DELETE",
     }),
 
+  markAllNotificationsRead: () =>
+    request<{ count: number }>("/api/notifications/read-all", {
+      method: "PATCH",
+    }),
+
+  clearAllNotifications: () =>
+    request<{ count: number }>("/api/notifications", {
+      method: "DELETE",
+    }),
+
   getLongformList: () => request<LongformVideo[]>("/api/longform"),
 
   getLongform: (id: number) => request<LongformVideo>(`/api/longform/${id}`),

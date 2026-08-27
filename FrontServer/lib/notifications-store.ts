@@ -126,25 +126,24 @@ export async function removeNotification(id: number) {
 export async function markAllNotificationsRead() {
   const unread = items.filter((n) => !n.read);
   if (!unread.length) return;
+  const prev = items;
   items = items.map((n) => (n.read ? n : { ...n, read: true }));
   emit();
-  const results = await Promise.all(
-    unread.map((n) => api.patchNotification(n.id, true))
-  );
-  if (results.some((r) => !r.success)) void refreshNotifications();
+  const res = await api.markAllNotificationsRead();
+  if (!res.success) {
+    items = prev;
+    emit();
+  }
 }
 
 /** 알림 전체 삭제 */
 export async function clearAllNotifications() {
   if (!items.length) return;
   const prev = items;
-  const ids = items.map((n) => n.id);
   items = EMPTY;
   emit();
-  const results = await Promise.all(
-    ids.map((id) => api.deleteNotification(id))
-  );
-  if (results.some((r) => !r.success)) {
+  const res = await api.clearAllNotifications();
+  if (!res.success) {
     items = prev;
     emit();
   }

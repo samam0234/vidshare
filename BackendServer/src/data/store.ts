@@ -1030,3 +1030,19 @@ export function deleteActivityNotification(
     .run(id, ownerId);
   return existing;
 }
+
+export function markAllActivityNotificationsRead(ownerId: string): number {
+  const info = getDb()
+    .prepare(
+      "UPDATE activity_notifications SET read = 1 WHERE owner_id = ? AND read = 0"
+    )
+    .run(ownerId);
+  return info.changes;
+}
+
+export function deleteAllActivityNotifications(ownerId: string): number {
+  const info = getDb()
+    .prepare("DELETE FROM activity_notifications WHERE owner_id = ?")
+    .run(ownerId);
+  return info.changes;
+}

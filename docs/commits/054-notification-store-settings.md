@@ -87,10 +87,8 @@ export async function clearAllNotifications()      // 낙관적 갱신 → 실�
 
 ## 5. 알려진 한계 (인수인계 포인트)
 
-1. **N+1 요청**: 알림이 50개면 DELETE 요청 50개가 나간다.
-   → `PATCH /api/notifications/read-all`, `DELETE /api/notifications` 벌크 엔드포인트 필요.
-2. **부분 실패**: `Promise.all` 이라 일부만 성공해도 전체 롤백/재동기화한다.
-3. **수신 거부가 서버에 없음**: 위 ⚠️ 참고.
+1. **N+1 요청**: ~~알림이 50개면 DELETE 요청 50개~~ → **058에서 벌크 API로 해소**.
+2. **수신 거부가 서버에 없음**: 위 ⚠️ 참고.
 
 ---
 

@@ -87,6 +87,8 @@ npm run typecheck  # 타입만 검사
 | GET | `/api/users/:id` | 사용자 상세 |
 | GET | `/api/users/:id/shorts` | 사용자 쇼츠 |
 | GET | `/api/notifications?category=` | 알림 목록 |
+| PATCH | `/api/notifications/read-all` | 본인 알림 전체 읽음 |
+| DELETE | `/api/notifications` | 본인 알림 전체 삭제 |
 | DELETE | `/api/notifications/:id` | 알림 삭제 |
 | PATCH | `/api/notifications/:id` | `{ read }` |
 | GET | `/api/messages/users` | 채팅 상대 목록 |

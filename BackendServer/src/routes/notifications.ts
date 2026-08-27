@@ -1,7 +1,9 @@
 import { Router } from "express";
 import {
   deleteActivityNotification,
+  deleteAllActivityNotifications,
   listActivityNotifications,
+  markAllActivityNotificationsRead,
   patchActivityNotification,
 } from "../data/store";
 import { requireRequestUser } from "../auth/requestUser";
@@ -14,6 +16,20 @@ router.get("/", (req, res) => {
   const user = requireRequestUser(req);
   const category = req.query.category ? String(req.query.category) : "all";
   res.json({ success: true, data: listActivityNotifications(user.id, category) });
+});
+
+/** PATCH /api/notifications/read-all — 본인 알림 전체 읽음. /:id 보다 앞에 둔다. */
+router.patch("/read-all", (req, res) => {
+  const user = requireRequestUser(req);
+  const count = markAllActivityNotificationsRead(user.id);
+  res.json({ success: true, data: { count } });
+});
+
+/** DELETE /api/notifications — 본인 알림 전체 삭제. /:id 보다 앞에 둔다. */
+router.delete("/", (req, res) => {
+  const user = requireRequestUser(req);
+  const count = deleteAllActivityNotifications(user.id);
+  res.json({ success: true, data: { count } });
 });
 
 /** DELETE /api/notifications/:id */

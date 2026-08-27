@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- 알림 벌크 API (커밋 058): `PATCH /api/notifications/read-all`, `DELETE /api/notifications`
 - **로컬 디스크 파일 스토리지** (커밋 057): `POST /api/uploads`, `GET /uploads/:file`. 영상 100MB / 이미지 8MB, UUID 파일명
 - 쇼츠 `thumb` 컬럼. 프로필 그리드·비디오 poster에 사용
 - **localStorage → SQLite 전면 이관** (커밋 038~052): 콘텐츠 상태를 전부 서버 영속화
@@ -71,7 +72,6 @@
 - 메시지 상대를 눌러도 대화창이 안 열리던 문제 (localStorage 하이드)
 
 ### 예정 (다음 작업자용, 상세는 features/roadmap.md)
-- 알림 벌크 엔드포인트 `PATCH /read-all`, `DELETE /` (P0)
 - 알림 팝업 outside-click 닫기, 전체 삭제 확인 모달 (P0)
 - 레거시 `notifications` 테이블 정리 (P0)
 - 통합 검색, 팔로우, 실시간 알림/메시지 (P1)

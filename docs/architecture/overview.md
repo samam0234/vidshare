@@ -58,7 +58,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 |------|------|
 | 실파일 업로드 | **057에서 로컬 `uploads/` 도입.** 트랜스코딩·비공개 URL·오브젝트 스토리지는 없음 |
 | 실시간성 | 알림·메시지 모두 폴링/수동 새로고침. WebSocket/SSE 없음 |
-| 벌크 API | 알림 전체 읽음/삭제가 개별 요청 N번 (`Promise.all`) |
+| 벌크 API | **058에서 도입.** 개별 `/:id` 도 유지 |
 | 알림 수신 거부 | 클라이언트 localStorage 전용. 서버는 계속 알림 생성 |
 | 검색 | Navbar 검색이 쇼츠 `?q=` 만 지원. 롱폼·커뮤니티·유저 미지원 |
 | 테스트 | 자동화 테스트 없음 (수동 검증만) |
@@ -197,7 +197,7 @@ src/
 | `/api/community` | `community.ts` | 생성 시 필요 |
 | `/api/conversations` | `conversations.ts` | 필요 |
 | `/api/messages` | `messages.ts` | 필요 |
-| `/api/notifications` | `notifications.ts` | 필요 |
+| `/api/notifications` | `notifications.ts` | 필요 (`GET`, `PATCH /read-all`, `DELETE /`, `/:id`) |
 | `/api/support/faq`, `/api/support/inquiries` | `support.ts` | 문의는 필요 |
 | `/api/chatbot/complete` | `chatbot.ts` | — |
 | `/api/chatbot/threads` | `chatbot-threads.ts` | 필요 |
