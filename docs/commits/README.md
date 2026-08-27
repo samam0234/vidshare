@@ -132,7 +132,7 @@ NNN-짧은-영문-slug.md
 | 056 | [056-documentation-handover-finalization.md](./056-documentation-handover-finalization.md) | `327ab15` | 전체 문서 인수인계용 갱신 (053-055 문서화, 아키텍처·로드맵·CHANGELOG 갱신) | 2026-08-26 |
 | 057 | [057-file-storage-uploads.md](./057-file-storage-uploads.md) | `c0ddf13` | 로컬 디스크 파일 스토리지 (POST /api/uploads, 쇼츠·롱폼 실파일) | 2026-08-26 |
 | 058 | [058-notification-bulk-endpoints.md](./058-notification-bulk-endpoints.md) | `ee8612d` | 알림 전체 읽음/삭제 벌크 API | 2026-08-27 |
-| 059 | [059-notification-popup-outside-click.md](./059-notification-popup-outside-click.md) | `TBD` | 알림 팝업 바깥 클릭 닫기 | 2026-08-27 |
+| 059 | [059-notification-popup-outside-click.md](./059-notification-popup-outside-click.md) | `fb4f119` | 알림 팝업 바깥 클릭 닫기 | 2026-08-27 |
 
 ---
 

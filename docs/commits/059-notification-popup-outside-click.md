@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `059` |
 | **파일명** | `059-notification-popup-outside-click.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `fb4f119` |
+| **Git 커밋 (full)** | `fb4f119bd253361e21f4431af2a06299e693b375` |
 | **날짜** | `2026-08-27` |
 | **작성자** | `Grok` |
 | **브랜치** | `master` |
