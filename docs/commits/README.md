@@ -130,7 +130,7 @@ NNN-짧은-영문-slug.md
 | 054 | [054-notification-store-settings.md](./054-notification-store-settings.md) | `2be566d` | 알림 수신 on/off·전체 읽음·전체 삭제 | 2026-08-24 |
 | 055 | [055-notification-popup-settings-ui.md](./055-notification-popup-settings-ui.md) | `034ec73` | 알림 팝업 위치·설정 패널 개편 | 2026-08-24 |
 | 056 | [056-documentation-handover-finalization.md](./056-documentation-handover-finalization.md) | `327ab15` | 전체 문서 인수인계용 갱신 (053-055 문서화, 아키텍처·로드맵·CHANGELOG 갱신) | 2026-08-26 |
-| 057 | [057-file-storage-uploads.md](./057-file-storage-uploads.md) | `TBD` | 로컬 디스크 파일 스토리지 (POST /api/uploads, 쇼츠·롱폼 실파일) | 2026-08-26 |
+| 057 | [057-file-storage-uploads.md](./057-file-storage-uploads.md) | `c0ddf13` | 로컬 디스크 파일 스토리지 (POST /api/uploads, 쇼츠·롱폼 실파일) | 2026-08-26 |
 
 ---
 

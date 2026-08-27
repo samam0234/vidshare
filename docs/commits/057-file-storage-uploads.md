@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `057` |
 | **파일명** | `057-file-storage-uploads.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `c0ddf13` |
+| **Git 커밋 (full)** | `c0ddf132bd6d0c2135baacb14c39dd48296ec572` |
 | **날짜** | `2026-08-26` |
 | **작성자** | `Grok` |
 | **브랜치** | `master` |
