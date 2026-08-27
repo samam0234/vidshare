@@ -35,6 +35,7 @@
 - [x] `lib/api.ts` 단일 통신 창구화
 - [x] 로컬 디스크 파일 스토리지 (`POST /api/uploads`, `/uploads`)
 - [x] 알림 벌크 읽음/삭제 (`PATCH /read-all`, `DELETE /api/notifications`)
+- [x] 알림 팝업 바깥 클릭 닫기
 
 ---
 
@@ -44,7 +45,7 @@
 |---|------|------|-----------|
 | A1 | ~~파일 스토리지~~ | **완료 (057)** — `uploads/` 디스크 + 쇼츠/롱폼 실파일 | — |
 | A2 | ~~알림 벌크 엔드포인트~~ | **완료 (058)** — `PATCH /read-all`, `DELETE /` | — |
-| A3 | **팝업 outside-click 닫기** | 알림 팝업이 Escape/X로만 닫힘 (055 한계) | `components/layout/Navbar.tsx` |
+| A3 | ~~팝업 outside-click 닫기~~ | **완료 (059)** — `notifRef` 밖 `pointerdown` | — |
 | A4 | **전체 삭제 확인 모달** | 실수로 전체 삭제 시 복구 불가 | `components/layout/NotificationPopup.tsx` |
 | A5 | **레거시 테이블 정리** | `notifications` vs `activity_notifications` 이중화 | `db/schema.ts`, `data/store.ts` |
 

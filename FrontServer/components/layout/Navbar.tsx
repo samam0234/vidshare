@@ -77,8 +77,23 @@ export default function Navbar() {
         setMenuOpen(false);
       }
     }
+    function onPointerDown(e: PointerEvent) {
+      const target = e.target;
+      if (!(target instanceof Node)) return;
+      if (
+        notifOpen &&
+        notifRef.current &&
+        !notifRef.current.contains(target)
+      ) {
+        setNotifOpen(false);
+      }
+    }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
   }, [notifOpen, menuOpen]);
 
   function onSearch(e: FormEvent) {
