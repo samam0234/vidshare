@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Play, Volume2, VolumeX } from "lucide-react";
 import type { Short } from "@/types";
 import { formatCount } from "@/lib/utils";
+import { mediaUrl } from "@/lib/media";
 import ShortActions from "./ShortActions";
 
 type Props = {
@@ -76,7 +77,8 @@ export default function ShortCard({
         {short.videoUrl ? (
           <video
             ref={videoRef}
-            src={short.videoUrl}
+            src={mediaUrl(short.videoUrl)}
+            poster={mediaUrl(short.thumb)}
             className="absolute inset-0 h-full w-full object-cover"
             loop
             muted={muted}

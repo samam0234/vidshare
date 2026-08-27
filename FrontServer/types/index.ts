@@ -15,6 +15,7 @@ export type Short = {
   comments: number;
   views: string;
   videoUrl?: string;
+  thumb?: string;
   gradient: string;
   createdAt: string;
 };
@@ -71,6 +72,7 @@ export type ProfileVideo = {
   shortId: string;
   views: string;
   gradient: string;
+  thumb?: string;
   title: string;
   likes: number;
   createdAt: string;

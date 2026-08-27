@@ -316,6 +316,7 @@ export function toProfileVideos(list: Short[]): ProfileVideo[] {
     shortId: s.id,
     views: s.views,
     gradient: s.gradient,
+    ...(s.thumb ? { thumb: s.thumb } : {}),
     title: s.title,
     likes: s.likes,
     createdAt: s.createdAt,

@@ -15,6 +15,7 @@ export type Short = {
   comments: number;
   views: string;
   videoUrl?: string;
+  thumb?: string;
   gradient: string;
   createdAt: string;
 };

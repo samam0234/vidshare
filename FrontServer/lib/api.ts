@@ -83,11 +83,46 @@ export const api = {
     description?: string;
     gradient?: string;
     videoUrl?: string;
+    thumb?: string;
   }) =>
     request<Short>("/api/shorts", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+
+  uploadFile: async (
+    file: File,
+    kind: "image" | "video"
+  ): Promise<
+    ApiResult<{ url: string; mime: string; size: number; kind: "image" | "video" }>
+  > => {
+    const form = new FormData();
+    form.append("file", file);
+    let res: Response;
+    try {
+      res = await fetch(
+        `${resolveApiUrl()}/api/uploads?kind=${encodeURIComponent(kind)}`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: form,
+          cache: "no-store",
+        }
+      );
+    } catch {
+      return { success: false, error: "서버에 연결할 수 없습니다." };
+    }
+    const body = (await res.json().catch(() => ({}))) as ApiResult<{
+      url: string;
+      mime: string;
+      size: number;
+      kind: "image" | "video";
+    }>;
+    if (!res.ok) {
+      return { success: false, error: body.error ?? res.statusText };
+    }
+    return body;
+  },
 
   likeShort: (id: string, action: "like" | "unlike") =>
     request<{ id: string; likes: number }>(`/api/shorts/${id}/like`, {

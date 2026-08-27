@@ -2,6 +2,7 @@ type Props = {
   title: string;
   description: string;
   thumb: string | null;
+  video: string | null;
   gradient: string;
 };
 
@@ -9,6 +10,7 @@ export default function UploadPreview({
   title,
   description,
   thumb,
+  video,
   gradient,
 }: Props) {
   return (
@@ -19,11 +21,22 @@ export default function UploadPreview({
       <div
         className="relative aspect-[9/16] w-full max-w-sm overflow-hidden rounded-3xl border border-[var(--border)] shadow-[var(--shadow)]"
         style={{
-          backgroundImage: thumb ? `url(${thumb})` : gradient,
+          backgroundImage: !video && thumb ? `url(${thumb})` : gradient,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
       >
+        {video ? (
+          <video
+            src={video}
+            poster={thumb ?? undefined}
+            className="absolute inset-0 h-full w-full object-cover"
+            muted
+            loop
+            playsInline
+            autoPlay
+          />
+        ) : null}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-5 text-white">
           <h3 className="text-lg font-bold leading-snug">
             {title.trim() || "(제목)"}

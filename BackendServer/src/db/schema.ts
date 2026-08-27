@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS shorts (
   comment_count INTEGER NOT NULL DEFAULT 0,
   views TEXT NOT NULL DEFAULT '0',
   video_url TEXT,
+  thumb TEXT,
   gradient TEXT NOT NULL,
   created_at TEXT NOT NULL
 );

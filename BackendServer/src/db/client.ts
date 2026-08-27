@@ -21,6 +21,20 @@ export function getDb(): SqliteDb {
   return db;
 }
 
+function ensureColumn(
+  database: SqliteDb,
+  table: string,
+  column: string,
+  sqlType: string
+) {
+  const cols = database
+    .prepare(`PRAGMA table_info(${table})`)
+    .all() as { name: string }[];
+  if (!cols.some((c) => c.name === column)) {
+    database.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${sqlType}`);
+  }
+}
+
 export function initDb(): SqliteDb {
   if (db) return db;
 
@@ -31,6 +45,7 @@ export function initDb(): SqliteDb {
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   db.exec(SCHEMA_SQL);
+  ensureColumn(db, "shorts", "thumb", "TEXT");
   seedIfEmpty(db);
 
   console.log(`  SQLite: ${file}`);

@@ -40,6 +40,7 @@ npm run dev
 | `PORT` | `4000` | 서버 포트 |
 | `CORS_ORIGIN` | (비움) | 추가 허용 오리진. 비우면 localhost + 사설망 |
 | `SQLITE_PATH` | `data/vidshare.sqlite` | DB 파일 경로 |
+| `UPLOADS_PATH` | `uploads/` | 사용자 업로드 파일 경로 |
 | `NODE_ENV` | `development` | 환경 |
 
 ### 기타 명령
@@ -71,7 +72,9 @@ npm run typecheck  # 타입만 검사
 | GET | `/api/health` | 헬스 체크 |
 | GET | `/api/shorts?q=` | 쇼츠 목록 (검색 선택) |
 | GET | `/api/shorts/:id` | 쇼츠 상세 |
-| POST | `/api/shorts` | 쇼츠 생성 `{ title, description?, gradient?, videoUrl? }` |
+| POST | `/api/shorts` | 쇼츠 생성 `{ title, description?, gradient?, videoUrl?, thumb? }` (로그인) |
+| POST | `/api/uploads?kind=` | 파일 업로드 `multipart file` (`image` \| `video`, 로그인) |
+| GET | `/uploads/:file` | 업로드된 영상·이미지 정적 파일 |
 | POST | `/api/shorts/:id/like` | 좋아요 `{ action?: "unlike" }` |
 | GET | `/api/shorts/:shortId/comments` | 댓글 목록 |
 | POST | `/api/shorts/:shortId/comments` | 댓글 작성 `{ text, author? }` |
@@ -107,7 +110,9 @@ BackendServer/
 │   ├── auth/              # 계정·세션
 │   ├── middleware/
 │   ├── routes/
+│   ├── upload/            # 디스크 저장·MIME 화이트리스트
 │   └── types/
+├── uploads/               # 사용자 파일 (Git 무시, README만 추적)
 ├── .env.example
 ├── package.json
 └── README.md
@@ -128,7 +133,7 @@ BackendServer/
 NEXT_PUBLIC_API_URL=http://localhost:4000
 ```
 
-> 현재 UI는 아직 로컬 mock을 주로 사용합니다. API 연동은 `NEXT_PUBLIC_API_URL` 기준으로 점진 교체하면 됩니다.
+프론트는 `lib/api.ts` 로 이 서버를 호출합니다. 업로드된 미디어는 `/uploads/...` 상대 경로로 저장되고, 프론트는 API 호스트를 붙여 재생합니다.
 
 ---
 
@@ -136,6 +141,6 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 
 - [x] SQLite 영속화
 - [x] 인증 (세션 쿠키)
-- [ ] 파일 업로드 스토리지
-- [ ] FrontServer mock → API fetch 전환
+- [x] 파일 업로드 스토리지
+- [x] FrontServer mock → API fetch 전환
 - [ ] (필요 시) SQLite → Maria

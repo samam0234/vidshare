@@ -7,6 +7,7 @@ import {
 } from "../data/store";
 import { requireRequestUser } from "../auth/requestUser";
 import { HttpError } from "../middleware/errorHandler";
+import { checkMediaUrl } from "../upload/files";
 
 const router = Router();
 
@@ -24,6 +25,19 @@ router.get("/:id", (req, res) => {
   res.json({ success: true, data: item });
 });
 
+function optionalMediaUrl(value: unknown, kind: "image" | "video") {
+  const checked = checkMediaUrl(value, kind);
+  if (checked.ok) return checked.url;
+  if (checked.reason === "empty") return undefined;
+  if (checked.reason === "data-url") {
+    throw new HttpError(400, "data URL은 저장할 수 없습니다. 파일을 업로드하세요.");
+  }
+  throw new HttpError(
+    400,
+    kind === "image" ? "썸네일 경로가 올바르지 않습니다." : "영상 경로가 올바르지 않습니다."
+  );
+}
+
 /** POST /api/longform  body: { title, description?, videoUrl?, thumb?, gradient? } */
 router.post("/", (req, res) => {
   const user = requireRequestUser(req);
@@ -35,8 +49,8 @@ router.post("/", (req, res) => {
   const item = createLongform({
     title: title.trim(),
     description: typeof description === "string" ? description : "",
-    videoUrl: typeof videoUrl === "string" ? videoUrl : "",
-    thumb: typeof thumb === "string" ? thumb : undefined,
+    videoUrl: optionalMediaUrl(videoUrl, "video") ?? "",
+    thumb: optionalMediaUrl(thumb, "image"),
     gradient: typeof gradient === "string" ? gradient : undefined,
     authorId: user.id,
   });

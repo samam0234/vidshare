@@ -3,7 +3,7 @@
 **작성일**: 2026-08-19  
 **성격**: 소규모 개인 프로젝트  
 
-**상태**: 프론트 UI + Express API + SQLite 인증/콘텐츠까지 구현. Front 전면 연동·실파일 업로드는 미착수.
+**상태**: 프론트 UI + Express API + SQLite 인증/콘텐츠 + 로컬 파일 업로드까지 구현.
 
 관련 문서: [README.md](./README.md) · [docs/architecture/overview.md](./docs/architecture/overview.md) · [docs/features/roadmap.md](./docs/features/roadmap.md)
 
@@ -74,7 +74,7 @@
 | 서버 구조 | Front / Backend 폴더 분리 | 역할이 보이고 나중에 붙이기도 쉽다 |
 | 프론트 | Next.js App Router + React | 페이지·라우트가 명확하다 |
 | 백엔드 | Express + TypeScript | 가볍고 REST를 바로 보여 준다 |
-| 지금 데이터 | Backend SQLite + 프론트 mock/localStorage | API는 재시작 후에도 남음. UI 전면 연동은 다음 |
+| 지금 데이터 | Backend SQLite + `uploads/` 파일 | API·파일 모두 재시작 후에도 남음 |
 | 인증 | bcrypt + HttpOnly 세션 쿠키 | JWT보다 데모에서 단순하다 |
 | 다음 DB | Maria (필요 시) | SQLite로 영속화한 뒤 이전 가능 |
 
@@ -135,7 +135,7 @@
 |------|------|------|
 | 외부 샘플 URL | 지금 쇼츠 데모 | 네트워크 필요 |
 | 브라우저 미리보기만 | 업로드 UI | 서버에 파일이 안 남음 |
-| 로컬 디스크 `uploads/` | 다음 단계 | 혼자 쓰는 PC 한 대에 적합 |
+| 로컬 디스크 `uploads/` | 채택 (057) | 혼자 쓰는 PC 한 대에 적합 |
 | S3 등 오브젝트 스토리지 | 실서비스 | 계정·비용·설정이 큼 |
 | 커뮤니티에 영상 ID만 링크 | 공유 방식 | 파일을 복제하지 않고 같은 영상을 가리킴 |
 
@@ -149,14 +149,13 @@
 - REST + 로그인 세션
 - LAN에서 개발 서버 접속
 - Backend SQLite 영속화 (계정·세션·쇼츠·댓글·알림·메시지)
+- 로컬 디스크 파일 업로드 (`uploads/`, 쇼츠·롱폼)
 
 ### 바로 다음
-1. **Front ↔ API 전면 연동** — mock / localStorage 를 서버 데이터로 교체
+1. 알림 벌크 API, 팝업 바깥 클릭 닫기 등 Phase A 잔여
 2. **커뮤니티 ↔ 영상 연결** — 글에서 쇼츠/롱폼 일련번호를 걸어 바로 재생
-3. 커뮤니티 글을 Backend SQLite로 이전
 
 ### 그다음
-- 실파일 업로드 (영상·썸네일)
 - 검색·팔로우
 - (필요 시) SQLite → Maria
 

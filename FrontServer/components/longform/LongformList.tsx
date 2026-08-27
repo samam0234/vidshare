@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Clapperboard, Plus } from "lucide-react";
 import { formatWhen } from "@/lib/content-store";
 import { api } from "@/lib/api";
+import { mediaUrl } from "@/lib/media";
 import { useAuth } from "@/context/AuthContext";
 import { loginHref } from "@/lib/guest-routes";
 import SerialBadge from "@/components/ui/SerialBadge";
@@ -100,7 +101,7 @@ export default function LongformList() {
                   className="h-20 w-32 shrink-0 rounded-xl bg-cover bg-center"
                   style={{
                     backgroundImage: v.thumb
-                      ? `url(${v.thumb})`
+                      ? `url(${mediaUrl(v.thumb)})`
                       : v.gradient,
                   }}
                 />

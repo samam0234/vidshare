@@ -1,11 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Shuffle, Upload } from "lucide-react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { Film, ImagePlus, Shuffle, Upload } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { randomGradient } from "@/lib/utils";
+import {
+  IMAGE_MAX_BYTES,
+  VIDEO_MAX_BYTES,
+  formatBytes,
+  isImageFile,
+  isVideoFile,
+} from "@/lib/media";
 import UploadPreview from "./UploadPreview";
 
 // Stable default so server-rendered HTML matches the client's first render.
@@ -15,10 +22,14 @@ const DEFAULT_GRADIENT = "linear-gradient(160deg, hsl(220 70% 45%), hsl(260 65% 
 export default function UploadForm() {
   const router = useRouter();
   const { user } = useAuth();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLInputElement>(null);
+  const thumbRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
-  const [thumb, setThumb] = useState<string | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [thumbFile, setThumbFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [thumbPreview, setThumbPreview] = useState<string | null>(null);
   const [gradient, setGradient] = useState(DEFAULT_GRADIENT);
   const [uploading, setUploading] = useState(false);
   const [done, setDone] = useState(false);
@@ -29,32 +40,103 @@ export default function UploadForm() {
     setGradient(randomGradient());
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (videoPreview) URL.revokeObjectURL(videoPreview);
+    };
+  }, [videoPreview]);
+
+  useEffect(() => {
+    return () => {
+      if (thumbPreview) URL.revokeObjectURL(thumbPreview);
+    };
+  }, [thumbPreview]);
+
+  function replacePreview(
+    setter: Dispatch<SetStateAction<string | null>>,
+    file: File | null
+  ) {
+    setter((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return file ? URL.createObjectURL(file) : null;
+    });
+  }
+
+  function onPickVideo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!isVideoFile(file)) {
+      setError("영상 형식만 올릴 수 있습니다. (mp4, webm, mov)");
+      return;
+    }
+    if (file.size > VIDEO_MAX_BYTES) {
+      setError(`영상은 ${formatBytes(VIDEO_MAX_BYTES)} 이하여야 합니다.`);
+      return;
+    }
+    setError(null);
+    setVideoFile(file);
+    replacePreview(setVideoPreview, file);
+  }
+
   function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setThumb(String(reader.result));
-    };
-    reader.readAsDataURL(file);
+    if (!isImageFile(file)) {
+      setError("이미지 형식만 올릴 수 있습니다. (jpg, png, webp, gif)");
+      return;
+    }
+    if (file.size > IMAGE_MAX_BYTES) {
+      setError(`이미지는 ${formatBytes(IMAGE_MAX_BYTES)} 이하여야 합니다.`);
+      return;
+    }
+    setError(null);
+    setThumbFile(file);
+    replacePreview(setThumbPreview, file);
   }
 
   function onRandom() {
-    setThumb(null);
+    setThumbFile(null);
+    replacePreview(setThumbPreview, null);
     setGradient(randomGradient());
   }
 
   async function onUpload() {
     if (!title.trim()) {
-      alert("제목을 입력해 주세요.");
+      setError("제목을 입력해 주세요.");
       return;
     }
     setError(null);
     setUploading(true);
+
+    let videoUrl: string | undefined;
+    let thumb: string | undefined;
+    if (videoFile) {
+      const uploaded = await api.uploadFile(videoFile, "video");
+      if (!uploaded.success || !uploaded.data) {
+        setUploading(false);
+        setError(uploaded.error ?? "영상 업로드에 실패했습니다.");
+        return;
+      }
+      videoUrl = uploaded.data.url;
+    }
+    if (thumbFile) {
+      const uploaded = await api.uploadFile(thumbFile, "image");
+      if (!uploaded.success || !uploaded.data) {
+        setUploading(false);
+        setError(uploaded.error ?? "썸네일 업로드에 실패했습니다.");
+        return;
+      }
+      thumb = uploaded.data.url;
+    }
+
     const res = await api.createShort({
       title: title.trim(),
       description: desc.trim() || undefined,
       gradient,
+      videoUrl,
+      thumb,
     });
     setUploading(false);
     if (!res.success || !res.data) {
@@ -73,7 +155,8 @@ export default function UploadForm() {
       <UploadPreview
         title={title}
         description={desc}
-        thumb={thumb}
+        thumb={thumbPreview}
+        video={videoPreview}
         gradient={gradient}
       />
 
@@ -81,7 +164,7 @@ export default function UploadForm() {
         <div>
           <h1 className="text-xl font-bold">쇼츠 업로드</h1>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            제목과 내용을 입력하고 썸네일을 지정하세요.
+            영상을 올리면 서버에 파일로 저장됩니다. 썸네일은 선택입니다.
           </p>
         </div>
 
@@ -107,18 +190,48 @@ export default function UploadForm() {
         </label>
 
         <div className="space-y-2">
+          <span className="text-sm font-semibold">영상</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              ref={videoRef}
+              type="file"
+              accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+              className="hidden"
+              onChange={onPickVideo}
+            />
+            <button
+              type="button"
+              onClick={() => videoRef.current?.click()}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--btn)] px-4 py-2.5 text-sm font-medium hover:border-[var(--accent)]"
+            >
+              <Film size={16} />
+              영상 선택
+            </button>
+            {videoFile ? (
+              <span className="text-xs text-[var(--text-muted)]">
+                {videoFile.name} · {formatBytes(videoFile.size)}
+              </span>
+            ) : (
+              <span className="text-xs text-[var(--text-muted)]">
+                mp4 / webm / mov, 최대 {formatBytes(VIDEO_MAX_BYTES)}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <span className="text-sm font-semibold">썸네일</span>
           <div className="flex flex-wrap gap-2">
             <input
-              ref={fileRef}
+              ref={thumbRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
               className="hidden"
               onChange={onPickImage}
             />
             <button
               type="button"
-              onClick={() => fileRef.current?.click()}
+              onClick={() => thumbRef.current?.click()}
               className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--btn)] px-4 py-2.5 text-sm font-medium hover:border-[var(--accent)]"
             >
               <ImagePlus size={16} />
@@ -137,7 +250,7 @@ export default function UploadForm() {
 
         <button
           type="button"
-          onClick={onUpload}
+          onClick={() => void onUpload()}
           disabled={uploading || done}
           className="mt-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-5 py-3.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
         >
@@ -155,7 +268,7 @@ export default function UploadForm() {
           </p>
         )}
         {error && (
-          <p className="text-center text-sm text-red-500">{error}</p>
+          <p className="text-center text-sm text-[var(--danger)]">{error}</p>
         )}
       </section>
     </main>

@@ -6,7 +6,7 @@
 |------|------|
 | **문서 번호** | `056` |
 | **파일명** | `056-documentation-handover-finalization.md` |
-| **Git 커밋들 (short)** | `eac364a`, `213a6fd`, `f78cda8`, `4355c12`, `2b35ec9` |
+| **Git 커밋들 (short)** | `eac364a`, `213a6fd`, `f78cda8`, `4355c12`, `2b35ec9`, `327ab15` |
 | **날짜** | `2026-08-26` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |

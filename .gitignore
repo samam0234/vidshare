@@ -12,7 +12,8 @@ out/
 
 # backend build / uploads / sqlite
 dist/
-uploads/
+uploads/*
+!uploads/README.md
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal

@@ -33,6 +33,7 @@
 - [x] FrontServer / BackendServer 분리
 - [x] localStorage → SQLite 전면 이관 (커밋 038~052)
 - [x] `lib/api.ts` 단일 통신 창구화
+- [x] 로컬 디스크 파일 스토리지 (`POST /api/uploads`, `/uploads`)
 
 ---
 
@@ -40,7 +41,7 @@
 
 | # | 작업 | 이유 | 손댈 파일 |
 |---|------|------|-----------|
-| A1 | **파일 스토리지** | 영상·이미지가 data URL이라 DB가 비대해지고 대용량 업로드 불가 | `BackendServer/src/routes/shorts.ts`, 신규 `upload.ts`, `FrontServer/components/upload/` |
+| A1 | ~~파일 스토리지~~ | **완료 (057)** — `uploads/` 디스크 + 쇼츠/롱폼 실파일 | — |
 | A2 | **알림 벌크 엔드포인트** | 전체 읽음/삭제가 개별 요청 N번 (054 한계) | `routes/notifications.ts`, `data/store.ts`, `lib/notifications-store.ts` |
 | A3 | **팝업 outside-click 닫기** | 알림 팝업이 Escape/X로만 닫힘 (055 한계) | `components/layout/Navbar.tsx` |
 | A4 | **전체 삭제 확인 모달** | 실수로 전체 삭제 시 복구 불가 | `components/layout/NotificationPopup.tsx` |

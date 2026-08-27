@@ -38,6 +38,7 @@ type ShortJoinRow = {
   comment_count: number;
   views: string;
   video_url: string | null;
+  thumb: string | null;
   gradient: string;
   created_at: string;
   handle: string;
@@ -49,7 +50,7 @@ type ShortJoinRow = {
 const SHORT_SELECT = `
   SELECT
     s.id, s.title, s.description, s.author_id, s.likes, s.comment_count,
-    s.views, s.video_url, s.gradient, s.created_at,
+    s.views, s.video_url, s.thumb, s.gradient, s.created_at,
     u.handle, u.name AS author_name, u.bio AS author_bio, u.avatar AS author_avatar
   FROM shorts s
   JOIN users u ON u.id = s.author_id
@@ -83,6 +84,7 @@ function toShort(row: ShortJoinRow): Short {
     gradient: row.gradient,
     createdAt: row.created_at,
     ...(row.video_url ? { videoUrl: row.video_url } : {}),
+    ...(row.thumb ? { thumb: row.thumb } : {}),
   };
 }
 
@@ -146,6 +148,7 @@ export function createShort(input: {
   description?: string;
   gradient?: string;
   videoUrl?: string;
+  thumb?: string;
   authorId: string;
 }): Short {
   const author = findAuthor(input.authorId);
@@ -156,15 +159,23 @@ export function createShort(input: {
   const gradient =
     input.gradient || "linear-gradient(160deg, #7c3aed, #3ea6ff)";
   const description = input.description ?? "";
-  const videoUrl = input.videoUrl;
 
   getDb()
     .prepare(
       `INSERT INTO shorts
-        (id, title, description, author_id, likes, comment_count, views, video_url, gradient, created_at)
-       VALUES (?, ?, ?, ?, 0, 0, '0', ?, ?, ?)`
+        (id, title, description, author_id, likes, comment_count, views, video_url, thumb, gradient, created_at)
+       VALUES (?, ?, ?, ?, 0, 0, '0', ?, ?, ?, ?)`
     )
-    .run(id, input.title, description, author.id, videoUrl ?? null, gradient, createdAt);
+    .run(
+      id,
+      input.title,
+      description,
+      author.id,
+      input.videoUrl ?? null,
+      input.thumb ?? null,
+      gradient,
+      createdAt
+    );
 
   return getShort(id)!;
 }

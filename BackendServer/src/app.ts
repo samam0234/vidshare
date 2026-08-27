@@ -16,6 +16,8 @@ import chatbotThreadsRouter from "./routes/chatbot-threads";
 import longformRouter from "./routes/longform";
 import communityRouter from "./routes/community";
 import conversationsRouter from "./routes/conversations";
+import uploadsRouter from "./routes/uploads";
+import { ensureUploadsDir, uploadsDir } from "./upload/files";
 
 function isPrivateHostname(hostname: string) {
   if (hostname === "localhost" || hostname === "127.0.0.1") return true;
@@ -59,6 +61,21 @@ export function createApp() {
   app.use(express.json({ limit: "12mb" }));
   app.use(cookieParser());
   app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+
+  ensureUploadsDir();
+  app.use(
+    "/uploads",
+    express.static(uploadsDir(), {
+      index: false,
+      dotfiles: "ignore",
+      maxAge: "7d",
+      immutable: true,
+      setHeaders(res) {
+        res.setHeader("X-Content-Type-Options", "nosniff");
+        res.setHeader("Content-Disposition", "inline");
+      },
+    })
+  );
 
   app.get("/", (_req, res) => {
     res.json({
@@ -108,6 +125,8 @@ export function createApp() {
         "PATCH /api/chatbot/threads/:id",
         "DELETE /api/chatbot/threads/:id",
         "POST /api/chatbot/threads/:id/messages",
+        "POST /api/uploads?kind=image|video",
+        "GET  /uploads/:file",
       ],
     });
   });
@@ -126,6 +145,7 @@ export function createApp() {
   app.use("/api/support", supportRouter);
   app.use("/api/chatbot/threads", chatbotThreadsRouter);
   app.use("/api/chatbot", chatbotRouter);
+  app.use("/api/uploads", uploadsRouter);
 
   app.use(notFound);
   app.use(errorHandler);

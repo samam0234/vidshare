@@ -24,6 +24,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
     │  routes/ → data/store.ts → db/client.ts
     ▼
 [SQLite]  BackendServer/data/vidshare.sqlite  (18개 테이블)
+[Files]   BackendServer/uploads/  ← 영상·썸네일. DB에는 /uploads/<uuid>.ext 만 저장
 ```
 
 | 폴더 | 역할 | 포트 |
@@ -41,7 +42,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 | 영역 | 상태 |
 |------|------|
 | 인증 | 회원가입·로그인·세션 (bcrypt + HttpOnly 쿠키 + SQLite) |
-| 쇼츠 | 목록·상세·생성·좋아요·댓글 (API 연동) |
+| 쇼츠 | 목록·상세·생성·좋아요·댓글, 실파일 업로드 (API 연동) |
 | 롱폼 | 목록·작성·상세 (API 연동) |
 | 커뮤니티 | 목록·작성·상세 (API 연동) |
 | 메시지 | 대화 목록·스레드·전송 (API 연동) |
@@ -55,7 +56,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 
 | 항목 | 설명 |
 |------|------|
-| 실파일 업로드 | 영상·이미지가 data URL 또는 외부 URL. 파일 스토리지 없음 |
+| 실파일 업로드 | **057에서 로컬 `uploads/` 도입.** 트랜스코딩·비공개 URL·오브젝트 스토리지는 없음 |
 | 실시간성 | 알림·메시지 모두 폴링/수동 새로고침. WebSocket/SSE 없음 |
 | 벌크 API | 알림 전체 읽음/삭제가 개별 요청 N번 (`Promise.all`) |
 | 알림 수신 거부 | 클라이언트 localStorage 전용. 서버는 계속 알림 생성 |
@@ -126,7 +127,8 @@ SQLite (vidshare.sqlite)
 
 | 파일 | 역할 |
 |------|------|
-| `api.ts` | **서버 통신 단일 창구**. 40+ 메서드, `ApiResult<T>` 반환 |
+| `api.ts` | **서버 통신 단일 창구**. 40+ 메서드, `ApiResult<T>` 반환. `uploadFile` 은 FormData |
+| `media.ts` | `/uploads` 를 API 호스트에 붙이는 `mediaUrl()`, 용량·형식 검사 |
 | `auth.ts` | 인증 헬퍼 |
 | `notifications-store.ts` | `useSyncExternalStore` 기반 알림 전역 상태 |
 | `content-store.ts` | `formatSerial()`, `formatWhen()` 두 유틸만 (localStorage 로직 제거됨) |
@@ -177,7 +179,8 @@ src/
 │   ├── schema.ts        ← CREATE TABLE 18개
 │   └── seed.ts
 ├── middleware/errorHandler.ts   ← HttpError → JSON 변환
-├── routes/              ← 12개 라우터
+├── routes/              ← 13개 라우터
+├── upload/files.ts      ← 디스크 경로·MIME 화이트리스트
 └── types/index.ts
 ```
 
@@ -198,6 +201,8 @@ src/
 | `/api/support/faq`, `/api/support/inquiries` | `support.ts` | 문의는 필요 |
 | `/api/chatbot/complete` | `chatbot.ts` | — |
 | `/api/chatbot/threads` | `chatbot-threads.ts` | 필요 |
+| `/api/uploads` | `uploads.ts` | 필요 |
+| `/uploads/:file` | `express.static` | 공개 (재생용) |
 
 ### SQLite 테이블 (18개)
 

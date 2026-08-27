@@ -8,6 +8,8 @@
 ## [Unreleased]
 
 ### Added
+- **로컬 디스크 파일 스토리지** (커밋 057): `POST /api/uploads`, `GET /uploads/:file`. 영상 100MB / 이미지 8MB, UUID 파일명
+- 쇼츠 `thumb` 컬럼. 프로필 그리드·비디오 poster에 사용
 - **localStorage → SQLite 전면 이관** (커밋 038~052): 콘텐츠 상태를 전부 서버 영속화
 - SQLite 스키마 8개 테이블 추가: `longform`, `community_posts`, `chatbot_threads`, `chatbot_messages`, `conversations`, `chat_lines`, `support_inquiries`, `activity_notifications`
 - 백엔드 라우트 신설: `/api/longform`, `/api/community`, `/api/conversations`, `/api/chatbot/threads`, `/api/support/inquiries`
@@ -41,6 +43,8 @@
 - 챗봇 봇 답변 마크다운 렌더링 (굵게·이탤릭·취소선·목록)
 
 ### Changed
+- 쇼츠·롱폼 작성은 data URL을 저장하지 않고 업로드 URL 또는 http(s)만 허용
+- 쇼츠 생성 API는 로그인 필수 (`requireRequestUser`)
 - 챗봇 워크스페이스 게스트/회원 모드 분리 (게스트는 메모리, 회원은 SQLite 영속화)
 - 알림 팝업을 포털/`fixed` 배치에서 벨 버튼 기준 `absolute` 배치로 변경
 - `lib/content-store.ts` 를 `formatSerial`/`formatWhen` 두 유틸만 남기고 축약 (~1000줄 → ~50줄)
@@ -67,7 +71,6 @@
 - 메시지 상대를 눌러도 대화창이 안 열리던 문제 (localStorage 하이드)
 
 ### 예정 (다음 작업자용, 상세는 features/roadmap.md)
-- 실파일 업로드 / 파일 스토리지 (P0)
 - 알림 벌크 엔드포인트 `PATCH /read-all`, `DELETE /` (P0)
 - 알림 팝업 outside-click 닫기, 전체 삭제 확인 모달 (P0)
 - 레거시 `notifications` 테이블 정리 (P0)

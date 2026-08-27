@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatWhen } from "@/lib/content-store";
 import { api } from "@/lib/api";
+import { mediaUrl } from "@/lib/media";
 import SerialBadge from "@/components/ui/SerialBadge";
 import type { LongformVideo } from "@/types/content";
 
@@ -63,12 +64,15 @@ export default function LongformDetail({ id }: { id: string }) {
       <div
         className="mt-5 aspect-video overflow-hidden rounded-3xl bg-cover bg-center"
         style={{
-          backgroundImage: item.thumb ? `url(${item.thumb})` : item.gradient,
+          backgroundImage: item.thumb
+            ? `url(${mediaUrl(item.thumb)})`
+            : item.gradient,
         }}
       >
         {item.videoUrl ? (
           <video
-            src={item.videoUrl}
+            src={mediaUrl(item.videoUrl)}
+            poster={mediaUrl(item.thumb)}
             controls
             className="h-full w-full object-cover"
           />

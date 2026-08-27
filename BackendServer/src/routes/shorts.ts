@@ -7,8 +7,9 @@ import {
   listShorts,
   listShortsByAuthor,
 } from "../data/store";
-import { getRequestPublicUser } from "../auth/requestUser";
+import { requireRequestUser } from "../auth/requestUser";
 import { HttpError } from "../middleware/errorHandler";
+import { checkMediaUrl } from "../upload/files";
 
 const router = Router();
 
@@ -25,16 +26,27 @@ router.get("/:id", (req, res) => {
   res.json({ success: true, data: item });
 });
 
-/** POST /api/shorts  body: { title, description?, gradient?, videoUrl? } */
+function optionalMediaUrl(value: unknown, kind: "image" | "video") {
+  const checked = checkMediaUrl(value, kind);
+  if (checked.ok) return checked.url;
+  if (checked.reason === "empty") return undefined;
+  if (checked.reason === "data-url") {
+    throw new HttpError(400, "data URL은 저장할 수 없습니다. 파일을 업로드하세요.");
+  }
+  throw new HttpError(
+    400,
+    kind === "image" ? "썸네일 경로가 올바르지 않습니다." : "영상 경로가 올바르지 않습니다."
+  );
+}
+
+/** POST /api/shorts  body: { title, description?, gradient?, videoUrl?, thumb? } */
 router.post("/", (req, res) => {
-  const { title, description, gradient, videoUrl } = req.body ?? {};
+  const user = requireRequestUser(req);
+  const { title, description, gradient, videoUrl, thumb } = req.body ?? {};
   if (!title || typeof title !== "string" || !title.trim()) {
     throw new HttpError(400, "title is required");
   }
-
-  const sessionUser = getRequestPublicUser(req);
-  const authorId = sessionUser?.id ?? "u-me";
-  if (!findAuthor(authorId)) {
+  if (!findAuthor(user.id)) {
     throw new HttpError(400, "작성자 계정이 없습니다.");
   }
 
@@ -42,8 +54,9 @@ router.post("/", (req, res) => {
     title: title.trim(),
     description: typeof description === "string" ? description : "",
     gradient: typeof gradient === "string" ? gradient : undefined,
-    videoUrl: typeof videoUrl === "string" ? videoUrl : undefined,
-    authorId,
+    videoUrl: optionalMediaUrl(videoUrl, "video"),
+    thumb: optionalMediaUrl(thumb, "image"),
+    authorId: user.id,
   });
   res.status(201).json({ success: true, data: short });
 });
