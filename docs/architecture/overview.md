@@ -276,7 +276,8 @@ npm run dev          # http://localhost:3000
    `docs/commits/README.md` 인덱스에 한 줄 추가한다 (해시는 커밋 후 채움)
 3. **한글 파일 편집 주의**: PowerShell `Get-Content | Set-Content` 는 UTF-8 한글을 깨뜨린다.
    에디터 도구로 편집할 것
-4. 남은 과제 목록은 [features/roadmap.md](../features/roadmap.md) 참고
+4. SQLite 현재 내용은 `BackendServer/data/DataBaseColumn.md` 에 자동 덤프된다 (gitignore).
+5. 남은 과제 목록은 [features/roadmap.md](../features/roadmap.md) 참고
 
 ---
 

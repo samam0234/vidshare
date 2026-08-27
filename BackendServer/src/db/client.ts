@@ -3,6 +3,10 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { SCHEMA_SQL } from "./schema";
 import { seedIfEmpty } from "./seed";
+import {
+  flushDatabaseDocDump,
+  interceptDatabaseWrites,
+} from "./dumpDoc";
 
 type SqliteDb = InstanceType<typeof Database>;
 
@@ -46,7 +50,9 @@ export function initDb(): SqliteDb {
   db.pragma("foreign_keys = ON");
   db.exec(SCHEMA_SQL);
   ensureColumn(db, "shorts", "thumb", "TEXT");
+  interceptDatabaseWrites(db);
   seedIfEmpty(db);
+  flushDatabaseDocDump(db);
 
   console.log(`  SQLite: ${file}`);
   return db;

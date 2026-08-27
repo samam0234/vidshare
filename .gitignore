@@ -14,6 +14,7 @@ out/
 dist/
 uploads/*
 !uploads/README.md
+data/DataBaseColumn.md
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal

@@ -7,6 +7,7 @@
 | `.gitkeep` | 추적 | 빈 `data/` 폴더를 저장소에 유지 |
 | `vidshare.sqlite` | 무시 | 실제 DB. 서버 재시작해도 내용이 남음 |
 | `vidshare.sqlite-wal` / `-shm` | 무시 | WAL 보조 파일 |
+| `DataBaseColumn.md` | 무시 | 테이블·컬럼·행 덤프. 쓰기 시 자동 갱신 |
 
 경로를 바꾸려면 `BackendServer/.env` 의 `SQLITE_PATH` 를 씁니다. 비우면 이 폴더의 `vidshare.sqlite` 입니다.
 

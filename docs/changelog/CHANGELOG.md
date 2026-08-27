@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- SQLite 테이블·행 덤프 `BackendServer/data/DataBaseColumn.md` (쓰기 시 자동 갱신, gitignore)
 - 알림 팝업 바깥 클릭 닫기 (커밋 059)
 - 알림 벌크 API (커밋 058): `PATCH /api/notifications/read-all`, `DELETE /api/notifications`
 - **로컬 디스크 파일 스토리지** (커밋 057): `POST /api/uploads`, `GET /uploads/:file`. 영상 100MB / 이미지 8MB, UUID 파일명

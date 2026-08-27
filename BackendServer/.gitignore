@@ -6,6 +6,7 @@ dist/
 .DS_Store
 uploads/*
 !uploads/README.md
+data/DataBaseColumn.md
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal
