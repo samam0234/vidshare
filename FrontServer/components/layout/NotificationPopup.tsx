@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCheck, FileText, Settings, Trash2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCheck,
+  FileText,
+  Settings,
+  Trash2,
+  X,
+} from "lucide-react";
 import { formatSerial } from "@/lib/content-store";
 import {
   clearAllNotifications,
@@ -21,7 +28,7 @@ type Props = {
 export default function NotificationPopup({ open, onClose }: Props) {
   const { notifications, unreadCount } = useNotifications();
   const enabled = useNotificationsEnabled();
-  const [view, setView] = useState<"list" | "settings">("list");
+  const [view, setView] = useState<"list" | "settings" | "confirmClear">("list");
 
   useEffect(() => {
     if (open) queueMicrotask(() => setView("list"));
@@ -48,7 +55,9 @@ export default function NotificationPopup({ open, onClose }: Props) {
             <FileText size={16} />
           </Link>
           <span className="flex items-center gap-1.5 text-sm font-semibold">
-            {view === "settings" ? "알림 설정" : "알림"}
+            {view === "settings" && "알림 설정"}
+            {view === "confirmClear" && "알림 전체 삭제"}
+            {view === "list" && "알림"}
             {view === "list" && unreadCount > 0 && (
               <span className="rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
                 {unreadCount}
@@ -59,15 +68,15 @@ export default function NotificationPopup({ open, onClose }: Props) {
         <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => setView((v) => (v === "settings" ? "list" : "settings"))}
+            onClick={() => setView((v) => (v === "list" ? "settings" : "list"))}
             className={cn(
               "rounded-lg p-1.5 hover:bg-[var(--btn)]",
-              view === "settings"
+              view !== "list"
                 ? "bg-[var(--btn)] text-[var(--accent)]"
                 : "text-[var(--text-muted)] hover:text-[var(--text)]"
             )}
             aria-label="알림 설정"
-            aria-pressed={view === "settings"}
+            aria-pressed={view !== "list"}
           >
             <Settings size={16} />
           </button>
@@ -115,12 +124,48 @@ export default function NotificationPopup({ open, onClose }: Props) {
           <button
             type="button"
             disabled={notifications.length === 0}
-            onClick={() => void clearAllNotifications()}
+            onClick={() => setView("confirmClear")}
             className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-[var(--danger)] hover:bg-[var(--btn)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Trash2 size={16} />
             알림 전체 삭제
           </button>
+        </div>
+      ) : view === "confirmClear" ? (
+        <div className="px-4 py-4">
+          <div className="flex gap-2.5">
+            <AlertTriangle
+              size={18}
+              className="mt-0.5 shrink-0 text-[var(--danger)]"
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">
+                알림 {notifications.length}건을 모두 삭제할까요?
+              </p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                삭제한 알림은 되돌릴 수 없습니다.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setView("settings")}
+              className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm hover:bg-[var(--btn)]"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void clearAllNotifications();
+                setView("list");
+              }}
+              className="rounded-lg bg-[var(--danger)] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
+            >
+              삭제
+            </button>
+          </div>
         </div>
       ) : (
         <>
