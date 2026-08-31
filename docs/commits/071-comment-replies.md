@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `071` |
 | **파일명** | `071-comment-replies.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `7fc0237` |
+| **Git 커밋 (full)** | `7fc0237ae2cb24cf2e827c5fdad80d1f8b63e9b4` |
 | **날짜** | `2026-09-01` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |

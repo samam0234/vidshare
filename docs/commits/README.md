@@ -140,6 +140,11 @@ NNN-짧은-영문-slug.md
 | 064 | [064-notification-settings-server.md](./064-notification-settings-server.md) | `6d381ac` | 알림 수신 거부 서버 반영 | 2026-08-31 |
 | 065 | [065-user-follows.md](./065-user-follows.md) | `c1169ec` | 팔로우/언팔·팔로잉 피드 | 2026-08-31 |
 | 066 | [066-backend-automated-tests.md](./066-backend-automated-tests.md) | `0758f9d` | 백엔드 자동화 테스트 32건 | 2026-08-31 |
+| 067 | [067-following-feed-page.md](./067-following-feed-page.md) | `a0b0763` | 팔로잉 피드 화면 (/following) | 2026-09-01 |
+| 068 | [068-guest-route-search-fix.md](./068-guest-route-search-fix.md) | `d3a43f0` | 비회원 검색·팔로우 목록 접근 회귀 수정 | 2026-09-01 |
+| 069 | [069-follow-list-pages.md](./069-follow-list-pages.md) | `637528c` | 팔로워/팔로잉 목록 화면 | 2026-09-01 |
+| 070 | [070-frontend-guest-route-tests.md](./070-frontend-guest-route-tests.md) | `db8198d` | 프론트 비회원 경로 테스트 28건 | 2026-09-01 |
+| 071 | [071-comment-replies.md](./071-comment-replies.md) | `7fc0237` | 댓글 대댓글 (1단계 스레드) | 2026-09-01 |
 
 ---
 

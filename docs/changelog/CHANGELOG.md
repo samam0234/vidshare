@@ -8,6 +8,10 @@
 ## [Unreleased]
 
 ### Added
+- **팔로잉 피드 화면** (커밋 067): `/following` — 팔로우한 크리에이터의 쇼츠 모아보기
+- **팔로워/팔로잉 목록 화면** (커밋 069): `/profile/:id/followers`, `/profile/:id/following`
+- **댓글 대댓글** (커밋 071): `comments.parent_id`, 1단계 스레드. 2단계 이상은 최상위로 평탄화
+- **프론트 테스트** (커밋 070): 비회원 경로·오픈 리다이렉트 방지 28건
 - **통합 검색** (커밋 063): `GET /api/search?q=` — 쇼츠·롱폼·커뮤니티·유저 동시 검색, `/search` 페이지 + 탭 필터
 - **알림 수신 설정 서버 저장** (커밋 064): `users.notifications_enabled`, `GET/PATCH /api/notifications/settings`. 수신 거부 시 알림을 **생성하지 않음**
 - **팔로우** (커밋 065): `user_follows` 테이블, `/api/follows` 6종, 프로필 버튼 연동, 팔로우 시 상대에게 알림
@@ -69,7 +73,9 @@
 ### Removed
 - 레거시 `notifications` 테이블 (커밋 062). 알림은 `activity_notifications` 로 일원화
 - 죽은 코드: `store.ts` 의 `listNotifications`/`deleteNotification`/`patchNotification`, `seedNotifications`, `Notification` 타입
+
 ### Fixed
+- 비회원이 `/search` 와 팔로우 목록 페이지에 접근하지 못하던 문제 (커밋 068, 063 회귀)
 - `support_inquiries` 컬럼 불일치 (`author_id` → `owner_id`)
 - `useEffect` 내 `setState` 린트 위반 (`queueMicrotask` 래핑으로 통일)
 - 버튼 안 SVG 클릭이 아이콘 선 사이로 빠지던 문제

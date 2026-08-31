@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `070` |
 | **파일명** | `070-frontend-guest-route-tests.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `db8198d` |
+| **Git 커밋 (full)** | `db8198d22fed9d75eb72e74c337603a571a20b41` |
 | **날짜** | `2026-09-01` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |
