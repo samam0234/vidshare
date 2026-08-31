@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `061` |
 | **파일명** | `061-notification-clear-confirm.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `7ff45bb` |
+| **Git 커밋 (full)** | `7ff45bbb61b551a485a87860624beaf83095ac1b` |
 | **날짜** | `2026-08-31` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |
