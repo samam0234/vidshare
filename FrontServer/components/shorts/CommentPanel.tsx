@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CornerDownRight, X } from "lucide-react";
 import type { Comment } from "@/types";
+import ReportButton from "@/components/moderation/ReportButton";
 
 type Props = {
   open: boolean;
@@ -287,6 +288,9 @@ function CommentItem({
                 삭제
               </button>
             </>
+          )}
+          {!canManage && !editing && (
+            <ReportButton targetType="comment" targetId={comment.id} />
           )}
         </div>
       </div>

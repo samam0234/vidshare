@@ -224,6 +224,33 @@ export const api = {
 
   getFollowingFeed: () => request<Short[]>("/api/follows/feed"),
 
+  getBlockStatus: (userId: string) =>
+    request<{ blocked: boolean }>(
+      `/api/blocks/${encodeURIComponent(userId)}/status`
+    ),
+
+  getBlockedUsers: () => request<Author[]>("/api/blocks"),
+
+  blockUser: (userId: string) =>
+    request<{ blocked: boolean }>(`/api/blocks/${encodeURIComponent(userId)}`, {
+      method: "POST",
+    }),
+
+  unblockUser: (userId: string) =>
+    request<{ blocked: boolean }>(`/api/blocks/${encodeURIComponent(userId)}`, {
+      method: "DELETE",
+    }),
+
+  reportContent: (
+    targetType: "short" | "comment" | "community" | "user",
+    targetId: string,
+    reason: string
+  ) =>
+    request<{ id: number }>("/api/reports", {
+      method: "POST",
+      body: JSON.stringify({ targetType, targetId, reason }),
+    }),
+
   patchNotificationSettings: (enabled: boolean) =>
     request<{ enabled: boolean }>("/api/notifications/settings", {
       method: "PATCH",

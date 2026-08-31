@@ -5,6 +5,7 @@ import {
   createActivityNotification,
   findAuthor,
   followUser,
+  isBlockedEitherWay,
   isFollowing,
   listFollowers,
   listFollowing,
@@ -58,6 +59,9 @@ router.post("/:id", (req, res) => {
   if (!target) throw new HttpError(404, "User not found");
   if (target.id === user.id) {
     throw new HttpError(400, "자기 자신은 팔로우할 수 없습니다.");
+  }
+  if (isBlockedEitherWay(user.id, target.id)) {
+    throw new HttpError(403, "차단 관계에서는 팔로우할 수 없습니다.");
   }
 
   const already = isFollowing(user.id, target.id);

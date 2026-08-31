@@ -7,16 +7,17 @@ import {
   listShorts,
   listShortsByAuthor,
 } from "../data/store";
-import { requireRequestUser } from "../auth/requestUser";
+import { getRequestPublicUser, requireRequestUser } from "../auth/requestUser";
 import { HttpError } from "../middleware/errorHandler";
 import { checkMediaUrl } from "../upload/files";
 
 const router = Router();
 
-/** GET /api/shorts?q= */
+/** GET /api/shorts?q= — 로그인한 경우 내가 차단한 유저의 영상은 제외된다 */
 router.get("/", (req, res) => {
   const q = String(req.query.q ?? "").trim();
-  res.json({ success: true, data: listShorts(q) });
+  const viewer = getRequestPublicUser(req);
+  res.json({ success: true, data: listShorts(q, viewer?.id) });
 });
 
 /** GET /api/shorts/:id */

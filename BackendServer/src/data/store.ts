@@ -202,22 +202,113 @@ export function listFollowingShorts(userId: string, limit = 50): Short[] {
   return rows.map(toShort);
 }
 
-export function listShorts(q?: string): Short[] {
+// ---------------------------------------------------------------------------
+// Blocks & Reports
+// ---------------------------------------------------------------------------
+
+export function isBlocked(blockerId: string, blockedId: string): boolean {
+  const row = getDb()
+    .prepare(
+      "SELECT 1 AS x FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?"
+    )
+    .get(blockerId, blockedId) as { x: number } | undefined;
+  return Boolean(row);
+}
+
+/** 서로 차단 관계인지 (양방향). 팔로우 요청 차단에 쓴다. */
+export function isBlockedEitherWay(aId: string, bId: string): boolean {
+  return isBlocked(aId, bId) || isBlocked(bId, aId);
+}
+
+/** 차단하면 서로의 팔로우 관계도 함께 끊는다. */
+export function blockUser(blockerId: string, blockedId: string): void {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    db.prepare(
+      `INSERT OR IGNORE INTO user_blocks (blocker_id, blocked_id, created_at)
+       VALUES (?, ?, ?)`
+    ).run(blockerId, blockedId, new Date().toISOString());
+    db.prepare(
+      "DELETE FROM user_follows WHERE (follower_id = ? AND following_id = ?) OR (follower_id = ? AND following_id = ?)"
+    ).run(blockerId, blockedId, blockedId, blockerId);
+  });
+  tx();
+}
+
+export function unblockUser(blockerId: string, blockedId: string): void {
+  getDb()
+    .prepare(
+      "DELETE FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?"
+    )
+    .run(blockerId, blockedId);
+}
+
+export function listBlockedUsers(blockerId: string): Author[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT u.id, u.handle, u.name, u.bio, u.avatar
+       FROM user_blocks b JOIN users u ON u.id = b.blocked_id
+       WHERE b.blocker_id = ? ORDER BY b.created_at DESC`
+    )
+    .all(blockerId) as UserRow[];
+  return rows.map(toAuthor);
+}
+
+const REPORT_TARGET_TYPES = ["short", "comment", "community", "user"] as const;
+export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
+
+export function isReportTargetType(v: unknown): v is ReportTargetType {
+  return (
+    typeof v === "string" &&
+    (REPORT_TARGET_TYPES as readonly string[]).includes(v)
+  );
+}
+
+export function createReport(input: {
+  reporterId: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: string;
+}): { id: number } {
+  const info = getDb()
+    .prepare(
+      `INSERT INTO reports (reporter_id, target_type, target_id, reason, created_at)
+       VALUES (?, ?, ?, ?, ?)`
+    )
+    .run(
+      input.reporterId,
+      input.targetType,
+      input.targetId,
+      input.reason,
+      new Date().toISOString()
+    );
+  return { id: Number(info.lastInsertRowid) };
+}
+
+export function listShorts(q?: string, viewerId?: string): Short[] {
   const query = q?.trim().toLowerCase() ?? "";
+  const blockClause = viewerId
+    ? "AND s.author_id NOT IN (SELECT blocked_id FROM user_blocks WHERE blocker_id = ?)"
+    : "";
   if (!query) {
-    const rows = getDb()
-      .prepare(`${SHORT_SELECT} ORDER BY s.created_at DESC, s.id DESC`)
-      .all() as ShortJoinRow[];
+    const sql = `${SHORT_SELECT} WHERE 1=1 ${blockClause} ORDER BY s.created_at DESC, s.id DESC`;
+    const rows = (
+      viewerId
+        ? getDb().prepare(sql).all(viewerId)
+        : getDb().prepare(sql).all()
+    ) as ShortJoinRow[];
     return rows.map(toShort);
   }
   const like = `%${query}%`;
-  const rows = getDb()
-    .prepare(
-      `${SHORT_SELECT}
-       WHERE lower(s.title) LIKE ? OR lower(u.handle) LIKE ? OR lower(s.description) LIKE ?
-       ORDER BY s.created_at DESC, s.id DESC`
-    )
-    .all(like, like, like) as ShortJoinRow[];
+  const sql = `${SHORT_SELECT}
+     WHERE (lower(s.title) LIKE ? OR lower(u.handle) LIKE ? OR lower(s.description) LIKE ?)
+     ${blockClause}
+     ORDER BY s.created_at DESC, s.id DESC`;
+  const rows = (
+    viewerId
+      ? getDb().prepare(sql).all(like, like, like, viewerId)
+      : getDb().prepare(sql).all(like, like, like)
+  ) as ShortJoinRow[];
   return rows.map(toShort);
 }
 

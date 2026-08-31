@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Settings, Upload, UserRound } from "lucide-react";
+import { Ban, Settings, Upload, UserRound } from "lucide-react";
 import type { Author } from "@/types";
 import { api } from "@/lib/api";
 import { loginHref } from "@/lib/guest-routes";
+import ReportButton from "@/components/moderation/ReportButton";
 
 type Props = {
   author: Author;
@@ -23,23 +24,32 @@ export default function ProfileHeader({
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await api.getFollowStatus(author.id);
-      if (cancelled || !res.success || !res.data) return;
+      const [followRes, blockRes] = await Promise.all([
+        api.getFollowStatus(author.id),
+        signedIn && !isMe ? api.getBlockStatus(author.id) : null,
+      ]);
+      if (cancelled) return;
       queueMicrotask(() => {
-        setFollowers(res.data!.followers);
-        setFollowing(res.data!.following);
-        setIsFollowing(res.data!.isFollowing);
+        if (followRes.success && followRes.data) {
+          setFollowers(followRes.data.followers);
+          setFollowing(followRes.data.following);
+          setIsFollowing(followRes.data.isFollowing);
+        }
+        if (blockRes && blockRes.success && blockRes.data) {
+          setBlocked(blockRes.data.blocked);
+        }
       });
     })();
     return () => {
       cancelled = true;
     };
-  }, [author.id]);
+  }, [author.id, signedIn, isMe]);
 
   async function toggleFollow() {
     if (busy) return;
@@ -51,6 +61,22 @@ export default function ProfileHeader({
       setFollowers(res.data.followers);
       setFollowing(res.data.following);
       setIsFollowing(res.data.isFollowing);
+    }
+    setBusy(false);
+  }
+
+  async function toggleBlock() {
+    if (busy) return;
+    setBusy(true);
+    const res = blocked
+      ? await api.unblockUser(author.id)
+      : await api.blockUser(author.id);
+    if (res.success && res.data) {
+      setBlocked(res.data.blocked);
+      if (res.data.blocked) {
+        setIsFollowing(false);
+        setFollowers((n) => Math.max(0, n));
+      }
     }
     setBusy(false);
   }
@@ -115,7 +141,7 @@ export default function ProfileHeader({
               <button
                 type="button"
                 onClick={() => void toggleFollow()}
-                disabled={busy}
+                disabled={busy || blocked}
                 className={
                   isFollowing
                     ? "rounded-xl border border-[var(--border)] bg-[var(--btn)] px-4 py-2 text-sm font-semibold hover:border-[var(--accent)] disabled:opacity-50"
@@ -130,6 +156,24 @@ export default function ProfileHeader({
               >
                 메시지
               </Link>
+              <button
+                type="button"
+                onClick={() => void toggleBlock()}
+                disabled={busy}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--btn)] hover:border-[var(--danger)] disabled:opacity-50"
+                aria-label={blocked ? "차단 해제" : "차단"}
+                title={blocked ? "차단 해제" : "차단"}
+              >
+                <Ban
+                  size={18}
+                  className={blocked ? "text-[var(--danger)]" : undefined}
+                />
+              </button>
+              <ReportButton
+                targetType="user"
+                targetId={author.id}
+                className="inline-flex items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--btn)] px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:border-[var(--danger)] hover:text-[var(--danger)]"
+              />
             </>
           ) : (
             <Link
