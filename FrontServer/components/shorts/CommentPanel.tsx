@@ -9,7 +9,10 @@ type Props = {
   onClose: () => void;
   comments: Comment[];
   onAdd: (text: string, parentId?: string) => void;
+  onEdit: (id: string, text: string) => void;
+  onDelete: (id: string) => void;
   canWrite?: boolean;
+  currentUserId?: string;
 };
 
 export default function CommentPanel({
@@ -17,7 +20,10 @@ export default function CommentPanel({
   onClose,
   comments,
   onAdd,
+  onEdit,
+  onDelete,
   canWrite = true,
+  currentUserId,
 }: Props) {
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
@@ -107,7 +113,10 @@ export default function CommentPanel({
               <CommentItem
                 comment={root}
                 canWrite={canWrite}
+                canManage={root.authorId === currentUserId}
                 onReply={() => startReply(root)}
+                onEdit={(text) => onEdit(root.id, text)}
+                onDelete={() => onDelete(root.id)}
               />
               {replies.length > 0 && (
                 <div className="ml-6 flex flex-col gap-3 border-l border-[var(--border)] pl-4">
@@ -116,7 +125,10 @@ export default function CommentPanel({
                       key={r.id}
                       comment={r}
                       canWrite={canWrite}
+                      canManage={r.authorId === currentUserId}
                       onReply={() => startReply(root)}
+                      onEdit={(text) => onEdit(r.id, text)}
+                      onDelete={() => onDelete(r.id)}
                       small
                     />
                   ))}
@@ -183,14 +195,29 @@ export default function CommentPanel({
 function CommentItem({
   comment,
   canWrite,
+  canManage,
   onReply,
+  onEdit,
+  onDelete,
   small,
 }: {
   comment: Comment;
   canWrite: boolean;
+  canManage: boolean;
   onReply: () => void;
+  onEdit: (text: string) => void;
+  onDelete: () => void;
   small?: boolean;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(comment.text);
+
+  function saveEdit() {
+    const t = draft.trim();
+    if (t && t !== comment.text) onEdit(t);
+    setEditing(false);
+  }
+
   return (
     <div className="flex gap-3">
       <div
@@ -202,14 +229,36 @@ function CommentItem({
       >
         {comment.author.slice(0, 1)}
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold">{comment.author}</div>
-        <p className="mt-0.5 text-sm text-[var(--text)]">{comment.text}</p>
+        {editing ? (
+          <div className="mt-1 flex gap-2">
+            <input
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveEdit();
+                if (e.key === "Escape") setEditing(false);
+              }}
+              className="flex-1 rounded-full border-none bg-white px-3 py-1.5 text-sm text-black focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            />
+            <button
+              type="button"
+              onClick={saveEdit}
+              className="shrink-0 rounded-full bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white"
+            >
+              저장
+            </button>
+          </div>
+        ) : (
+          <p className="mt-0.5 text-sm text-[var(--text)]">{comment.text}</p>
+        )}
         <div className="mt-1 flex items-center gap-2">
           <span className="text-xs text-[var(--text-muted)]">
             {comment.time}
           </span>
-          {canWrite && (
+          {canWrite && !editing && (
             <button
               type="button"
               onClick={onReply}
@@ -217,6 +266,27 @@ function CommentItem({
             >
               답글
             </button>
+          )}
+          {canManage && !editing && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setDraft(comment.text);
+                  setEditing(true);
+                }}
+                className="text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text)]"
+              >
+                수정
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                className="text-xs font-medium text-[var(--text-muted)] hover:text-[var(--danger)]"
+              >
+                삭제
+              </button>
+            </>
           )}
         </div>
       </div>

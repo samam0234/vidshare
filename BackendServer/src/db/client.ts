@@ -59,6 +59,7 @@ export function initDb(): SqliteDb {
   db.exec(SCHEMA_SQL);
   ensureColumn(db, "shorts", "thumb", "TEXT");
   ensureColumn(db, "comments", "parent_id", "TEXT");
+  ensureColumn(db, "comments", "author_id", "TEXT");
   ensureColumn(
     db,
     "users",

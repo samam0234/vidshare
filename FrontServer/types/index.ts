@@ -27,6 +27,7 @@ export type Comment = {
   text: string;
   time: string;
   parentId?: string;
+  authorId?: string;
 };
 
 export type NotificationCategory =

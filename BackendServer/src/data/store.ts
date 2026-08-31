@@ -288,7 +288,7 @@ export function likeShort(id: string, unlike: boolean) {
 export function listComments(shortId: string): Comment[] {
   const rows = getDb()
     .prepare(
-      "SELECT id, short_id, author, text, time, parent_id FROM comments WHERE short_id = ? ORDER BY rowid"
+      "SELECT id, short_id, author, text, time, parent_id, author_id FROM comments WHERE short_id = ? ORDER BY rowid"
     )
     .all(shortId) as Array<{
     id: string;
@@ -297,6 +297,7 @@ export function listComments(shortId: string): Comment[] {
     text: string;
     time: string;
     parent_id: string | null;
+    author_id: string | null;
   }>;
   return rows.map((r) => ({
     id: r.id,
@@ -305,6 +306,7 @@ export function listComments(shortId: string): Comment[] {
     text: r.text,
     time: r.time,
     ...(r.parent_id ? { parentId: r.parent_id } : {}),
+    ...(r.author_id ? { authorId: r.author_id } : {}),
   }));
 }
 
@@ -312,6 +314,7 @@ export function addComment(input: {
   shortId: string;
   text: string;
   author: string;
+  authorId?: string;
   parentId?: string;
 }): Comment | undefined {
   const db = getDb();
@@ -339,18 +342,20 @@ export function addComment(input: {
     text: input.text,
     time: "방금 전",
     ...(parentId ? { parentId } : {}),
+    ...(input.authorId ? { authorId: input.authorId } : {}),
   };
 
   const tx = db.transaction(() => {
     db.prepare(
-      "INSERT INTO comments (id, short_id, author, text, time, parent_id) VALUES (?, ?, ?, ?, ?, ?)"
+      "INSERT INTO comments (id, short_id, author, text, time, parent_id, author_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
     ).run(
       comment.id,
       comment.shortId,
       comment.author,
       comment.text,
       comment.time,
-      parentId ?? null
+      parentId ?? null,
+      input.authorId ?? null
     );
     db.prepare(
       "UPDATE shorts SET comment_count = comment_count + 1 WHERE id = ?"
@@ -358,6 +363,65 @@ export function addComment(input: {
   });
   tx();
   return comment;
+}
+
+/** 본인 댓글만 수정할 수 있다. 있는지/소유인지를 구분하지 않고 undefined 로 통일. */
+export function updateComment(
+  id: string,
+  userId: string,
+  text: string
+): Comment | undefined {
+  const db = getDb();
+  const row = db
+    .prepare("SELECT author_id FROM comments WHERE id = ?")
+    .get(id) as { author_id: string | null } | undefined;
+  if (!row || row.author_id !== userId) return undefined;
+
+  db.prepare("UPDATE comments SET text = ? WHERE id = ?").run(text, id);
+  const updated = db
+    .prepare(
+      "SELECT id, short_id, author, text, time, parent_id, author_id FROM comments WHERE id = ?"
+    )
+    .get(id) as {
+    id: string;
+    short_id: string;
+    author: string;
+    text: string;
+    time: string;
+    parent_id: string | null;
+    author_id: string | null;
+  };
+  return {
+    id: updated.id,
+    shortId: updated.short_id,
+    author: updated.author,
+    text: updated.text,
+    time: updated.time,
+    ...(updated.parent_id ? { parentId: updated.parent_id } : {}),
+    ...(updated.author_id ? { authorId: updated.author_id } : {}),
+  };
+}
+
+/** 본인 댓글만 삭제. 답글이 있으면 함께 지우고 그 개수만큼 comment_count 를 줄인다. */
+export function deleteComment(id: string, userId: string): boolean {
+  const db = getDb();
+  const row = db
+    .prepare("SELECT short_id, author_id FROM comments WHERE id = ?")
+    .get(id) as { short_id: string; author_id: string | null } | undefined;
+  if (!row || row.author_id !== userId) return false;
+
+  const tx = db.transaction(() => {
+    const replies = db
+      .prepare("SELECT COUNT(*) AS c FROM comments WHERE parent_id = ?")
+      .get(id) as { c: number };
+    db.prepare("DELETE FROM comments WHERE parent_id = ?").run(id);
+    db.prepare("DELETE FROM comments WHERE id = ?").run(id);
+    db.prepare(
+      "UPDATE shorts SET comment_count = MAX(0, comment_count - ?) WHERE id = ?"
+    ).run(1 + replies.c, row.short_id);
+  });
+  tx();
+  return true;
 }
 
 export function listFaqs(): FaqItem[] {

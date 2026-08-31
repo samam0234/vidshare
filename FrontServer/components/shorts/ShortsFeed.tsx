@@ -168,13 +168,42 @@ export default function ShortsFeed({ query, focusId }: Props) {
 
   async function addComment(text: string, parentId?: string) {
     if (!user || !activeShortId) return;
-    const res = await api.postComment(activeShortId, text, user.name, parentId);
+    const res = await api.postComment(activeShortId, text, parentId);
     if (res.success && res.data) {
       const created = res.data;
       setComments((prev) => [...prev, created]);
       setShorts((prev) =>
         prev.map((s) =>
           s.id === activeShortId ? { ...s, comments: s.comments + 1 } : s
+        )
+      );
+    }
+  }
+
+  async function editComment(id: string, text: string) {
+    const res = await api.patchComment(id, text);
+    if (res.success && res.data) {
+      const updated = res.data;
+      setComments((prev) => prev.map((c) => (c.id === id ? updated : c)));
+    }
+  }
+
+  async function removeComment(id: string) {
+    if (!activeShortId) return;
+    const target = comments.find((c) => c.id === id);
+    if (!target) return;
+    const removedCount =
+      1 + comments.filter((c) => c.parentId === id).length;
+    const res = await api.deleteComment(id);
+    if (res.success) {
+      setComments((prev) =>
+        prev.filter((c) => c.id !== id && c.parentId !== id)
+      );
+      setShorts((prev) =>
+        prev.map((s) =>
+          s.id === activeShortId
+            ? { ...s, comments: Math.max(0, s.comments - removedCount) }
+            : s
         )
       );
     }
@@ -250,7 +279,10 @@ export default function ShortsFeed({ query, focusId }: Props) {
         onClose={() => setPanelOpen(false)}
         comments={comments}
         onAdd={addComment}
+        onEdit={editComment}
+        onDelete={removeComment}
         canWrite={Boolean(user)}
+        currentUserId={user?.id}
       />
 
       {shareToast && (

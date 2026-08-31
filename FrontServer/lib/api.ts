@@ -150,15 +150,21 @@ export const api = {
   getComments: (shortId: string) =>
     request<Comment[]>(`/api/shorts/${shortId}/comments`),
 
-  postComment: (
-    shortId: string,
-    text: string,
-    author?: string,
-    parentId?: string
-  ) =>
+  postComment: (shortId: string, text: string, parentId?: string) =>
     request<Comment>(`/api/shorts/${shortId}/comments`, {
       method: "POST",
-      body: JSON.stringify({ text, author, parentId }),
+      body: JSON.stringify({ text, parentId }),
+    }),
+
+  patchComment: (id: string, text: string) =>
+    request<Comment>(`/api/comments/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ text }),
+    }),
+
+  deleteComment: (id: string) =>
+    request<{ id: string }>(`/api/comments/${id}`, {
+      method: "DELETE",
     }),
 
   getUser: (id: string) => request<Author>(`/api/users/${id}`),
