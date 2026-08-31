@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `076` |
 | **파일명** | `076-playlists.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `7fbc987` |
+| **Git 커밋 (full)** | `7fbc9876a02c39a9e912f2b847716e7049eaff8b` |
 | **날짜** | `2026-09-01` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |
