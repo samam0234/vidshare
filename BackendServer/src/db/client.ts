@@ -25,6 +25,14 @@ export function getDb(): SqliteDb {
   return db;
 }
 
+/** 테스트에서 임시 DB를 정리할 때 사용. */
+export function closeDb() {
+  if (db) {
+    db.close();
+    db = null;
+  }
+}
+
 function ensureColumn(
   database: SqliteDb,
   table: string,

@@ -132,6 +132,8 @@ export function scheduleDatabaseDocDump(database: SqliteDb) {
   if (dumpTimer) clearTimeout(dumpTimer);
   dumpTimer = setTimeout(() => {
     dumpTimer = null;
+    // 대기 중에 커넥션이 닫힐 수 있다(테스트 종료 등).
+    if (!database.open) return;
     try {
       dumpOnce(database);
     } catch (err) {
