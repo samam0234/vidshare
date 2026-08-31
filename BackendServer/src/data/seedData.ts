@@ -7,7 +7,9 @@ import type {
   Short,
 } from "../types";
 
-export const seedAuthors: Author[] = [
+// 시드 계정은 전부 일반 유저다. 관리자는 `npm run create-admin` 으로 만든다
+// (비밀번호를 소스에 남기지 않기 위해).
+const seedAuthorBase: Omit<Author, "role">[] = [
   {
     id: "u1",
     handle: "깃털유머",
@@ -39,6 +41,11 @@ export const seedAuthors: Author[] = [
     bio: "테스트 계정 (비밀번호 demo1234)",
   },
 ];
+
+export const seedAuthors: Author[] = seedAuthorBase.map((a) => ({
+  ...a,
+  role: "user",
+}));
 
 const authorById = Object.fromEntries(seedAuthors.map((a) => [a.id, a]));
 

@@ -85,6 +85,9 @@ router.post("/login", (req, res) => {
   ) {
     throw new HttpError(401, "핸들 또는 비밀번호가 올바르지 않습니다.");
   }
+  if (account.suspended) {
+    throw new HttpError(403, "정지된 계정입니다. 고객센터로 문의해 주세요.");
+  }
   const sid = createSession(account.id);
   setSessionCookie(res, sid);
   res.json({ success: true, data: toPublicUser(account) });

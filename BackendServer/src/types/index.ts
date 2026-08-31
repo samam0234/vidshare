@@ -1,9 +1,42 @@
+export type UserRole = "user" | "admin";
+
 export type Author = {
   id: string;
   handle: string;
   name: string;
   avatar?: string;
   bio?: string;
+  role: UserRole;
+};
+
+/** 관리자 콘솔 전용 유저 표현. 공개 `Author` 에는 없는 운영 정보를 포함한다. */
+export type AdminUser = Author & {
+  suspended: boolean;
+  createdAt: string;
+};
+
+export type ReportStatus = "open" | "resolved" | "dismissed";
+
+export type AdminReport = {
+  id: number;
+  reporterId: string;
+  reporterHandle: string;
+  targetType: string;
+  targetId: string;
+  reason: string;
+  status: ReportStatus;
+  createdAt: string;
+};
+
+export type AdminStats = {
+  userCount: number;
+  suspendedCount: number;
+  openReportCount: number;
+  inquiryCount: number;
+  unrepliedInquiryCount: number;
+  shortCount: number;
+  longformCount: number;
+  communityCount: number;
 };
 
 export type Short = {
@@ -130,6 +163,8 @@ export type SupportInquiry = {
   body: string;
   authorName: string;
   createdAt: string;
+  adminReply?: string;
+  repliedAt?: string;
 };
 
 export type AppNotification = {

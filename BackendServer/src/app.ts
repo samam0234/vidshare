@@ -22,6 +22,7 @@ import followsRouter from "./routes/follows";
 import blocksRouter from "./routes/blocks";
 import reportsRouter from "./routes/reports";
 import playlistsRouter from "./routes/playlists";
+import adminAuthRouter from "./routes/admin/auth";
 import { ensureUploadsDir, uploadsDir } from "./upload/files";
 
 function isPrivateHostname(hostname: string) {
@@ -157,6 +158,9 @@ export function createApp() {
         "POST /api/chatbot/threads/:id/messages",
         "POST /api/uploads?kind=image|video",
         "GET  /uploads/:file",
+        "POST /api/admin/auth/login",
+        "POST /api/admin/auth/logout",
+        "GET  /api/admin/auth/me",
       ],
     });
   });
@@ -181,6 +185,7 @@ export function createApp() {
   app.use("/api/chatbot/threads", chatbotThreadsRouter);
   app.use("/api/chatbot", chatbotRouter);
   app.use("/api/uploads", uploadsRouter);
+  app.use("/api/admin/auth", adminAuthRouter);
 
   app.use(notFound);
   app.use(errorHandler);

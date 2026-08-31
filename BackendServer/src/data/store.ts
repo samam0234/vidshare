@@ -20,6 +20,7 @@ import type {
   NotificationCategory,
   Short,
   SupportInquiry,
+  UserRole,
 } from "../types";
 
 type UserRow = {
@@ -28,7 +29,12 @@ type UserRow = {
   name: string;
   bio: string;
   avatar: string | null;
+  role: string;
 };
+
+function toRole(raw: string): UserRole {
+  return raw === "admin" ? "admin" : "user";
+}
 
 type ShortJoinRow = {
   id: string;
@@ -46,13 +52,15 @@ type ShortJoinRow = {
   author_name: string;
   author_bio: string;
   author_avatar: string | null;
+  author_role: string;
 };
 
 const SHORT_SELECT = `
   SELECT
     s.id, s.title, s.description, s.author_id, s.likes, s.comment_count,
     s.views, s.video_url, s.thumb, s.gradient, s.created_at,
-    u.handle, u.name AS author_name, u.bio AS author_bio, u.avatar AS author_avatar
+    u.handle, u.name AS author_name, u.bio AS author_bio,
+    u.avatar AS author_avatar, u.role AS author_role
   FROM shorts s
   JOIN users u ON u.id = s.author_id
 `;
@@ -64,6 +72,7 @@ function toAuthor(row: UserRow): Author {
     name: row.name,
     bio: row.bio,
     ...(row.avatar ? { avatar: row.avatar } : {}),
+    role: toRole(row.role),
   };
 }
 
@@ -78,6 +87,7 @@ function toShort(row: ShortJoinRow): Short {
       name: row.author_name,
       bio: row.author_bio,
       ...(row.author_avatar ? { avatar: row.author_avatar } : {}),
+      role: toRole(row.author_role),
     },
     likes: row.likes,
     comments: row.comment_count,
@@ -92,7 +102,7 @@ function toShort(row: ShortJoinRow): Short {
 export function listAuthors(): Author[] {
   const rows = getDb()
     .prepare(
-      "SELECT id, handle, name, bio, avatar FROM users ORDER BY created_at, id"
+      "SELECT id, handle, name, bio, avatar, role FROM users ORDER BY created_at, id"
     )
     .all() as UserRow[];
   return rows.map(toAuthor);
@@ -102,7 +112,7 @@ export function findAuthor(idOrHandle: string): Author | undefined {
   const key = idOrHandle.replace(/^@/, "").trim();
   const row = getDb()
     .prepare(
-      `SELECT id, handle, name, bio, avatar FROM users
+      `SELECT id, handle, name, bio, avatar, role FROM users
        WHERE id = ? OR lower(handle) = lower(?)`
     )
     .get(key, key) as UserRow | undefined;
@@ -113,7 +123,7 @@ export function searchAuthors(q: string, limit = 20): Author[] {
   const like = `%${q.trim().toLowerCase().replace(/^@/, "")}%`;
   const rows = getDb()
     .prepare(
-      `SELECT id, handle, name, bio, avatar FROM users
+      `SELECT id, handle, name, bio, avatar, role FROM users
        WHERE lower(handle) LIKE ? OR lower(name) LIKE ?
        ORDER BY created_at, id LIMIT ?`
     )
@@ -171,7 +181,7 @@ export function unfollowUser(followerId: string, followingId: string): boolean {
 export function listFollowers(userId: string): Author[] {
   const rows = getDb()
     .prepare(
-      `SELECT u.id, u.handle, u.name, u.bio, u.avatar
+      `SELECT u.id, u.handle, u.name, u.bio, u.avatar, u.role
        FROM user_follows f JOIN users u ON u.id = f.follower_id
        WHERE f.following_id = ? ORDER BY f.created_at DESC`
     )
@@ -182,7 +192,7 @@ export function listFollowers(userId: string): Author[] {
 export function listFollowing(userId: string): Author[] {
   const rows = getDb()
     .prepare(
-      `SELECT u.id, u.handle, u.name, u.bio, u.avatar
+      `SELECT u.id, u.handle, u.name, u.bio, u.avatar, u.role
        FROM user_follows f JOIN users u ON u.id = f.following_id
        WHERE f.follower_id = ? ORDER BY f.created_at DESC`
     )
@@ -248,7 +258,7 @@ export function unblockUser(blockerId: string, blockedId: string): void {
 export function listBlockedUsers(blockerId: string): Author[] {
   const rows = getDb()
     .prepare(
-      `SELECT u.id, u.handle, u.name, u.bio, u.avatar
+      `SELECT u.id, u.handle, u.name, u.bio, u.avatar, u.role
        FROM user_blocks b JOIN users u ON u.id = b.blocked_id
        WHERE b.blocker_id = ? ORDER BY b.created_at DESC`
     )

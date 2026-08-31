@@ -66,6 +66,11 @@ export function initDb(): SqliteDb {
     "notifications_enabled",
     "INTEGER NOT NULL DEFAULT 1"
   );
+  ensureColumn(db, "users", "role", "TEXT NOT NULL DEFAULT 'user'");
+  ensureColumn(db, "users", "suspended", "INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db, "reports", "status", "TEXT NOT NULL DEFAULT 'open'");
+  ensureColumn(db, "support_inquiries", "admin_reply", "TEXT");
+  ensureColumn(db, "support_inquiries", "replied_at", "TEXT");
   // 레거시 목 알림 테이블. 지금은 activity_notifications 만 쓴다.
   db.exec("DROP TABLE IF EXISTS notifications");
   interceptDatabaseWrites(db);

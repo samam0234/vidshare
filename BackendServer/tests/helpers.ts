@@ -49,4 +49,25 @@ export async function loginAs(
   return list.map((c) => c.split(";")[0]).join("; ");
 }
 
+/**
+ * 관리자 계정을 만들고 콘솔 세션 쿠키를 돌려준다.
+ * 관리자는 시드에 없으므로(비밀번호를 소스에 두지 않기 위해) 테스트에서도
+ * create-admin 스크립트와 같은 경로 — `createAccount({ role: "admin" })` — 를 쓴다.
+ */
+export async function createAdminAndLogin(
+  app: Express,
+  handle = "root",
+  password = "admin1234"
+): Promise<{ jar: string; id: string }> {
+  const { createAccount } = await import("../src/auth/accounts.js");
+  const account = createAccount({ handle, name: handle, password, role: "admin" });
+  const res = await request(app)
+    .post("/api/admin/auth/login")
+    .send({ handle, password });
+  const raw = res.headers["set-cookie"];
+  if (!raw) throw new Error(`admin login failed: ${res.status}`);
+  const list = Array.isArray(raw) ? raw : [raw];
+  return { jar: list.map((c) => c.split(";")[0]).join("; "), id: account.id };
+}
+
 export const DEMO = { handle: "demo", password: "demo1234" };

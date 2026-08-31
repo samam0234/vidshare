@@ -8,6 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "create-admin": "tsx scripts/create-admin.ts",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "test": "cross-env NODE_ENV=test node --import tsx --test tests/**/*.test.ts",
     "test:watch": "cross-env NODE_ENV=test node --import tsx --test --watch tests/**/*.test.ts"
