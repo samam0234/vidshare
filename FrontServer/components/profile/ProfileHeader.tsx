@@ -72,12 +72,18 @@ export default function ProfileHeader({
         )}
         <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-[var(--text-muted)]">
           <span>영상 {videoCount}개</span>
-          <span>
+          <Link
+            href={`/profile/${author.id}/followers`}
+            className="hover:text-[var(--text)] hover:underline"
+          >
             팔로워 <b className="text-[var(--text)]">{followers}</b>
-          </span>
-          <span>
+          </Link>
+          <Link
+            href={`/profile/${author.id}/following`}
+            className="hover:text-[var(--text)] hover:underline"
+          >
             팔로잉 <b className="text-[var(--text)]">{following}</b>
-          </span>
+          </Link>
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {isMe ? (
