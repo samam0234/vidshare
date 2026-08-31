@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- **E2E 테스트** (커밋 079): Playwright, 게스트 접근·로그인/로그아웃·커뮤니티 작성·메시지 실시간(WS) 8개 시나리오
 - **메시지 실시간화** (커밋 078): WebSocket (`/ws/conversations`), 대화 송수신을 실시간으로 브로드캐스트, REST 폴백 유지
 - **알림 실시간화** (커밋 077): SSE (`GET /api/notifications/stream`), 폴링 없이 새 알림 즉시 도착
 - **재생목록** (커밋 076): `playlists`/`playlist_items`, 프로필 탭 실구현, `/playlists/:id` 상세 페이지
