@@ -27,14 +27,7 @@ function getServerSnapshot() {
   return EMPTY;
 }
 
-const ENABLED_KEY = "vidshare:notifications-enabled";
-
-function readEnabled(): boolean {
-  if (typeof window === "undefined") return true;
-  return window.localStorage.getItem(ENABLED_KEY) !== "0";
-}
-
-let enabled = readEnabled();
+let enabled = true;
 const enabledListeners = new Set<() => void>();
 
 function emitEnabled() {
@@ -58,19 +51,33 @@ export function isNotificationsEnabled() {
   return enabled;
 }
 
-/** 알림 수신 여부 토글. 끄면 배지/목록을 비우고, 켜면 즉시 새로고침. */
-export function setNotificationsEnabled(next: boolean) {
-  if (enabled === next) return;
-  enabled = next;
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(ENABLED_KEY, next ? "1" : "0");
+/** 서버에 저장된 수신 설정을 읽어 온다. 로그인 직후 호출. */
+export async function refreshNotificationSettings() {
+  const res = await api.getNotificationSettings();
+  if (res.success && res.data && res.data.enabled !== enabled) {
+    enabled = res.data.enabled;
+    emitEnabled();
   }
+}
+
+/** 알림 수신 여부 토글. 서버에 저장하고, 끄면 목록을 비운다. 실패 시 되돌린다. */
+export async function setNotificationsEnabled(next: boolean) {
+  if (enabled === next) return;
+  const prev = enabled;
+  enabled = next;
   emitEnabled();
   if (next) {
     void refreshNotifications();
   } else {
     items = EMPTY;
     emit();
+  }
+
+  const res = await api.patchNotificationSettings(next);
+  if (!res.success) {
+    enabled = prev;
+    emitEnabled();
+    if (prev) void refreshNotifications();
   }
 }
 
@@ -99,10 +106,14 @@ export async function refreshNotifications() {
   }
 }
 
-/** 로그아웃 시 비우기 */
+/** 로그아웃 시 비우기. 수신 설정은 계정별이므로 기본값으로 되돌린다. */
 export function resetNotifications() {
   items = EMPTY;
   emit();
+  if (!enabled) {
+    enabled = true;
+    emitEnabled();
+  }
 }
 
 export async function markNotificationRead(id: number) {

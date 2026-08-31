@@ -101,6 +101,8 @@ export function createApp() {
         "GET  /api/users/:id",
         "GET  /api/users/:id/shorts",
         "GET  /api/notifications",
+        "GET  /api/notifications/settings",
+        "PATCH /api/notifications/settings",
         "PATCH /api/notifications/read-all",
         "DELETE /api/notifications",
         "PATCH /api/notifications/:id",

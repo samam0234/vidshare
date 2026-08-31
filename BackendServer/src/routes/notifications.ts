@@ -2,9 +2,11 @@ import { Router } from "express";
 import {
   deleteActivityNotification,
   deleteAllActivityNotifications,
+  getNotificationsEnabled,
   listActivityNotifications,
   markAllActivityNotificationsRead,
   patchActivityNotification,
+  setNotificationsEnabled,
 } from "../data/store";
 import { requireRequestUser } from "../auth/requestUser";
 import { HttpError } from "../middleware/errorHandler";
@@ -16,6 +18,26 @@ router.get("/", (req, res) => {
   const user = requireRequestUser(req);
   const category = req.query.category ? String(req.query.category) : "all";
   res.json({ success: true, data: listActivityNotifications(user.id, category) });
+});
+
+/** GET /api/notifications/settings — 수신 설정 조회. /:id 보다 앞에 둔다. */
+router.get("/settings", (req, res) => {
+  const user = requireRequestUser(req);
+  res.json({
+    success: true,
+    data: { enabled: getNotificationsEnabled(user.id) },
+  });
+});
+
+/** PATCH /api/notifications/settings  body: { enabled: boolean } */
+router.patch("/settings", (req, res) => {
+  const user = requireRequestUser(req);
+  const enabled = req.body?.enabled;
+  if (typeof enabled !== "boolean") {
+    throw new HttpError(400, "enabled는 boolean이어야 합니다.");
+  }
+  setNotificationsEnabled(user.id, enabled);
+  res.json({ success: true, data: { enabled } });
 });
 
 /** PATCH /api/notifications/read-all — 본인 알림 전체 읽음. /:id 보다 앞에 둔다. */

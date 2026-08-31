@@ -50,6 +50,12 @@ export function initDb(): SqliteDb {
   db.pragma("foreign_keys = ON");
   db.exec(SCHEMA_SQL);
   ensureColumn(db, "shorts", "thumb", "TEXT");
+  ensureColumn(
+    db,
+    "users",
+    "notifications_enabled",
+    "INTEGER NOT NULL DEFAULT 1"
+  );
   // 레거시 목 알림 테이블. 지금은 activity_notifications 만 쓴다.
   db.exec("DROP TABLE IF EXISTS notifications");
   interceptDatabaseWrites(db);

@@ -183,6 +183,15 @@ export const api = {
       method: "DELETE",
     }),
 
+  getNotificationSettings: () =>
+    request<{ enabled: boolean }>("/api/notifications/settings"),
+
+  patchNotificationSettings: (enabled: boolean) =>
+    request<{ enabled: boolean }>("/api/notifications/settings", {
+      method: "PATCH",
+      body: JSON.stringify({ enabled }),
+    }),
+
   getLongformList: () => request<LongformVideo[]>("/api/longform"),
 
   getLongform: (id: number) => request<LongformVideo>(`/api/longform/${id}`),

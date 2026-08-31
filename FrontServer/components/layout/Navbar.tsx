@@ -17,6 +17,7 @@ import { toggleStoredTheme, useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import {
+  refreshNotificationSettings,
   refreshNotifications,
   resetNotifications,
   useNotifications,
@@ -59,8 +60,11 @@ export default function Navbar() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user) void refreshNotifications();
-    else resetNotifications();
+    if (user) {
+      void refreshNotificationSettings().then(() => refreshNotifications());
+    } else {
+      resetNotifications();
+    }
   }, [user]);
 
   if (pathForMenus !== pathname) {

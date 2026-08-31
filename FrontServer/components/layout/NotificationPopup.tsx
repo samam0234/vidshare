@@ -98,7 +98,7 @@ export default function NotificationPopup({ open, onClose }: Props) {
               type="button"
               role="switch"
               aria-checked={enabled}
-              onClick={() => setNotificationsEnabled(!enabled)}
+              onClick={() => void setNotificationsEnabled(!enabled)}
               className={cn(
                 "relative h-6 w-11 shrink-0 rounded-full transition-colors",
                 enabled ? "bg-[var(--accent)]" : "bg-[var(--border)]"

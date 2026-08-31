@@ -938,10 +938,30 @@ export function getActivityNotification(
   return row ? toActivityNotification(row) : undefined;
 }
 
+/** 사용자가 알림을 받는지 여부. 행이 없으면 기본값 true. */
+export function getNotificationsEnabled(userId: string): boolean {
+  const row = getDb()
+    .prepare("SELECT notifications_enabled FROM users WHERE id = ?")
+    .get(userId) as { notifications_enabled: number } | undefined;
+  return row ? Boolean(row.notifications_enabled) : true;
+}
+
+export function setNotificationsEnabled(
+  userId: string,
+  enabled: boolean
+): boolean {
+  getDb()
+    .prepare("UPDATE users SET notifications_enabled = ? WHERE id = ?")
+    .run(enabled ? 1 : 0, userId);
+  return enabled;
+}
+
+/** 수신을 꺼 둔 사용자는 저장하지 않고 undefined 를 돌려준다. */
 export function createActivityNotification(
   ownerId: string,
   input: { category: NotificationCategory; message: string; href?: string }
-): AppNotification {
+): AppNotification | undefined {
+  if (!getNotificationsEnabled(ownerId)) return undefined;
   const createdAt = new Date().toISOString();
   const info = getDb()
     .prepare(

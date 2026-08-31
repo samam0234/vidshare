@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   bio TEXT NOT NULL DEFAULT '',
   avatar TEXT,
   password_hash TEXT,
+  notifications_enabled INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL
 );
 
