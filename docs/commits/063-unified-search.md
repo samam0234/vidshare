@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `063` |
 | **파일명** | `063-unified-search.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `4c84a78` |
+| **Git 커밋 (full)** | `4c84a78b1f26e0683ef3c2739b14b847dc9b39f2` |
 | **날짜** | `2026-08-31` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |
