@@ -69,6 +69,7 @@ export async function setNotificationsEnabled(next: boolean) {
   if (next) {
     void refreshNotifications();
   } else {
+    disconnectStream();
     items = EMPTY;
     emit();
   }
@@ -104,16 +105,49 @@ export async function refreshNotifications() {
     items = res.data;
     emit();
   }
+  connectStream();
 }
 
 /** 로그아웃 시 비우기. 수신 설정은 계정별이므로 기본값으로 되돌린다. */
 export function resetNotifications() {
+  disconnectStream();
   items = EMPTY;
   emit();
   if (!enabled) {
     enabled = true;
     emitEnabled();
   }
+}
+
+let eventSource: EventSource | null = null;
+
+/**
+ * 알림 실시간 수신(SSE). 폴링 없이 새 알림이 생기는 즉시 목록 맨 위에 얹는다.
+ * 이미 연결돼 있으면 아무 것도 하지 않는다(중복 연결 방지).
+ */
+function connectStream() {
+  if (typeof window === "undefined" || eventSource || !enabled) return;
+  eventSource = new EventSource(`${api.baseUrl}/api/notifications/stream`, {
+    withCredentials: true,
+  });
+  eventSource.addEventListener("notification", (event) => {
+    try {
+      const notification = JSON.parse((event as MessageEvent).data) as AppNotification;
+      if (items.some((n) => n.id === notification.id)) return;
+      items = [notification, ...items];
+      emit();
+    } catch {
+      // 파싱 실패한 이벤트는 무시한다.
+    }
+  });
+  eventSource.onerror = () => {
+    // 브라우저가 자동으로 재연결을 시도한다. 별도 처리 불필요.
+  };
+}
+
+function disconnectStream() {
+  eventSource?.close();
+  eventSource = null;
 }
 
 export async function markNotificationRead(id: number) {

@@ -10,8 +10,41 @@ import {
 } from "../data/store";
 import { requireRequestUser } from "../auth/requestUser";
 import { HttpError } from "../middleware/errorHandler";
+import { notificationBus } from "../realtime/notificationBus";
+import type { AppNotification } from "../types";
 
 const router = Router();
+
+/**
+ * GET /api/notifications/stream — SSE. /:id 보다 앞에 둔다.
+ * 연결 유지 중 새 알림이 생기면 즉시 이벤트로 흘려보낸다(폴링 대체).
+ */
+router.get("/stream", (req, res) => {
+  const user = requireRequestUser(req);
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+  res.write(": connected\n\n");
+
+  const onNotification = (notification: AppNotification) => {
+    res.write(`event: notification\ndata: ${JSON.stringify(notification)}\n\n`);
+  };
+  notificationBus.on(user.id, onNotification);
+
+  const keepAlive = setInterval(() => {
+    res.write(": ping\n\n");
+  }, 25000);
+  keepAlive.unref();
+
+  req.on("close", () => {
+    clearInterval(keepAlive);
+    notificationBus.off(user.id, onNotification);
+  });
+});
 
 /** GET /api/notifications?category= */
 router.get("/", (req, res) => {

@@ -1,5 +1,6 @@
 import { v4 as uuid } from "uuid";
 import { getDb } from "../db/client";
+import { publishNotification } from "../realtime/notificationBus";
 import type {
   Author,
   ChatUser,
@@ -1346,7 +1347,9 @@ export function createActivityNotification(
        VALUES (?, ?, ?, ?, 0, ?)`
     )
     .run(ownerId, input.category, input.message, input.href ?? null, createdAt);
-  return getActivityNotification(Number(info.lastInsertRowid), ownerId)!;
+  const notification = getActivityNotification(Number(info.lastInsertRowid), ownerId)!;
+  publishNotification(ownerId, notification);
+  return notification;
 }
 
 export function patchActivityNotification(

@@ -95,3 +95,48 @@ describe("알림 벌크 동작", () => {
     assert.equal(await countNotifications(), 0);
   });
 });
+
+describe("알림 실시간 스트림 (SSE)", () => {
+  it("비로그인 연결은 401", async () => {
+    const res = await request(app).get("/api/notifications/stream");
+    assert.equal(res.status, 401);
+  });
+
+  it("로그인 상태면 text/event-stream 으로 연결되고 새 알림을 즉시 흘려보낸다", async () => {
+    const http = await import("node:http");
+    const server = http.createServer(app);
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    server.unref();
+    const { port } = server.address() as { port: number };
+
+    const controller = new AbortController();
+    const res = await fetch(`http://127.0.0.1:${port}/api/notifications/stream`, {
+      headers: { Cookie: jar },
+      signal: controller.signal,
+    });
+    assert.equal(res.status, 200);
+    assert.match(String(res.headers.get("content-type")), /text\/event-stream/);
+
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    const readUntilNotification = (async () => {
+      while (!buf.includes("event: notification")) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value);
+      }
+    })();
+
+    // 스트림 연결이 자리 잡을 시간을 준 뒤 알림을 발생시킨다.
+    await new Promise((r) => setTimeout(r, 100));
+    await writePost("실시간알림테스트");
+    await readUntilNotification;
+
+    controller.abort();
+    server.close();
+
+    assert.match(buf, /event: notification/);
+    assert.match(buf, /실시간알림테스트|category/);
+  });
+});
