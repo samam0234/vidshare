@@ -136,6 +136,10 @@ NNN-짧은-영문-slug.md
 | 060 | [060-sqlite-database-column-dump.md](./060-sqlite-database-column-dump.md) | `0b6ad0e` | SQLite 쓰기 시 DataBaseColumn.md 자동 덤프 | 2026-08-27 |
 | 061 | [061-notification-clear-confirm.md](./061-notification-clear-confirm.md) | `7ff45bb` | 알림 전체 삭제 확인 단계 (A4) | 2026-08-31 |
 | 062 | [062-drop-legacy-notifications-table.md](./062-drop-legacy-notifications-table.md) | `b77e4dc` | 레거시 notifications 테이블·죽은 코드 제거 (A5) | 2026-08-31 |
+| 063 | [063-unified-search.md](./063-unified-search.md) | `4c84a78` | 통합 검색 (쇼츠·롱폼·커뮤니티·유저) | 2026-08-31 |
+| 064 | [064-notification-settings-server.md](./064-notification-settings-server.md) | `6d381ac` | 알림 수신 거부 서버 반영 | 2026-08-31 |
+| 065 | [065-user-follows.md](./065-user-follows.md) | `c1169ec` | 팔로우/언팔·팔로잉 피드 | 2026-08-31 |
+| 066 | [066-backend-automated-tests.md](./066-backend-automated-tests.md) | `0758f9d` | 백엔드 자동화 테스트 32건 | 2026-08-31 |
 
 ---
 

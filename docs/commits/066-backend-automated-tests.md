@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `066` |
 | **파일명** | `066-backend-automated-tests.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `0758f9d` |
+| **Git 커밋 (full)** | `0758f9d86b45aeb0199fdb09e1702ddf83e80673` |
 | **날짜** | `2026-08-31` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |

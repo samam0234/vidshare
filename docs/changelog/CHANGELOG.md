@@ -8,6 +8,10 @@
 ## [Unreleased]
 
 ### Added
+- **통합 검색** (커밋 063): `GET /api/search?q=` — 쇼츠·롱폼·커뮤니티·유저 동시 검색, `/search` 페이지 + 탭 필터
+- **알림 수신 설정 서버 저장** (커밋 064): `users.notifications_enabled`, `GET/PATCH /api/notifications/settings`. 수신 거부 시 알림을 **생성하지 않음**
+- **팔로우** (커밋 065): `user_follows` 테이블, `/api/follows` 6종, 프로필 버튼 연동, 팔로우 시 상대에게 알림
+- **백엔드 자동화 테스트** (커밋 066): `node:test` + `supertest` 32건 (인증·쇼츠·검색·팔로우·알림)
 - 알림 전체 삭제 확인 단계 (커밋 061): 삭제 건수 표시 후 취소/삭제 선택
 - SQLite 테이블·행 덤프 `BackendServer/data/DataBaseColumn.md` (쓰기 시 자동 갱신, gitignore)
 - 알림 팝업 바깥 클릭 닫기 (커밋 059)
@@ -77,11 +81,10 @@
 - 메시지 상대를 눌러도 대화창이 안 열리던 문제 (localStorage 하이드)
 
 ### 예정 (다음 작업자용, 상세는 features/roadmap.md)
-- **Phase A(P0) 전량 완료 (2026-08-31).** 아래는 Phase B 이후
-- 통합 검색 (롱폼·커뮤니티·유저) (P1)
-- 알림 수신 거부를 서버에 반영 (P1)
-- 팔로우, 실시간 알림/메시지 (P1)
-- 자동화 테스트 (현재 0건), 배포 파이프라인 (P1)
+- **Phase A(P0) 전량 완료, Phase B 주요 항목 완료 (2026-08-31)**
+- 팔로잉 피드 화면, 팔로워/팔로잉 목록 화면 (API는 준비됨)
+- 실시간 알림/메시지 (SSE 또는 WebSocket)
+- 프론트 테스트, E2E(Playwright), 배포 파이프라인
 
 ---
 

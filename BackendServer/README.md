@@ -48,7 +48,9 @@ npm run dev
 ```bash
 npm run build      # dist/ 컴파일
 npm start          # 프로덕션 실행 (build 후)
-npm run typecheck  # 타입만 검사
+npm run typecheck  # 타입만 검사 (src + tests)
+npm test           # API 자동화 테스트 (임시 SQLite 사용)
+npm run test:watch # 테스트 진행 상태 감지
 ```
 
 ---
@@ -70,6 +72,7 @@ npm run typecheck  # 타입만 검사
 | Method | Path | 설명 |
 |--------|------|------|
 | GET | `/api/health` | 헬스 체크 |
+| GET | `/api/search?q=` | 통합 검색 (쇼츠·롱폼·커뮤니티·유저) |
 | GET | `/api/shorts?q=` | 쇼츠 목록 (검색 선택) |
 | GET | `/api/shorts/:id` | 쇼츠 상세 |
 | POST | `/api/shorts` | 쇼츠 생성 `{ title, description?, gradient?, videoUrl?, thumb? }` (로그인) |
@@ -87,10 +90,18 @@ npm run typecheck  # 타입만 검사
 | GET | `/api/users/:id` | 사용자 상세 |
 | GET | `/api/users/:id/shorts` | 사용자 쇼츠 |
 | GET | `/api/notifications?category=` | 알림 목록 |
+| GET | `/api/notifications/settings` | 알림 수신 설정 조회 (로그인) |
+| PATCH | `/api/notifications/settings` | `{ enabled }` 수신 설정 변경 (로그인) |
 | PATCH | `/api/notifications/read-all` | 본인 알림 전체 읽음 |
 | DELETE | `/api/notifications` | 본인 알림 전체 삭제 |
 | DELETE | `/api/notifications/:id` | 알림 삭제 |
 | PATCH | `/api/notifications/:id` | `{ read }` |
+| GET | `/api/follows/feed` | 팔로잉 피드 (로그인) |
+| GET | `/api/follows/:id` | 팔로워/팔로잉 수 + 내 팔로우 여부 |
+| GET | `/api/follows/:id/followers` | 팔로워 목록 |
+| GET | `/api/follows/:id/following` | 팔로잉 목록 |
+| POST | `/api/follows/:id` | 팔로우 (로그인, 멱등) |
+| DELETE | `/api/follows/:id` | 언팔로우 (로그인) |
 | GET | `/api/messages/users` | 채팅 상대 목록 |
 | GET | `/api/messages/:userId` | 대화 내역 |
 | POST | `/api/messages/:userId` | 메시지 전송 `{ content, isImage? }` |

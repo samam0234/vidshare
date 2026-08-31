@@ -1,7 +1,7 @@
 # 아키텍처 개요
 
 **상태**: 구현됨 — FrontServer(Next.js) + BackendServer(Express + SQLite) 전면 연동 완료
-**최종 갱신**: 2026-08-31
+**최종 갱신**: 2026-08-31 (Phase B 완료)
 **대상 독자**: 이 저장소를 처음 인수받는 개발자/에이전트
 
 ---
@@ -23,7 +23,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 [BackendServer :4000]  Express REST API
     │  routes/ → data/store.ts → db/client.ts
     ▼
-[SQLite]  BackendServer/data/vidshare.sqlite  (17개 테이블)
+[SQLite]  BackendServer/data/vidshare.sqlite  (18개 테이블)
 [Files]   BackendServer/uploads/  ← 영상·썸네일. DB에는 /uploads/<uuid>.ext 만 저장
 ```
 
@@ -58,9 +58,9 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 |------|------|
 | 실파일 업로드 | **057에서 로컬 `uploads/` 도입.** 트랜스코딩·비공개 URL·오브젝트 스토리지는 없음 |
 | 실시간성 | 알림·메시지 모두 폴링/수동 새로고침. WebSocket/SSE 없음 |
-| 알림 수신 거부 | 클라이언트 localStorage 전용. 서버는 계속 알림 생성 |
-| 검색 | Navbar 검색이 쇼츠 `?q=` 만 지원. 롱폼·커뮤니티·유저 미지원 |
-| 테스트 | 자동화 테스트 없음 (수동 검증만) |
+| 검색 | **063에서 통합 검색 도입.** 관련도 정렬·페이지네이션은 없음 |
+| 팔로우 | **065에서 API 도입.** 팔로잉 피드·목록 화면은 미구현 |
+| 테스트 | **066에서 백엔드 32건 도입.** 프론트·E2E·CI 는 없음 |
 | 마이그레이션 | 버전 테이블 없이 `initDb()` 에서 개별 처리 (`ensureColumn`, `DROP TABLE`) |
 | `lib/mock-data.ts` | 잔존. 일부 시드/폴백 용도로만 남아 있음 |
 
@@ -216,6 +216,7 @@ src/
 | 콘텐츠 (038 추가) | `longform`, `community_posts` |
 | 대화 (038 추가) | `conversations`, `chat_lines` |
 | 알림 (038 추가) | `activity_notifications` |
+| 팔로우 (065 추가) | `user_follows` |
 
 > 알림은 `activity_notifications` **하나만** 쓴다.
 > 초기 목업용 `notifications` 테이블은 커밋 062에서 제거했고,
