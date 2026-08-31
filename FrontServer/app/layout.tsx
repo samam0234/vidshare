@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { QueryProvider } from "@/context/QueryProvider";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import GuestRouteGuard from "@/components/auth/GuestRouteGuard";
@@ -32,13 +33,15 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col font-sans">
         <ThemeProvider>
-          <AuthProvider>
-            <Navbar />
-            <GuestRouteGuard>
-              <div className="flex flex-1 flex-col">{children}</div>
-            </GuestRouteGuard>
-            <Footer />
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <Navbar />
+              <GuestRouteGuard>
+                <div className="flex flex-1 flex-col">{children}</div>
+              </GuestRouteGuard>
+              <Footer />
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

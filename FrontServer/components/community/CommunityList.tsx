@@ -1,40 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { MessageSquareText, Plus } from "lucide-react";
 import { formatWhen } from "@/lib/content-store";
 import { api } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/context/AuthContext";
 import { loginHref } from "@/lib/guest-routes";
 import SerialBadge from "@/components/ui/SerialBadge";
-import type { CommunityPost } from "@/types/content";
 
 export default function CommunityList() {
   const { user } = useAuth();
   const writeHref = user ? "/community/write" : loginHref("/community/write");
-  const [community, setCommunity] = useState<CommunityPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  const { data: community = [], isLoading: loading, error } = useQuery({
+    queryKey: queryKeys.community,
+    queryFn: async () => {
       const res = await api.getCommunityList();
-      if (cancelled) return;
-      queueMicrotask(() => {
-        if (res.success && res.data) {
-          setCommunity(res.data);
-        } else {
-          setLoadError(res.error ?? "커뮤니티 글을 불러오지 못했습니다.");
-        }
-        setLoading(false);
-      });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      if (!res.success || !res.data) {
+        throw new Error(res.error ?? "커뮤니티 글을 불러오지 못했습니다.");
+      }
+      return res.data;
+    },
+  });
+  const loadError = error instanceof Error ? error.message : null;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">

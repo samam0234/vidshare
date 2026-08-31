@@ -2,10 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function CommunityForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +27,7 @@ export default function CommunityForm() {
       setBusy(false);
       return;
     }
+    void queryClient.invalidateQueries({ queryKey: queryKeys.community });
     router.push(`/community/${res.data.id}`);
   }
 

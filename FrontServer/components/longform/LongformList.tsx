@@ -1,41 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Clapperboard, Plus } from "lucide-react";
 import { formatWhen } from "@/lib/content-store";
 import { api } from "@/lib/api";
 import { mediaUrl } from "@/lib/media";
+import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/context/AuthContext";
 import { loginHref } from "@/lib/guest-routes";
 import SerialBadge from "@/components/ui/SerialBadge";
-import type { LongformVideo } from "@/types/content";
 
 export default function LongformList() {
   const { user } = useAuth();
   const writeHref = user ? "/longform/write" : loginHref("/longform/write");
-  const [longform, setLongform] = useState<LongformVideo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  const { data: longform = [], isLoading: loading, error } = useQuery({
+    queryKey: queryKeys.longform,
+    queryFn: async () => {
       const res = await api.getLongformList();
-      if (cancelled) return;
-      queueMicrotask(() => {
-        if (res.success && res.data) {
-          setLongform(res.data);
-        } else {
-          setLoadError(res.error ?? "롱폼 목록을 불러오지 못했습니다.");
-        }
-        setLoading(false);
-      });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      if (!res.success || !res.data) {
+        throw new Error(res.error ?? "롱폼 목록을 불러오지 못했습니다.");
+      }
+      return res.data;
+    },
+  });
+  const loadError = error instanceof Error ? error.message : null;
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">

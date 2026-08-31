@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toProfileVideos } from "@/lib/mock-data";
-import type { Author, Short } from "@/types";
+import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/context/AuthContext";
 import ProfileHeader from "./ProfileHeader";
 import ProfileTabs, { type SortKey, type TabKey } from "./ProfileTabs";
@@ -16,25 +17,21 @@ export default function ProfilePageClient({ id }: Props) {
   const { user } = useAuth();
   const resolvedId = id === "me" || id === "u-me" ? (user?.id ?? id) : id;
 
-  const [author, setAuthor] = useState<Author | null>(null);
-  const [shorts, setShorts] = useState<Short[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    queueMicrotask(() => setLoading(true));
-    Promise.all([api.getUser(resolvedId), api.getUserShorts(resolvedId)]).then(
-      ([userRes, shortsRes]) => {
-        if (cancelled) return;
-        setAuthor(userRes.success && userRes.data ? userRes.data : null);
-        setShorts(shortsRes.success && shortsRes.data ? shortsRes.data : []);
-        setLoading(false);
-      }
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [resolvedId]);
+  const { data: author = null, isLoading: authorLoading } = useQuery({
+    queryKey: queryKeys.user(resolvedId),
+    queryFn: async () => {
+      const res = await api.getUser(resolvedId);
+      return res.success && res.data ? res.data : null;
+    },
+  });
+  const { data: shorts = [], isLoading: shortsLoading } = useQuery({
+    queryKey: queryKeys.userShorts(resolvedId),
+    queryFn: async () => {
+      const res = await api.getUserShorts(resolvedId);
+      return res.success && res.data ? res.data : [];
+    },
+  });
+  const loading = authorLoading || shortsLoading;
 
   const isMe = Boolean(user && author && author.id === user.id);
   const baseVideos = useMemo(() => toProfileVideos(shorts), [shorts]);

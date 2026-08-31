@@ -153,6 +153,7 @@ NNN-짧은-영문-slug.md
 | 077 | [077-notifications-realtime-sse.md](./077-notifications-realtime-sse.md) | `6add572` | 알림 실시간화 (SSE) | 2026-09-01 |
 | 078 | [078-messages-realtime-ws.md](./078-messages-realtime-ws.md) | `41dfaae` | 메시지 실시간화 (WebSocket) | 2026-09-01 |
 | 079 | [079-e2e-playwright.md](./079-e2e-playwright.md) | `596d730` | E2E 테스트 (Playwright) | 2026-09-01 |
+| 080 | [080-react-query.md](./080-react-query.md) | `TBD` | 서버 상태 캐싱 (React Query) | 2026-09-01 |
 
 ---
 

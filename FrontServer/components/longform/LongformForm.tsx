@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Film, ImagePlus, Shuffle, Upload } from "lucide-react";
 import { api } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import { randomGradient } from "@/lib/utils";
 import {
   IMAGE_MAX_BYTES,
@@ -19,6 +21,7 @@ const DEFAULT_GRADIENT = "linear-gradient(160deg, hsl(220 70% 45%), hsl(260 65% 
 
 export default function LongformForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const videoRef = useRef<HTMLInputElement>(null);
   const thumbRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
@@ -120,6 +123,7 @@ export default function LongformForm() {
       setBusy(false);
       return;
     }
+    void queryClient.invalidateQueries({ queryKey: queryKeys.longform });
     router.push(`/longform/${res.data.id}`);
   }
 

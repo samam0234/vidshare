@@ -3,55 +3,48 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageCircle, Plus } from "lucide-react";
 import { formatWhen } from "@/lib/content-store";
 import { api } from "@/lib/api";
 import { onChatLine } from "@/lib/chat-socket";
+import { queryKeys } from "@/lib/query-keys";
 import SerialBadge from "@/components/ui/SerialBadge";
 import type { Conversation } from "@/types/content";
 
 export default function MessagesPageClient() {
   const router = useRouter();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  const { data: conversations = [], isLoading: loading, error } = useQuery({
+    queryKey: queryKeys.conversations,
+    queryFn: async () => {
       const res = await api.getConversations();
-      if (cancelled) return;
-      queueMicrotask(() => {
-        if (res.success && res.data) {
-          setConversations(res.data);
-        } else {
-          setLoadError(res.error ?? "대화 목록을 불러오지 못했습니다.");
-        }
-        setLoading(false);
-      });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      if (!res.success || !res.data) {
+        throw new Error(res.error ?? "대화 목록을 불러오지 못했습니다.");
+      }
+      return res.data;
+    },
+  });
+  const loadError = error instanceof Error ? error.message : null;
 
   useEffect(() => {
     return onChatLine((line) => {
-      setConversations((prev) =>
-        prev.map((c) =>
+      queryClient.setQueryData<Conversation[]>(queryKeys.conversations, (prev) =>
+        prev?.map((c) =>
           c.id === line.conversationId
             ? {
                 ...c,
                 lastMessage: line.isImage ? "(이미지)" : line.content.slice(0, 40),
               }
             : c
-        )
+        ) ?? prev
       );
     });
-  }, []);
+  }, [queryClient]);
 
   async function createTarget() {
     if (!name.trim()) {
@@ -65,6 +58,7 @@ export default function MessagesPageClient() {
       alert(res.error ?? "대화 상대 추가에 실패했습니다.");
       return;
     }
+    void queryClient.invalidateQueries({ queryKey: queryKeys.conversations });
     setName("");
     setOpen(false);
     router.push(`/messages/${res.data.id}`);

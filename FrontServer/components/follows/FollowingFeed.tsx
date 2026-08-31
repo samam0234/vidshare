@@ -1,50 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { UserPlus } from "lucide-react";
 import { api } from "@/lib/api";
 import { toProfileVideos } from "@/lib/mock-data";
+import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/context/AuthContext";
 import { loginHref } from "@/lib/guest-routes";
 import VideoGrid from "@/components/profile/VideoGrid";
-import type { Short } from "@/types";
 
 export default function FollowingFeed() {
   const { user, ready } = useAuth();
-  const [shorts, setShorts] = useState<Short[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!ready) return;
-    if (!user) {
-      queueMicrotask(() => setLoading(false));
-      return;
-    }
-
-    let cancelled = false;
-    (async () => {
+  const {
+    data: shorts = [],
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.followingFeed,
+    queryFn: async () => {
       const res = await api.getFollowingFeed();
-      if (cancelled) return;
-      queueMicrotask(() => {
-        if (res.success && res.data) {
-          setShorts(res.data);
-          setError(null);
-        } else {
-          setError(res.error ?? "피드를 불러오지 못했습니다.");
-        }
-        setLoading(false);
-      });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [ready, user]);
+      if (!res.success || !res.data) {
+        throw new Error(res.error ?? "피드를 불러오지 못했습니다.");
+      }
+      return res.data;
+    },
+    enabled: ready && Boolean(user),
+  });
+  const error = queryError instanceof Error ? queryError.message : null;
 
   const videos = useMemo(() => toProfileVideos(shorts), [shorts]);
 
-  if (!ready || loading) {
+  if (!ready || (user && loading)) {
     return (
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         <p className="py-16 text-center text-sm text-[var(--text-muted)]">
