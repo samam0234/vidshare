@@ -1,7 +1,7 @@
 # 아키텍처 개요
 
 **상태**: 구현됨 — FrontServer(Next.js) + BackendServer(Express + SQLite) 전면 연동 완료
-**최종 갱신**: 2026-08-26
+**최종 갱신**: 2026-08-31
 **대상 독자**: 이 저장소를 처음 인수받는 개발자/에이전트
 
 ---
@@ -23,7 +23,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 [BackendServer :4000]  Express REST API
     │  routes/ → data/store.ts → db/client.ts
     ▼
-[SQLite]  BackendServer/data/vidshare.sqlite  (18개 테이블)
+[SQLite]  BackendServer/data/vidshare.sqlite  (17개 테이블)
 [Files]   BackendServer/uploads/  ← 영상·썸네일. DB에는 /uploads/<uuid>.ext 만 저장
 ```
 
@@ -58,10 +58,10 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 |------|------|
 | 실파일 업로드 | **057에서 로컬 `uploads/` 도입.** 트랜스코딩·비공개 URL·오브젝트 스토리지는 없음 |
 | 실시간성 | 알림·메시지 모두 폴링/수동 새로고침. WebSocket/SSE 없음 |
-| 벌크 API | **058에서 도입.** 개별 `/:id` 도 유지 |
 | 알림 수신 거부 | 클라이언트 localStorage 전용. 서버는 계속 알림 생성 |
 | 검색 | Navbar 검색이 쇼츠 `?q=` 만 지원. 롱폼·커뮤니티·유저 미지원 |
 | 테스트 | 자동화 테스트 없음 (수동 검증만) |
+| 마이그레이션 | 버전 테이블 없이 `initDb()` 에서 개별 처리 (`ensureColumn`, `DROP TABLE`) |
 | `lib/mock-data.ts` | 잔존. 일부 시드/폴백 용도로만 남아 있음 |
 
 ---
@@ -204,22 +204,22 @@ src/
 | `/api/uploads` | `uploads.ts` | 필요 |
 | `/uploads/:file` | `express.static` | 공개 (재생용) |
 
-### SQLite 테이블 (18개)
+### SQLite 테이블 (17개)
 
 | 그룹 | 테이블 |
 |------|--------|
 | 인증 | `users`, `sessions` |
 | 쇼츠 | `shorts`, `comments` |
-| 레거시 메시지/알림 | `notifications`, `chat_users`, `messages` |
+| 레거시 메시지 | `chat_users`, `messages` |
 | 고객센터 | `faqs`, `support_inquiries` |
 | 챗봇 | `chatbot_docs`, `chatbot_summaries`, `chatbot_threads`, `chatbot_messages` |
 | 콘텐츠 (038 추가) | `longform`, `community_posts` |
 | 대화 (038 추가) | `conversations`, `chat_lines` |
 | 알림 (038 추가) | `activity_notifications` |
 
-> ⚠️ `notifications` (레거시) 와 `activity_notifications` (신규) 가 공존한다.
-> 프론트가 쓰는 `/api/notifications` 는 **`activity_notifications`** 를 읽는다.
-> 레거시 테이블 정리는 미완 과제.
+> 알림은 `activity_notifications` **하나만** 쓴다.
+> 초기 목업용 `notifications` 테이블은 커밋 062에서 제거했고,
+> `initDb()` 의 `DROP TABLE IF EXISTS notifications` 가 기존 DB에서도 떨어뜨린다.
 
 ---
 

@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `062` |
 | **파일명** | `062-drop-legacy-notifications-table.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `b77e4dc` |
+| **Git 커밋 (full)** | `b77e4dcac816460ebb4b766bc5f0d8143a743319` |
 | **날짜** | `2026-08-31` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |

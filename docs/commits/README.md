@@ -134,6 +134,8 @@ NNN-짧은-영문-slug.md
 | 058 | [058-notification-bulk-endpoints.md](./058-notification-bulk-endpoints.md) | `ee8612d` | 알림 전체 읽음/삭제 벌크 API | 2026-08-27 |
 | 059 | [059-notification-popup-outside-click.md](./059-notification-popup-outside-click.md) | `fb4f119` | 알림 팝업 바깥 클릭 닫기 | 2026-08-27 |
 | 060 | [060-sqlite-database-column-dump.md](./060-sqlite-database-column-dump.md) | `0b6ad0e` | SQLite 쓰기 시 DataBaseColumn.md 자동 덤프 | 2026-08-27 |
+| 061 | [061-notification-clear-confirm.md](./061-notification-clear-confirm.md) | `7ff45bb` | 알림 전체 삭제 확인 단계 (A4) | 2026-08-31 |
+| 062 | [062-drop-legacy-notifications-table.md](./062-drop-legacy-notifications-table.md) | `b77e4dc` | 레거시 notifications 테이블·죽은 코드 제거 (A5) | 2026-08-31 |
 
 ---
 

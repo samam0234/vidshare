@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- 알림 전체 삭제 확인 단계 (커밋 061): 삭제 건수 표시 후 취소/삭제 선택
 - SQLite 테이블·행 덤프 `BackendServer/data/DataBaseColumn.md` (쓰기 시 자동 갱신, gitignore)
 - 알림 팝업 바깥 클릭 닫기 (커밋 059)
 - 알림 벌크 API (커밋 058): `PATCH /api/notifications/read-all`, `DELETE /api/notifications`
@@ -61,7 +62,9 @@
 - Git 저장소 루트를 `FrontServer/` 에서 `vidshare/` 로 이동 (루트 docs 추적)
 - 네비: 메시지/알림 텍스트 제거, 롱폼·커뮤니티·챗봇 추가, 좁은 화면 햄버거
 - 고객센터 FAQ를 유저가 직접 할 수 있는 짧은 안내로 변경
-
+### Removed
+- 레거시 `notifications` 테이블 (커밋 062). 알림은 `activity_notifications` 로 일원화
+- 죽은 코드: `store.ts` 의 `listNotifications`/`deleteNotification`/`patchNotification`, `seedNotifications`, `Notification` 타입
 ### Fixed
 - `support_inquiries` 컬럼 불일치 (`author_id` → `owner_id`)
 - `useEffect` 내 `setState` 린트 위반 (`queueMicrotask` 래핑으로 통일)
@@ -74,9 +77,10 @@
 - 메시지 상대를 눌러도 대화창이 안 열리던 문제 (localStorage 하이드)
 
 ### 예정 (다음 작업자용, 상세는 features/roadmap.md)
-- 전체 삭제 확인 모달 (P0)
-- 레거시 `notifications` 테이블 정리 (P0)
-- 통합 검색, 팔로우, 실시간 알림/메시지 (P1)
+- **Phase A(P0) 전량 완료 (2026-08-31).** 아래는 Phase B 이후
+- 통합 검색 (롱폼·커뮤니티·유저) (P1)
+- 알림 수신 거부를 서버에 반영 (P1)
+- 팔로우, 실시간 알림/메시지 (P1)
 - 자동화 테스트 (현재 0건), 배포 파이프라인 (P1)
 
 ---
