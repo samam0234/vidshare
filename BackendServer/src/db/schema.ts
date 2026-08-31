@@ -169,4 +169,12 @@ CREATE TABLE IF NOT EXISTS activity_notifications (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_activity_notifications_owner ON activity_notifications(owner_id);
+
+CREATE TABLE IF NOT EXISTS user_follows (
+  follower_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  following_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (follower_id, following_id)
+);
+CREATE INDEX IF NOT EXISTS idx_user_follows_following ON user_follows(following_id);
 `;

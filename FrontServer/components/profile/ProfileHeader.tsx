@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Settings, Upload, UserRound } from "lucide-react";
 import type { Author } from "@/types";
+import { api } from "@/lib/api";
 import { loginHref } from "@/lib/guest-routes";
 
 type Props = {
@@ -18,6 +20,41 @@ export default function ProfileHeader({
   videoCount,
   signedIn = false,
 }: Props) {
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await api.getFollowStatus(author.id);
+      if (cancelled || !res.success || !res.data) return;
+      queueMicrotask(() => {
+        setFollowers(res.data!.followers);
+        setFollowing(res.data!.following);
+        setIsFollowing(res.data!.isFollowing);
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [author.id]);
+
+  async function toggleFollow() {
+    if (busy) return;
+    setBusy(true);
+    const res = isFollowing
+      ? await api.unfollowUser(author.id)
+      : await api.followUser(author.id);
+    if (res.success && res.data) {
+      setFollowers(res.data.followers);
+      setFollowing(res.data.following);
+      setIsFollowing(res.data.isFollowing);
+    }
+    setBusy(false);
+  }
+
   return (
     <section className="flex flex-col gap-5 sm:flex-row sm:items-center">
       <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-sky-500 to-pink-500 text-3xl font-bold text-white shadow-lg sm:h-32 sm:w-32">
@@ -33,8 +70,14 @@ export default function ProfileHeader({
         {author.bio && (
           <p className="mt-1 text-sm text-[var(--text-muted)]">{author.bio}</p>
         )}
-        <p className="mt-2 text-sm text-[var(--text-muted)]">
-          영상 {videoCount}개
+        <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-[var(--text-muted)]">
+          <span>영상 {videoCount}개</span>
+          <span>
+            팔로워 <b className="text-[var(--text)]">{followers}</b>
+          </span>
+          <span>
+            팔로잉 <b className="text-[var(--text)]">{following}</b>
+          </span>
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {isMe ? (
@@ -65,9 +108,15 @@ export default function ProfileHeader({
             <>
               <button
                 type="button"
-                className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                onClick={() => void toggleFollow()}
+                disabled={busy}
+                className={
+                  isFollowing
+                    ? "rounded-xl border border-[var(--border)] bg-[var(--btn)] px-4 py-2 text-sm font-semibold hover:border-[var(--accent)] disabled:opacity-50"
+                    : "rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                }
               >
-                팔로우
+                {isFollowing ? "팔로잉" : "팔로우"}
               </button>
               <Link
                 href="/messages"

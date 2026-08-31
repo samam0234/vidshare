@@ -41,6 +41,12 @@ export type SearchResults = {
   users: Author[];
 };
 
+export type FollowStatus = {
+  followers: number;
+  following: number;
+  isFollowing: boolean;
+};
+
 export async function request<T>(
   path: string,
   init?: RequestInit
@@ -185,6 +191,27 @@ export const api = {
 
   getNotificationSettings: () =>
     request<{ enabled: boolean }>("/api/notifications/settings"),
+
+  getFollowStatus: (userId: string) =>
+    request<FollowStatus>(`/api/follows/${encodeURIComponent(userId)}`),
+
+  followUser: (userId: string) =>
+    request<FollowStatus>(`/api/follows/${encodeURIComponent(userId)}`, {
+      method: "POST",
+    }),
+
+  unfollowUser: (userId: string) =>
+    request<FollowStatus>(`/api/follows/${encodeURIComponent(userId)}`, {
+      method: "DELETE",
+    }),
+
+  getFollowers: (userId: string) =>
+    request<Author[]>(`/api/follows/${encodeURIComponent(userId)}/followers`),
+
+  getFollowing: (userId: string) =>
+    request<Author[]>(`/api/follows/${encodeURIComponent(userId)}/following`),
+
+  getFollowingFeed: () => request<Short[]>("/api/follows/feed"),
 
   patchNotificationSettings: (enabled: boolean) =>
     request<{ enabled: boolean }>("/api/notifications/settings", {

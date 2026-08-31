@@ -18,6 +18,7 @@ import communityRouter from "./routes/community";
 import conversationsRouter from "./routes/conversations";
 import uploadsRouter from "./routes/uploads";
 import searchRouter from "./routes/search";
+import followsRouter from "./routes/follows";
 import { ensureUploadsDir, uploadsDir } from "./upload/files";
 
 function isPrivateHostname(hostname: string) {
@@ -100,6 +101,12 @@ export function createApp() {
         "GET  /api/users/me",
         "GET  /api/users/:id",
         "GET  /api/users/:id/shorts",
+        "GET  /api/follows/feed",
+        "GET  /api/follows/:id",
+        "GET  /api/follows/:id/followers",
+        "GET  /api/follows/:id/following",
+        "POST /api/follows/:id",
+        "DELETE /api/follows/:id",
         "GET  /api/notifications",
         "GET  /api/notifications/settings",
         "PATCH /api/notifications/settings",
@@ -144,6 +151,7 @@ export function createApp() {
   app.use("/api/shorts/:shortId/comments", commentsRouter);
   app.use("/api/comments", commentsRouter);
   app.use("/api/users", usersRouter);
+  app.use("/api/follows", followsRouter);
   app.use("/api/notifications", notificationsRouter);
   app.use("/api/messages", messagesRouter);
   app.use("/api/conversations", conversationsRouter);

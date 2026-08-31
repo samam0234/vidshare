@@ -119,6 +119,89 @@ export function searchAuthors(q: string, limit = 20): Author[] {
   return rows.map(toAuthor);
 }
 
+// ---------------------------------------------------------------------------
+// Follows
+// ---------------------------------------------------------------------------
+
+export function isFollowing(followerId: string, followingId: string): boolean {
+  const row = getDb()
+    .prepare(
+      "SELECT 1 AS x FROM user_follows WHERE follower_id = ? AND following_id = ?"
+    )
+    .get(followerId, followingId) as { x: number } | undefined;
+  return Boolean(row);
+}
+
+export function countFollowers(userId: string): number {
+  const row = getDb()
+    .prepare("SELECT COUNT(*) AS c FROM user_follows WHERE following_id = ?")
+    .get(userId) as { c: number };
+  return row.c;
+}
+
+export function countFollowing(userId: string): number {
+  const row = getDb()
+    .prepare("SELECT COUNT(*) AS c FROM user_follows WHERE follower_id = ?")
+    .get(userId) as { c: number };
+  return row.c;
+}
+
+/** 이미 팔로우 중이면 아무것도 하지 않는다(멱등). */
+export function followUser(followerId: string, followingId: string): boolean {
+  getDb()
+    .prepare(
+      `INSERT OR IGNORE INTO user_follows (follower_id, following_id, created_at)
+       VALUES (?, ?, ?)`
+    )
+    .run(followerId, followingId, new Date().toISOString());
+  return true;
+}
+
+export function unfollowUser(followerId: string, followingId: string): boolean {
+  getDb()
+    .prepare(
+      "DELETE FROM user_follows WHERE follower_id = ? AND following_id = ?"
+    )
+    .run(followerId, followingId);
+  return true;
+}
+
+export function listFollowers(userId: string): Author[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT u.id, u.handle, u.name, u.bio, u.avatar
+       FROM user_follows f JOIN users u ON u.id = f.follower_id
+       WHERE f.following_id = ? ORDER BY f.created_at DESC`
+    )
+    .all(userId) as UserRow[];
+  return rows.map(toAuthor);
+}
+
+export function listFollowing(userId: string): Author[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT u.id, u.handle, u.name, u.bio, u.avatar
+       FROM user_follows f JOIN users u ON u.id = f.following_id
+       WHERE f.follower_id = ? ORDER BY f.created_at DESC`
+    )
+    .all(userId) as UserRow[];
+  return rows.map(toAuthor);
+}
+
+/** 내가 팔로우한 사람들의 쇼츠 (팔로잉 피드) */
+export function listFollowingShorts(userId: string, limit = 50): Short[] {
+  const rows = getDb()
+    .prepare(
+      `${SHORT_SELECT}
+       WHERE s.author_id IN (
+         SELECT following_id FROM user_follows WHERE follower_id = ?
+       )
+       ORDER BY s.created_at DESC, s.id DESC LIMIT ?`
+    )
+    .all(userId, limit) as ShortJoinRow[];
+  return rows.map(toShort);
+}
+
 export function listShorts(q?: string): Short[] {
   const query = q?.trim().toLowerCase() ?? "";
   if (!query) {
