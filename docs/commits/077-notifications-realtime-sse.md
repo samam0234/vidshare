@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `077` |
 | **파일명** | `077-notifications-realtime-sse.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `d350313` |
+| **Git 커밋 (full)** | `d35031382bc3d4f389e7f4dd36f8645915f17161` |
 | **날짜** | `2026-08-31` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |
