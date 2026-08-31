@@ -23,6 +23,11 @@ import blocksRouter from "./routes/blocks";
 import reportsRouter from "./routes/reports";
 import playlistsRouter from "./routes/playlists";
 import adminAuthRouter from "./routes/admin/auth";
+import adminReportsRouter from "./routes/admin/reports";
+import adminUsersRouter from "./routes/admin/users";
+import adminContentRouter from "./routes/admin/content";
+import adminSupportRouter from "./routes/admin/support";
+import adminDashboardRouter from "./routes/admin/dashboard";
 import { ensureUploadsDir, uploadsDir } from "./upload/files";
 
 function isPrivateHostname(hostname: string) {
@@ -161,6 +166,18 @@ export function createApp() {
         "POST /api/admin/auth/login",
         "POST /api/admin/auth/logout",
         "GET  /api/admin/auth/me",
+        "GET  /api/admin/dashboard/stats",
+        "GET  /api/admin/reports?status=",
+        "PATCH /api/admin/reports/:id",
+        "GET  /api/admin/users?q=",
+        "PATCH /api/admin/users/:id/suspend",
+        "DELETE /api/admin/content/shorts/:id",
+        "DELETE /api/admin/content/longform/:id",
+        "DELETE /api/admin/content/community/:id",
+        "DELETE /api/admin/content/comments/:id",
+        "GET  /api/admin/support/inquiries",
+        "GET  /api/admin/support/inquiries/:id",
+        "PATCH /api/admin/support/inquiries/:id/reply",
       ],
     });
   });
@@ -186,6 +203,11 @@ export function createApp() {
   app.use("/api/chatbot", chatbotRouter);
   app.use("/api/uploads", uploadsRouter);
   app.use("/api/admin/auth", adminAuthRouter);
+  app.use("/api/admin/dashboard", adminDashboardRouter);
+  app.use("/api/admin/reports", adminReportsRouter);
+  app.use("/api/admin/users", adminUsersRouter);
+  app.use("/api/admin/content", adminContentRouter);
+  app.use("/api/admin/support", adminSupportRouter);
 
   app.use(notFound);
   app.use(errorHandler);

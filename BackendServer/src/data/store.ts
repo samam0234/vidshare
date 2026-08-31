@@ -3,7 +3,11 @@ import { getDb } from "../db/client";
 import { publishNotification } from "../realtime/notificationBus";
 import { publishChatLine } from "../realtime/chatBus";
 import type {
+  AdminReport,
+  AdminStats,
+  AdminUser,
   Author,
+  ReportStatus,
   ChatUser,
   ChatLine,
   ChatbotAttachment,
@@ -621,14 +625,13 @@ export function updateComment(
   };
 }
 
-/** 본인 댓글만 삭제. 답글이 있으면 함께 지우고 그 개수만큼 comment_count 를 줄인다. */
-export function deleteComment(id: string, userId: string): boolean {
+/**
+ * 소유권 확인 없이 댓글을 지운다. 답글이 있으면 함께 지우고 그 개수만큼
+ * comment_count 를 줄인다. 소유권 검사는 호출자가 한다
+ * (`deleteComment` = 본인 확인, `adminDeleteComment` = 관리자 권한).
+ */
+function deleteCommentRow(id: string, shortId: string) {
   const db = getDb();
-  const row = db
-    .prepare("SELECT short_id, author_id FROM comments WHERE id = ?")
-    .get(id) as { short_id: string; author_id: string | null } | undefined;
-  if (!row || row.author_id !== userId) return false;
-
   const tx = db.transaction(() => {
     const replies = db
       .prepare("SELECT COUNT(*) AS c FROM comments WHERE parent_id = ?")
@@ -637,9 +640,18 @@ export function deleteComment(id: string, userId: string): boolean {
     db.prepare("DELETE FROM comments WHERE id = ?").run(id);
     db.prepare(
       "UPDATE shorts SET comment_count = MAX(0, comment_count - ?) WHERE id = ?"
-    ).run(1 + replies.c, row.short_id);
+    ).run(1 + replies.c, shortId);
   });
   tx();
+}
+
+/** 본인 댓글만 삭제. */
+export function deleteComment(id: string, userId: string): boolean {
+  const row = getDb()
+    .prepare("SELECT short_id, author_id FROM comments WHERE id = ?")
+    .get(id) as { short_id: string; author_id: string | null } | undefined;
+  if (!row || row.author_id !== userId) return false;
+  deleteCommentRow(id, row.short_id);
   return true;
 }
 
@@ -1217,10 +1229,15 @@ type InquiryRow = {
   owner_id: string;
   created_at: string;
   author_name: string;
+  author_handle: string;
+  admin_reply: string | null;
+  replied_at: string | null;
 };
 
 const INQUIRY_SELECT = `
-  SELECT i.id, i.subject, i.body, i.owner_id, i.created_at, u.name AS author_name
+  SELECT i.id, i.subject, i.body, i.owner_id, i.created_at,
+         i.admin_reply, i.replied_at,
+         u.name AS author_name, u.handle AS author_handle
   FROM support_inquiries i
   JOIN users u ON u.id = i.owner_id
 `;
@@ -1231,6 +1248,8 @@ function toInquiry(row: InquiryRow): SupportInquiry {
     subject: row.subject,
     body: row.body,
     authorName: row.author_name,
+    ...(row.admin_reply ? { adminReply: row.admin_reply } : {}),
+    ...(row.replied_at ? { repliedAt: row.replied_at } : {}),
     createdAt: row.created_at,
   };
 }
@@ -1408,4 +1427,195 @@ export function deleteAllActivityNotifications(ownerId: string): number {
     .prepare("DELETE FROM activity_notifications WHERE owner_id = ?")
     .run(ownerId);
   return info.changes;
+}
+
+// ---------------------------------------------------------------------------
+// Admin (관리자 콘솔 전용)
+// ---------------------------------------------------------------------------
+
+const REPORT_STATUSES = ["open", "resolved", "dismissed"] as const;
+
+export function isReportStatus(v: unknown): v is ReportStatus {
+  return (
+    typeof v === "string" && (REPORT_STATUSES as readonly string[]).includes(v)
+  );
+}
+
+type AdminReportRow = {
+  id: number;
+  reporter_id: string;
+  reporter_handle: string;
+  target_type: string;
+  target_id: string;
+  reason: string;
+  status: string;
+  created_at: string;
+};
+
+export function listAllReports(status?: ReportStatus): AdminReport[] {
+  const where = status ? "WHERE r.status = ?" : "";
+  const rows = getDb()
+    .prepare(
+      `SELECT r.id, r.reporter_id, r.target_type, r.target_id, r.reason,
+              r.status, r.created_at, u.handle AS reporter_handle
+       FROM reports r
+       JOIN users u ON u.id = r.reporter_id
+       ${where}
+       ORDER BY r.id DESC`
+    )
+    .all(...(status ? [status] : [])) as AdminReportRow[];
+
+  return rows.map((row) => ({
+    id: row.id,
+    reporterId: row.reporter_id,
+    reporterHandle: row.reporter_handle,
+    targetType: row.target_type,
+    targetId: row.target_id,
+    reason: row.reason,
+    status: (REPORT_STATUSES as readonly string[]).includes(row.status)
+      ? (row.status as ReportStatus)
+      : "open",
+    createdAt: row.created_at,
+  }));
+}
+
+export function setReportStatus(id: number, status: ReportStatus): boolean {
+  const info = getDb()
+    .prepare("UPDATE reports SET status = ? WHERE id = ?")
+    .run(status, id);
+  return info.changes > 0;
+}
+
+type AdminUserRow = UserRow & {
+  suspended: number;
+  created_at: string;
+};
+
+export function listAllUsersForAdmin(q?: string): AdminUser[] {
+  const like = q?.trim() ? `%${q.trim().toLowerCase().replace(/^@/, "")}%` : null;
+  const rows = getDb()
+    .prepare(
+      `SELECT id, handle, name, bio, avatar, role, suspended, created_at
+       FROM users
+       ${like ? "WHERE lower(handle) LIKE ? OR lower(name) LIKE ?" : ""}
+       ORDER BY created_at DESC, id`
+    )
+    .all(...(like ? [like, like] : [])) as AdminUserRow[];
+
+  return rows.map((row) => ({
+    ...toAuthor(row),
+    suspended: Boolean(row.suspended),
+    createdAt: row.created_at,
+  }));
+}
+
+/**
+ * 유저를 정지/해제한다. 정지 시 해당 유저의 세션을 전부 지워 이미 로그인해
+ * 있던 브라우저도 즉시 끊는다 — 매 요청마다 suspended 를 다시 확인하는 대신
+ * "정지 시점에 한 번" 정리하는 쪽을 택했다.
+ */
+export function setUserSuspended(userId: string, suspended: boolean): boolean {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    const info = db
+      .prepare("UPDATE users SET suspended = ? WHERE id = ?")
+      .run(suspended ? 1 : 0, userId);
+    if (info.changes > 0 && suspended) {
+      db.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
+    }
+    return info.changes > 0;
+  });
+  return tx();
+}
+
+/** 쇼츠 삭제. comments/playlist_items 는 FK ON DELETE CASCADE 로 함께 사라진다. */
+export function adminDeleteShort(id: string): boolean {
+  const info = getDb().prepare("DELETE FROM shorts WHERE id = ?").run(id);
+  return info.changes > 0;
+}
+
+export function adminDeleteLongform(id: number): boolean {
+  const info = getDb().prepare("DELETE FROM longform WHERE id = ?").run(id);
+  return info.changes > 0;
+}
+
+export function adminDeleteCommunityPost(id: number): boolean {
+  const info = getDb()
+    .prepare("DELETE FROM community_posts WHERE id = ?")
+    .run(id);
+  return info.changes > 0;
+}
+
+/** 소유자와 무관하게 댓글 삭제. 답글 정리·카운트 감소는 본인 삭제와 동일. */
+export function adminDeleteComment(id: string): boolean {
+  const row = getDb()
+    .prepare("SELECT short_id FROM comments WHERE id = ?")
+    .get(id) as { short_id: string } | undefined;
+  if (!row) return false;
+  deleteCommentRow(id, row.short_id);
+  return true;
+}
+
+export type AdminInquiry = SupportInquiry & {
+  ownerId: string;
+  authorHandle: string;
+};
+
+function toAdminInquiry(row: InquiryRow): AdminInquiry {
+  return {
+    ...toInquiry(row),
+    ownerId: row.owner_id,
+    authorHandle: row.author_handle,
+  };
+}
+
+/** 소유자 필터 없이 전체 문의. `unreplied` 면 아직 답변 없는 것만. */
+export function listAllInquiries(unreplied = false): AdminInquiry[] {
+  const rows = getDb()
+    .prepare(
+      `${INQUIRY_SELECT}
+       ${unreplied ? "WHERE i.admin_reply IS NULL" : ""}
+       ORDER BY i.id DESC`
+    )
+    .all() as InquiryRow[];
+  return rows.map(toAdminInquiry);
+}
+
+export function getInquiryByIdAdmin(id: number): AdminInquiry | undefined {
+  const row = getDb()
+    .prepare(`${INQUIRY_SELECT} WHERE i.id = ?`)
+    .get(id) as InquiryRow | undefined;
+  return row ? toAdminInquiry(row) : undefined;
+}
+
+export function replyToInquiry(
+  id: number,
+  reply: string
+): AdminInquiry | undefined {
+  const info = getDb()
+    .prepare(
+      "UPDATE support_inquiries SET admin_reply = ?, replied_at = ? WHERE id = ?"
+    )
+    .run(reply, new Date().toISOString(), id);
+  if (info.changes === 0) return undefined;
+  return getInquiryByIdAdmin(id);
+}
+
+export function adminStats(): AdminStats {
+  const db = getDb();
+  const count = (sql: string) => (db.prepare(sql).get() as { c: number }).c;
+  return {
+    userCount: count("SELECT COUNT(*) AS c FROM users"),
+    suspendedCount: count("SELECT COUNT(*) AS c FROM users WHERE suspended = 1"),
+    openReportCount: count(
+      "SELECT COUNT(*) AS c FROM reports WHERE status = 'open'"
+    ),
+    inquiryCount: count("SELECT COUNT(*) AS c FROM support_inquiries"),
+    unrepliedInquiryCount: count(
+      "SELECT COUNT(*) AS c FROM support_inquiries WHERE admin_reply IS NULL"
+    ),
+    shortCount: count("SELECT COUNT(*) AS c FROM shorts"),
+    longformCount: count("SELECT COUNT(*) AS c FROM longform"),
+    communityCount: count("SELECT COUNT(*) AS c FROM community_posts"),
+  };
 }
