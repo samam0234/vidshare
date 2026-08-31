@@ -48,21 +48,22 @@ export default function ProfileTabs({ tab, sort, onTab, onSort }: Props) {
         ))}
       </div>
       <div className="flex gap-1">
-        {sorts.map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={() => onSort(s.key)}
-            className={cn(
-              "rounded-full px-3 py-1.5 text-xs font-medium transition",
-              sort === s.key
-                ? "bg-[var(--accent)] text-white"
-                : "bg-[var(--btn)] text-[var(--text-muted)] hover:text-[var(--text)]"
-            )}
-          >
-            {s.label}
-          </button>
-        ))}
+        {tab !== "playlists" &&
+          sorts.map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => onSort(s.key)}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-xs font-medium transition",
+                sort === s.key
+                  ? "bg-[var(--accent)] text-white"
+                  : "bg-[var(--btn)] text-[var(--text-muted)] hover:text-[var(--text)]"
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
       </div>
     </section>
   );

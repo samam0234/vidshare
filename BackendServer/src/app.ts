@@ -21,6 +21,7 @@ import searchRouter from "./routes/search";
 import followsRouter from "./routes/follows";
 import blocksRouter from "./routes/blocks";
 import reportsRouter from "./routes/reports";
+import playlistsRouter from "./routes/playlists";
 import { ensureUploadsDir, uploadsDir } from "./upload/files";
 
 function isPrivateHostname(hostname: string) {
@@ -116,6 +117,12 @@ export function createApp() {
         "POST /api/blocks/:id",
         "DELETE /api/blocks/:id",
         "POST /api/reports",
+        "GET  /api/playlists?ownerId=",
+        "POST /api/playlists",
+        "GET  /api/playlists/:id",
+        "DELETE /api/playlists/:id",
+        "POST /api/playlists/:id/items",
+        "DELETE /api/playlists/:id/items/:shortId",
         "GET  /api/notifications",
         "GET  /api/notifications/settings",
         "PATCH /api/notifications/settings",
@@ -163,6 +170,7 @@ export function createApp() {
   app.use("/api/follows", followsRouter);
   app.use("/api/blocks", blocksRouter);
   app.use("/api/reports", reportsRouter);
+  app.use("/api/playlists", playlistsRouter);
   app.use("/api/notifications", notificationsRouter);
   app.use("/api/messages", messagesRouter);
   app.use("/api/conversations", conversationsRouter);

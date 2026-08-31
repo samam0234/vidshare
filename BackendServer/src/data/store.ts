@@ -285,6 +285,122 @@ export function createReport(input: {
   return { id: Number(info.lastInsertRowid) };
 }
 
+// ---------------------------------------------------------------------------
+// Playlists
+// ---------------------------------------------------------------------------
+
+export type Playlist = {
+  id: number;
+  ownerId: string;
+  title: string;
+  createdAt: string;
+  itemCount: number;
+};
+
+type PlaylistRow = {
+  id: number;
+  owner_id: string;
+  title: string;
+  created_at: string;
+  item_count: number;
+};
+
+function toPlaylist(row: PlaylistRow): Playlist {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    title: row.title,
+    createdAt: row.created_at,
+    itemCount: row.item_count,
+  };
+}
+
+const PLAYLIST_SELECT = `
+  SELECT p.id, p.owner_id, p.title, p.created_at,
+         (SELECT COUNT(*) FROM playlist_items i WHERE i.playlist_id = p.id) AS item_count
+  FROM playlists p
+`;
+
+export function listPlaylistsByOwner(ownerId: string): Playlist[] {
+  const rows = getDb()
+    .prepare(`${PLAYLIST_SELECT} WHERE p.owner_id = ? ORDER BY p.id DESC`)
+    .all(ownerId) as PlaylistRow[];
+  return rows.map(toPlaylist);
+}
+
+export function getPlaylistById(id: number): Playlist | undefined {
+  const row = getDb()
+    .prepare(`${PLAYLIST_SELECT} WHERE p.id = ?`)
+    .get(id) as PlaylistRow | undefined;
+  return row ? toPlaylist(row) : undefined;
+}
+
+export function createPlaylist(ownerId: string, title: string): Playlist {
+  const info = getDb()
+    .prepare(
+      "INSERT INTO playlists (owner_id, title, created_at) VALUES (?, ?, ?)"
+    )
+    .run(ownerId, title, new Date().toISOString());
+  return getPlaylistById(Number(info.lastInsertRowid))!;
+}
+
+/** 본인 재생목록만 삭제 가능. */
+export function deletePlaylist(id: number, ownerId: string): boolean {
+  const info = getDb()
+    .prepare("DELETE FROM playlists WHERE id = ? AND owner_id = ?")
+    .run(id, ownerId);
+  return info.changes > 0;
+}
+
+export function listPlaylistItems(playlistId: number): Short[] {
+  const rows = getDb()
+    .prepare(
+      `${SHORT_SELECT}
+       JOIN playlist_items pi ON pi.short_id = s.id
+       WHERE pi.playlist_id = ?
+       ORDER BY pi.added_at DESC`
+    )
+    .all(playlistId) as ShortJoinRow[];
+  return rows.map(toShort);
+}
+
+/** 본인 재생목록에만 추가 가능. 이미 있으면 조용히 무시(멱등). */
+export function addPlaylistItem(
+  playlistId: number,
+  ownerId: string,
+  shortId: string
+): boolean {
+  const db = getDb();
+  const playlist = db
+    .prepare("SELECT id FROM playlists WHERE id = ? AND owner_id = ?")
+    .get(playlistId, ownerId);
+  if (!playlist) return false;
+  const short = db.prepare("SELECT id FROM shorts WHERE id = ?").get(shortId);
+  if (!short) return false;
+
+  db.prepare(
+    `INSERT OR IGNORE INTO playlist_items (playlist_id, short_id, added_at)
+     VALUES (?, ?, ?)`
+  ).run(playlistId, shortId, new Date().toISOString());
+  return true;
+}
+
+export function removePlaylistItem(
+  playlistId: number,
+  ownerId: string,
+  shortId: string
+): boolean {
+  const db = getDb();
+  const playlist = db
+    .prepare("SELECT id FROM playlists WHERE id = ? AND owner_id = ?")
+    .get(playlistId, ownerId);
+  if (!playlist) return false;
+  db.prepare(
+    "DELETE FROM playlist_items WHERE playlist_id = ? AND short_id = ?"
+  ).run(playlistId, shortId);
+  return true;
+}
+
 export function listShorts(q?: string, viewerId?: string): Short[] {
   const query = q?.trim().toLowerCase() ?? "";
   const blockClause = viewerId

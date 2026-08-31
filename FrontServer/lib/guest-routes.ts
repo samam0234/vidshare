@@ -12,6 +12,7 @@ export function isGuestAllowedPath(pathname: string) {
   if (pathname === "/search") return true;
   if (/^\/profile\/[^/]+$/.test(pathname)) return true;
   if (/^\/profile\/[^/]+\/(followers|following)$/.test(pathname)) return true;
+  if (/^\/playlists\/\d+$/.test(pathname)) return true;
   return false;
 }
 

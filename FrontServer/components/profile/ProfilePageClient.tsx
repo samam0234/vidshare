@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import ProfileHeader from "./ProfileHeader";
 import ProfileTabs, { type SortKey, type TabKey } from "./ProfileTabs";
 import VideoGrid from "./VideoGrid";
+import PlaylistTab from "./PlaylistTab";
 
 type Props = { id: string };
 
@@ -42,10 +43,7 @@ export default function ProfilePageClient({ id }: Props) {
   const [sort, setSort] = useState<SortKey>("latest");
 
   const videos = useMemo(() => {
-    let list = [...baseVideos];
-    if (tab === "playlists") {
-      list = [];
-    }
+    const list = [...baseVideos];
 
     if (sort === "latest") {
       list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -55,7 +53,7 @@ export default function ProfilePageClient({ id }: Props) {
       list.sort((a, b) => b.likes - a.likes);
     }
     return list;
-  }, [baseVideos, tab, sort]);
+  }, [baseVideos, sort]);
 
   if (loading) {
     return (
@@ -90,14 +88,11 @@ export default function ProfilePageClient({ id }: Props) {
           onTab={setTab}
           onSort={setSort}
         />
-        <VideoGrid
-          videos={videos}
-          emptyText={
-            tab === "playlists"
-              ? "재생목록이 아직 없습니다."
-              : "표시할 영상이 없습니다."
-          }
-        />
+        {tab === "playlists" ? (
+          <PlaylistTab ownerId={author.id} isMe={isMe} />
+        ) : (
+          <VideoGrid videos={videos} emptyText="표시할 영상이 없습니다." />
+        )}
       </div>
     </main>
   );

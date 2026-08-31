@@ -47,6 +47,16 @@ export type FollowStatus = {
   isFollowing: boolean;
 };
 
+export type Playlist = {
+  id: number;
+  ownerId: string;
+  title: string;
+  createdAt: string;
+  itemCount: number;
+};
+
+export type PlaylistDetail = Playlist & { items: Short[] };
+
 export async function request<T>(
   path: string,
   init?: RequestInit
@@ -250,6 +260,35 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ targetType, targetId, reason }),
     }),
+
+  getUserPlaylists: (ownerId: string) =>
+    request<Playlist[]>(
+      `/api/playlists?ownerId=${encodeURIComponent(ownerId)}`
+    ),
+
+  createPlaylist: (title: string) =>
+    request<Playlist>("/api/playlists", {
+      method: "POST",
+      body: JSON.stringify({ title }),
+    }),
+
+  getPlaylist: (id: number) =>
+    request<PlaylistDetail>(`/api/playlists/${id}`),
+
+  deletePlaylist: (id: number) =>
+    request<{ id: number }>(`/api/playlists/${id}`, { method: "DELETE" }),
+
+  addToPlaylist: (playlistId: number, shortId: string) =>
+    request<PlaylistDetail>(`/api/playlists/${playlistId}/items`, {
+      method: "POST",
+      body: JSON.stringify({ shortId }),
+    }),
+
+  removeFromPlaylist: (playlistId: number, shortId: string) =>
+    request<PlaylistDetail>(
+      `/api/playlists/${playlistId}/items/${encodeURIComponent(shortId)}`,
+      { method: "DELETE" }
+    ),
 
   patchNotificationSettings: (enabled: boolean) =>
     request<{ enabled: boolean }>("/api/notifications/settings", {
