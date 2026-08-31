@@ -151,6 +151,7 @@ NNN-짧은-영문-slug.md
 | 075 | [075-moderation-basics.md](./075-moderation-basics.md) | `805647f` | 신고·차단 (모더레이션 기초) | 2026-08-31 |
 | 076 | [076-playlists.md](./076-playlists.md) | `a35cd6b` | 재생목록 (프로필 탭 실구현) | 2026-09-01 |
 | 077 | [077-notifications-realtime-sse.md](./077-notifications-realtime-sse.md) | `6add572` | 알림 실시간화 (SSE) | 2026-09-01 |
+| 078 | [078-messages-realtime-ws.md](./078-messages-realtime-ws.md) | `41dfaae` | 메시지 실시간화 (WebSocket) | 2026-09-01 |
 
 ---
 
