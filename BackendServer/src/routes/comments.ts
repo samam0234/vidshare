@@ -13,11 +13,11 @@ router.get("/", (req, res) => {
   res.json({ success: true, data: listComments(shortId) });
 });
 
-/** POST body: { shortId?, text, author? } */
+/** POST body: { shortId?, text, author?, parentId? } */
 router.post("/", (req, res) => {
   const shortId =
     (req.params as { shortId?: string }).shortId ?? req.body?.shortId;
-  const { text, author } = req.body ?? {};
+  const { text, author, parentId } = req.body ?? {};
 
   if (!shortId || typeof shortId !== "string") {
     throw new HttpError(400, "shortId is required");
@@ -25,13 +25,19 @@ router.post("/", (req, res) => {
   if (!text || typeof text !== "string" || !text.trim()) {
     throw new HttpError(400, "text is required");
   }
+  if (parentId !== undefined && typeof parentId !== "string") {
+    throw new HttpError(400, "parentId는 문자열이어야 합니다.");
+  }
 
   const comment = addComment({
     shortId,
     text: text.trim(),
     author: typeof author === "string" && author.trim() ? author : "사용자",
+    ...(parentId ? { parentId } : {}),
   });
-  if (!comment) throw new HttpError(404, "Short not found");
+  if (!comment) {
+    throw new HttpError(404, parentId ? "Parent comment not found" : "Short not found");
+  }
 
   res.status(201).json({ success: true, data: comment });
 });

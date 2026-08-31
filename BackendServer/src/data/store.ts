@@ -288,7 +288,7 @@ export function likeShort(id: string, unlike: boolean) {
 export function listComments(shortId: string): Comment[] {
   const rows = getDb()
     .prepare(
-      "SELECT id, short_id, author, text, time FROM comments WHERE short_id = ? ORDER BY rowid"
+      "SELECT id, short_id, author, text, time, parent_id FROM comments WHERE short_id = ? ORDER BY rowid"
     )
     .all(shortId) as Array<{
     id: string;
@@ -296,6 +296,7 @@ export function listComments(shortId: string): Comment[] {
     author: string;
     text: string;
     time: string;
+    parent_id: string | null;
   }>;
   return rows.map((r) => ({
     id: r.id,
@@ -303,6 +304,7 @@ export function listComments(shortId: string): Comment[] {
     author: r.author,
     text: r.text,
     time: r.time,
+    ...(r.parent_id ? { parentId: r.parent_id } : {}),
   }));
 }
 
@@ -310,6 +312,7 @@ export function addComment(input: {
   shortId: string;
   text: string;
   author: string;
+  parentId?: string;
 }): Comment | undefined {
   const db = getDb();
   const short = db
@@ -317,18 +320,38 @@ export function addComment(input: {
     .get(input.shortId) as { id: string } | undefined;
   if (!short) return undefined;
 
+  let parentId: string | undefined;
+  if (input.parentId) {
+    const parent = db
+      .prepare("SELECT id, short_id, parent_id FROM comments WHERE id = ?")
+      .get(input.parentId) as
+      | { id: string; short_id: string; parent_id: string | null }
+      | undefined;
+    if (!parent || parent.short_id !== input.shortId) return undefined;
+    // 1단계까지만 허용. 대대댓글은 최상위 부모에 붙인다.
+    parentId = parent.parent_id ?? parent.id;
+  }
+
   const comment: Comment = {
     id: `c-${uuid().slice(0, 8)}`,
     shortId: input.shortId,
     author: input.author,
     text: input.text,
     time: "방금 전",
+    ...(parentId ? { parentId } : {}),
   };
 
   const tx = db.transaction(() => {
     db.prepare(
-      "INSERT INTO comments (id, short_id, author, text, time) VALUES (?, ?, ?, ?, ?)"
-    ).run(comment.id, comment.shortId, comment.author, comment.text, comment.time);
+      "INSERT INTO comments (id, short_id, author, text, time, parent_id) VALUES (?, ?, ?, ?, ?, ?)"
+    ).run(
+      comment.id,
+      comment.shortId,
+      comment.author,
+      comment.text,
+      comment.time,
+      parentId ?? null
+    );
     db.prepare(
       "UPDATE shorts SET comment_count = comment_count + 1 WHERE id = ?"
     ).run(input.shortId);

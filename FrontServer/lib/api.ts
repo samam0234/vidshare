@@ -150,10 +150,15 @@ export const api = {
   getComments: (shortId: string) =>
     request<Comment[]>(`/api/shorts/${shortId}/comments`),
 
-  postComment: (shortId: string, text: string, author?: string) =>
+  postComment: (
+    shortId: string,
+    text: string,
+    author?: string,
+    parentId?: string
+  ) =>
     request<Comment>(`/api/shorts/${shortId}/comments`, {
       method: "POST",
-      body: JSON.stringify({ text, author }),
+      body: JSON.stringify({ text, author, parentId }),
     }),
 
   getUser: (id: string) => request<Author>(`/api/users/${id}`),

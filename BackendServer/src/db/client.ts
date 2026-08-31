@@ -58,6 +58,7 @@ export function initDb(): SqliteDb {
   db.pragma("foreign_keys = ON");
   db.exec(SCHEMA_SQL);
   ensureColumn(db, "shorts", "thumb", "TEXT");
+  ensureColumn(db, "comments", "parent_id", "TEXT");
   ensureColumn(
     db,
     "users",

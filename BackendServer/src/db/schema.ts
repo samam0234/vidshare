@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS comments (
   short_id TEXT NOT NULL REFERENCES shorts(id) ON DELETE CASCADE,
   author TEXT NOT NULL,
   text TEXT NOT NULL,
-  time TEXT NOT NULL
+  time TEXT NOT NULL,
+  parent_id TEXT REFERENCES comments(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS chat_users (

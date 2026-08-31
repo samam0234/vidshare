@@ -166,9 +166,9 @@ export default function ShortsFeed({ query, focusId }: Props) {
     setLiked((prev) => ({ ...prev, [id]: false }));
   }
 
-  async function addComment(text: string) {
+  async function addComment(text: string, parentId?: string) {
     if (!user || !activeShortId) return;
-    const res = await api.postComment(activeShortId, text, user.name);
+    const res = await api.postComment(activeShortId, text, user.name, parentId);
     if (res.success && res.data) {
       const created = res.data;
       setComments((prev) => [...prev, created]);

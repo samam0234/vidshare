@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CornerDownRight, X } from "lucide-react";
 import type { Comment } from "@/types";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   comments: Comment[];
-  onAdd: (text: string) => void;
+  onAdd: (text: string, parentId?: string) => void;
   canWrite?: boolean;
 };
 
@@ -20,14 +20,34 @@ export default function CommentPanel({
   canWrite = true,
 }: Props) {
   const [text, setText] = useState("");
+  const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const threads = useMemo(() => {
+    const roots = comments.filter((c) => !c.parentId);
+    const byParent = new Map<string, Comment[]>();
+    for (const c of comments) {
+      if (!c.parentId) continue;
+      const list = byParent.get(c.parentId) ?? [];
+      list.push(c);
+      byParent.set(c.parentId, list);
+    }
+    return roots.map((root) => ({
+      root,
+      replies: byParent.get(root.id) ?? [],
+    }));
+  }, [comments]);
 
   useEffect(() => {
     if (open && canWrite) {
       inputRef.current?.focus();
     }
   }, [open, canWrite]);
+
+  useEffect(() => {
+    if (!open) queueMicrotask(() => setReplyTo(null));
+  }, [open]);
 
   useEffect(() => {
     if (listRef.current) {
@@ -38,8 +58,14 @@ export default function CommentPanel({
   function submit() {
     const t = text.trim();
     if (!t) return;
-    onAdd(t);
+    onAdd(t, replyTo?.id);
     setText("");
+    setReplyTo(null);
+  }
+
+  function startReply(c: Comment) {
+    setReplyTo(c);
+    inputRef.current?.focus();
   }
 
   if (!open) return null;
@@ -76,41 +102,69 @@ export default function CommentPanel({
               첫 댓글을 남겨보세요.
             </p>
           )}
-          {comments.map((c) => (
-            <div key={c.id} className="flex gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-pink-500 text-xs font-bold text-white">
-                {c.author.slice(0, 1)}
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-semibold">{c.author}</div>
-                <p className="mt-0.5 text-sm text-[var(--text)]">{c.text}</p>
-                <span className="mt-1 block text-xs text-[var(--text-muted)]">
-                  {c.time}
-                </span>
-              </div>
+          {threads.map(({ root, replies }) => (
+            <div key={root.id} className="flex flex-col gap-3">
+              <CommentItem
+                comment={root}
+                canWrite={canWrite}
+                onReply={() => startReply(root)}
+              />
+              {replies.length > 0 && (
+                <div className="ml-6 flex flex-col gap-3 border-l border-[var(--border)] pl-4">
+                  {replies.map((r) => (
+                    <CommentItem
+                      key={r.id}
+                      comment={r}
+                      canWrite={canWrite}
+                      onReply={() => startReply(root)}
+                      small
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
 
         {canWrite ? (
-          <div className="flex gap-2 border-t border-[var(--border)] bg-[var(--bg-card)] p-3">
-            <input
-              ref={inputRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") submit();
-              }}
-              placeholder="댓글을 입력하세요..."
-              className="flex-1 rounded-full border-none bg-white px-4 py-2.5 text-sm text-black placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-            />
-            <button
-              type="button"
-              onClick={submit}
-              className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-            >
-              등록
-            </button>
+          <div className="border-t border-[var(--border)] bg-[var(--bg-card)] p-3">
+            {replyTo && (
+              <div className="mb-2 flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
+                <CornerDownRight size={13} />
+                <span className="min-w-0 flex-1 truncate">
+                  {replyTo.author} 님에게 답글
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setReplyTo(null)}
+                  className="rounded px-1.5 py-0.5 hover:bg-[var(--btn)] hover:text-[var(--text)]"
+                >
+                  취소
+                </button>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                ref={inputRef}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submit();
+                  if (e.key === "Escape") setReplyTo(null);
+                }}
+                placeholder={
+                  replyTo ? "답글을 입력하세요..." : "댓글을 입력하세요..."
+                }
+                className="flex-1 rounded-full border-none bg-white px-4 py-2.5 text-sm text-black placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              />
+              <button
+                type="button"
+                onClick={submit}
+                className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              >
+                등록
+              </button>
+            </div>
           </div>
         ) : (
           <div className="border-t border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-center text-sm text-[var(--text-muted)]">
@@ -123,5 +177,49 @@ export default function CommentPanel({
         )}
       </aside>
     </>
+  );
+}
+
+function CommentItem({
+  comment,
+  canWrite,
+  onReply,
+  small,
+}: {
+  comment: Comment;
+  canWrite: boolean;
+  onReply: () => void;
+  small?: boolean;
+}) {
+  return (
+    <div className="flex gap-3">
+      <div
+        className={
+          small
+            ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-pink-500 text-[10px] font-bold text-white"
+            : "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-pink-500 text-xs font-bold text-white"
+        }
+      >
+        {comment.author.slice(0, 1)}
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm font-semibold">{comment.author}</div>
+        <p className="mt-0.5 text-sm text-[var(--text)]">{comment.text}</p>
+        <div className="mt-1 flex items-center gap-2">
+          <span className="text-xs text-[var(--text-muted)]">
+            {comment.time}
+          </span>
+          {canWrite && (
+            <button
+              type="button"
+              onClick={onReply}
+              className="text-xs font-medium text-[var(--text-muted)] hover:text-[var(--accent)]"
+            >
+              답글
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
