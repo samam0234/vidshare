@@ -8,6 +8,12 @@
 ## [Unreleased]
 
 ### Added
+- **알림 실시간화** (커밋 077): SSE (`GET /api/notifications/stream`), 폴링 없이 새 알림 즉시 도착
+- **재생목록** (커밋 076): `playlists`/`playlist_items`, 프로필 탭 실구현, `/playlists/:id` 상세 페이지
+- **신고·차단** (커밋 075): `user_blocks`/`reports`, 차단 시 팔로우 관계 자동 해제, 쇼츠 피드에서 차단 유저 제외
+- **댓글 수정·삭제** (커밋 074): 작성자 본인만 가능. **보안 수정**: 댓글 작성에 로그인 필수화 (기존엔 비회원도 임의 이름으로 작성 가능했음)
+- **에러 바운더리** (커밋 073): `error.tsx`, `global-error.tsx`, `not-found.tsx`
+- **mock-data.ts 정리** (커밋 072): 사용하지 않는 더미 데이터/헬퍼 제거 (~330줄 → ~65줄)
 - **팔로잉 피드 화면** (커밋 067): `/following` — 팔로우한 크리에이터의 쇼츠 모아보기
 - **팔로워/팔로잉 목록 화면** (커밋 069): `/profile/:id/followers`, `/profile/:id/following`
 - **댓글 대댓글** (커밋 071): `comments.parent_id`, 1단계 스레드. 2단계 이상은 최상위로 평탄화

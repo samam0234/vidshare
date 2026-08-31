@@ -145,6 +145,12 @@ NNN-짧은-영문-slug.md
 | 069 | [069-follow-list-pages.md](./069-follow-list-pages.md) | `637528c` | 팔로워/팔로잉 목록 화면 | 2026-09-01 |
 | 070 | [070-frontend-guest-route-tests.md](./070-frontend-guest-route-tests.md) | `db8198d` | 프론트 비회원 경로 테스트 28건 | 2026-09-01 |
 | 071 | [071-comment-replies.md](./071-comment-replies.md) | `7fc0237` | 댓글 대댓글 (1단계 스레드) | 2026-09-01 |
+| 072 | [072-mock-data-cleanup.md](./072-mock-data-cleanup.md) | `d3189ed` | mock-data.ts 죽은 코드 정리 | 2026-08-31 |
+| 073 | [073-error-boundaries.md](./073-error-boundaries.md) | `1a69105` | 에러 바운더리 (error/global-error/not-found) | 2026-08-31 |
+| 074 | [074-comment-edit-delete.md](./074-comment-edit-delete.md) | `a62365a` | 댓글 수정·삭제 + 댓글 작성 인증 보안 수정 | 2026-08-31 |
+| 075 | [075-moderation-basics.md](./075-moderation-basics.md) | `805647f` | 신고·차단 (모더레이션 기초) | 2026-08-31 |
+| 076 | [076-playlists.md](./076-playlists.md) | `a35cd6b` | 재생목록 (프로필 탭 실구현) | 2026-09-01 |
+| 077 | [077-notifications-realtime-sse.md](./077-notifications-realtime-sse.md) | `6add572` | 알림 실시간화 (SSE) | 2026-09-01 |
 
 ---
 
