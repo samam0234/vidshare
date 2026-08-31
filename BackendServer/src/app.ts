@@ -17,6 +17,7 @@ import longformRouter from "./routes/longform";
 import communityRouter from "./routes/community";
 import conversationsRouter from "./routes/conversations";
 import uploadsRouter from "./routes/uploads";
+import searchRouter from "./routes/search";
 import { ensureUploadsDir, uploadsDir } from "./upload/files";
 
 function isPrivateHostname(hostname: string) {
@@ -84,6 +85,7 @@ export function createApp() {
       docs: "/api/health",
       endpoints: [
         "GET  /api/health",
+        "GET  /api/search?q=",
         "GET  /api/shorts",
         "GET  /api/shorts/:id",
         "POST /api/shorts",
@@ -134,6 +136,7 @@ export function createApp() {
   });
 
   app.use("/api/health", healthRouter);
+  app.use("/api/search", searchRouter);
   app.use("/api/auth", authRouter);
   app.use("/api/shorts", shortsRouter);
   app.use("/api/shorts/:shortId/comments", commentsRouter);

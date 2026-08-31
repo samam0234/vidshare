@@ -107,6 +107,18 @@ export function findAuthor(idOrHandle: string): Author | undefined {
   return row ? toAuthor(row) : undefined;
 }
 
+export function searchAuthors(q: string, limit = 20): Author[] {
+  const like = `%${q.trim().toLowerCase().replace(/^@/, "")}%`;
+  const rows = getDb()
+    .prepare(
+      `SELECT id, handle, name, bio, avatar FROM users
+       WHERE lower(handle) LIKE ? OR lower(name) LIKE ?
+       ORDER BY created_at, id LIMIT ?`
+    )
+    .all(like, like, limit) as UserRow[];
+  return rows.map(toAuthor);
+}
+
 export function listShorts(q?: string): Short[] {
   const query = q?.trim().toLowerCase() ?? "";
   if (!query) {
@@ -394,6 +406,18 @@ export function getLongformById(id: number): LongformVideo | undefined {
   return row ? toLongform(row) : undefined;
 }
 
+export function searchLongform(q: string, limit = 20): LongformVideo[] {
+  const like = `%${q.trim().toLowerCase()}%`;
+  const rows = getDb()
+    .prepare(
+      `${LONGFORM_SELECT}
+       WHERE lower(l.title) LIKE ? OR lower(l.description) LIKE ? OR lower(u.name) LIKE ?
+       ORDER BY l.id DESC LIMIT ?`
+    )
+    .all(like, like, like, limit) as LongformRow[];
+  return rows.map(toLongform);
+}
+
 export function createLongform(input: {
   title: string;
   description?: string;
@@ -461,6 +485,18 @@ export function getCommunityById(id: number): CommunityPost | undefined {
     .prepare(`${COMMUNITY_SELECT} WHERE c.id = ?`)
     .get(id) as CommunityRow | undefined;
   return row ? toCommunity(row) : undefined;
+}
+
+export function searchCommunity(q: string, limit = 20): CommunityPost[] {
+  const like = `%${q.trim().toLowerCase()}%`;
+  const rows = getDb()
+    .prepare(
+      `${COMMUNITY_SELECT}
+       WHERE lower(c.title) LIKE ? OR lower(c.body) LIKE ? OR lower(u.name) LIKE ?
+       ORDER BY c.id DESC LIMIT ?`
+    )
+    .all(like, like, like, limit) as CommunityRow[];
+  return rows.map(toCommunity);
 }
 
 export function createCommunity(input: {

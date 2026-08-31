@@ -33,6 +33,14 @@ export type ApiResult<T> = {
   error?: string;
 };
 
+export type SearchResults = {
+  query: string;
+  shorts: Short[];
+  longform: LongformVideo[];
+  community: CommunityPost[];
+  users: Author[];
+};
+
 export async function request<T>(
   path: string,
   init?: RequestInit
@@ -70,6 +78,9 @@ export const api = {
   },
 
   health: () => request<{ status: string }>("/api/health"),
+
+  search: (q: string) =>
+    request<SearchResults>(`/api/search?q=${encodeURIComponent(q)}`),
 
   getShorts: (q?: string) =>
     request<Short[]>(

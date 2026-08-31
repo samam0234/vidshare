@@ -99,7 +99,7 @@ export default function Navbar() {
   function onSearch(e: FormEvent) {
     e.preventDefault();
     if (!query.trim()) return;
-    router.push(`/?q=${encodeURIComponent(query.trim())}`);
+    router.push(`/search?q=${encodeURIComponent(query.trim())}`);
   }
 
   return (
