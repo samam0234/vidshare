@@ -137,6 +137,7 @@ export function createApp() {
         "GET  /api/conversations/:id",
         "POST /api/conversations",
         "POST /api/conversations/:id/lines",
+        "WS   /ws/conversations",
         "GET  /api/longform",
         "GET  /api/longform/:id",
         "POST /api/longform",

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Paperclip, Send } from "lucide-react";
 import { formatWhen } from "@/lib/content-store";
 import { api } from "@/lib/api";
+import { onChatLine, sendChatLineWS } from "@/lib/chat-socket";
 import SerialBadge from "@/components/ui/SerialBadge";
 import { cn } from "@/lib/utils";
 import type { ChatLine, Conversation } from "@/types/content";
@@ -46,6 +47,24 @@ export default function MessageThread({ id }: { id: string }) {
     }
   }, [messages.length]);
 
+  useEffect(() => {
+    if (!Number.isFinite(num)) return;
+    return onChatLine((line) => {
+      if (line.conversationId !== num) return;
+      setMessages((prev) =>
+        prev.some((m) => m.id === line.id) ? prev : [...prev, line]
+      );
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              lastMessage: line.isImage ? "(이미지)" : line.content.slice(0, 40),
+            }
+          : prev
+      );
+    });
+  }, [num]);
+
   if (loading) {
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 text-center">
@@ -66,6 +85,9 @@ export default function MessageThread({ id }: { id: string }) {
   }
 
   async function send(content: string, isImage = false) {
+    // WS 로 보내면 서버가 chatBus 로 되돌려 주므로 위 구독에서 화면에 반영된다.
+    if (sendChatLineWS(num, { content, isImage })) return;
+
     const res = await api.sendChatLine(num, { type: "me", content, isImage });
     if (res.success && res.data) {
       setMessages((prev) => [...prev, res.data!]);

@@ -22,6 +22,7 @@ import {
   resetNotifications,
   useNotifications,
 } from "@/lib/notifications-store";
+import { connectChatSocket, disconnectChatSocket } from "@/lib/chat-socket";
 import NotificationPopup from "./NotificationPopup";
 
 const guestNavLinks = [
@@ -63,8 +64,10 @@ export default function Navbar() {
   useEffect(() => {
     if (user) {
       void refreshNotificationSettings().then(() => refreshNotifications());
+      connectChatSocket();
     } else {
       resetNotifications();
+      disconnectChatSocket();
     }
   }, [user]);
 

@@ -1,6 +1,7 @@
 import { v4 as uuid } from "uuid";
 import { getDb } from "../db/client";
 import { publishNotification } from "../realtime/notificationBus";
+import { publishChatLine } from "../realtime/chatBus";
 import type {
   Author,
   ChatUser,
@@ -1190,7 +1191,9 @@ export function addChatLine(
        FROM chat_lines WHERE id = ?`
     )
     .get(Number(info.lastInsertRowid)) as ChatLineRow;
-  return toChatLine(row);
+  const line = toChatLine(row);
+  publishChatLine(ownerId, line);
+  return line;
 }
 
 // ---------------------------------------------------------------------------

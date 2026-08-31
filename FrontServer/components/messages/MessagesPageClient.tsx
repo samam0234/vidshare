@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { MessageCircle, Plus } from "lucide-react";
 import { formatWhen } from "@/lib/content-store";
 import { api } from "@/lib/api";
+import { onChatLine } from "@/lib/chat-socket";
 import SerialBadge from "@/components/ui/SerialBadge";
 import type { Conversation } from "@/types/content";
 
@@ -35,6 +36,21 @@ export default function MessagesPageClient() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    return onChatLine((line) => {
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === line.conversationId
+            ? {
+                ...c,
+                lastMessage: line.isImage ? "(이미지)" : line.content.slice(0, 40),
+              }
+            : c
+        )
+      );
+    });
   }, []);
 
   async function createTarget() {
