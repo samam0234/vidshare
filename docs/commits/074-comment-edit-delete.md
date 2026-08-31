@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `074` |
 | **파일명** | `074-comment-edit-delete.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `a62365a` |
+| **Git 커밋 (full)** | `a62365a229c93dfda9e6d8beaf13e018e819736f` |
 | **날짜** | `2026-09-01` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |

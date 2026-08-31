@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `073` |
 | **파일명** | `073-error-boundaries.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `1a69105` |
+| **Git 커밋 (full)** | `1a691051b602cb83280b695bfe0e2a1674258ca7` |
 | **날짜** | `2026-09-01` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |

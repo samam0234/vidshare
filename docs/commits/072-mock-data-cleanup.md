@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `072` |
 | **파일명** | `072-mock-data-cleanup.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `d3189ed` |
+| **Git 커밋 (full)** | `d3189ed6378a27bbeb0ae8c2f6c9397514b75b7c` |
 | **날짜** | `2026-09-01` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |
