@@ -103,6 +103,11 @@ export default function SupportContact() {
                   <span className="min-w-0 flex-1 truncate font-medium">
                     {q.subject}
                   </span>
+                  {q.adminReply ? (
+                    <span className="shrink-0 rounded-full bg-[var(--accent)]/15 px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">
+                      답변 완료
+                    </span>
+                  ) : null}
                   <span className="shrink-0 text-xs text-[var(--text-muted)]">
                     {formatWhen(q.createdAt)}
                   </span>

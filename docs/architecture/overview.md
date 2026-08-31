@@ -1,7 +1,7 @@
 # 아키텍처 개요
 
-**상태**: 구현됨 — FrontServer(Next.js) + BackendServer(Express + SQLite) 전면 연동 완료
-**최종 갱신**: 2026-09-01 (Phase B 완료 — 메시지 실시간화까지)
+**상태**: 구현됨 — FrontServer(Next.js) + BackendServer(Express + SQLite) + console(관리자) 연동 완료
+**최종 갱신**: 2026-09-01 (관리자 콘솔 081~084까지)
 **대상 독자**: 이 저장소를 처음 인수받는 개발자/에이전트
 
 ---
@@ -12,26 +12,33 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 프론트(Next.js)와 백엔드(Express + SQLite)를 폴더로 분리한 모노레포다.
 
 ```
-[Browser]
-    │
-    ▼
-[FrontServer :3000]  Next.js 15 App Router
-    │  app/ (라우트) · components/ (UI) · context/ (전역) · lib/ (API·스토어)
-    │  lib/api.ts  ── 모든 서버 통신의 단일 창구
-    │
-    ▼ fetch(credentials: "include")
+[Browser — 사용자]              [Browser — 운영자]
+    │                                │
+    ▼                                ▼
+[FrontServer :3000]            [console :3200]  관리자 전용 Next.js
+    │  lib/api.ts               │  lib/adminApi.ts
+    │  쿠키 vidshare_sid        │  쿠키 vidshare_admin_sid
+    │                           │
+    ▼ fetch(credentials: "include")  ▼
 [BackendServer :4000]  Express REST API
     │  routes/ → data/store.ts → db/client.ts
+    │  /api/*        ← requireRequestUser
+    │  /api/admin/*  ← requireAdmin
     ▼
-[SQLite]  BackendServer/data/vidshare.sqlite  (18개 테이블)
+[SQLite]  BackendServer/data/vidshare.sqlite  (19개 테이블)
 [Files]   BackendServer/uploads/  ← 영상·썸네일. DB에는 /uploads/<uuid>.ext 만 저장
 ```
 
 | 폴더 | 역할 | 포트 |
 |------|------|------|
-| `vidshare/FrontServer/` | Next.js UI | 3000 |
+| `vidshare/FrontServer/` | Next.js UI (사용자) | 3000 |
+| `vidshare/console/` | Next.js UI (관리자, 081~084) | 3200 |
 | `vidshare/BackendServer/` | Express API + SQLite | 4000 |
 | `vidshare/docs/` | 설계·이력·커밋 상세 | — |
+
+> 두 프론트가 **같은 백엔드**를 보지만 세션 쿠키 이름이 달라
+> (`vidshare_sid` / `vidshare_admin_sid`) 같은 브라우저에서 동시에
+> 로그인해 있어도 서로 덮어쓰지 않는다.
 
 ---
 
@@ -183,7 +190,14 @@ src/
 │   ├── notificationBus.ts   ← 알림 SSE용 owner_id 채널 EventEmitter (077)
 │   ├── chatBus.ts           ← 메시지 WS용 owner_id 채널 EventEmitter (078)
 │   └── chatSocket.ts        ← /ws/conversations 업그레이드 처리·인증·송수신 (078)
-├── routes/              ← 13개 라우터
+├── routes/              ← 13개 라우터 + admin/ 5개 (081~082)
+│   └── admin/           ← auth·reports·users·content·support·dashboard
+├── auth/
+│   ├── sessions.ts      ← vidshare_sid (사용자)
+│   ├── adminSession.ts  ← vidshare_admin_sid (관리자, 081)
+│   ├── requestUser.ts   ← requireRequestUser
+│   └── requireAdmin.ts  ← requireAdmin (081)
+├── scripts/create-admin.ts  ← 관리자 계정 생성·승격 CLI (081)
 ├── upload/files.ts      ← 디스크 경로·MIME 화이트리스트
 └── types/index.ts
 ```
@@ -208,6 +222,12 @@ src/
 | `/api/chatbot/threads` | `chatbot-threads.ts` | 필요 |
 | `/api/uploads` | `uploads.ts` | 필요 |
 | `/uploads/:file` | `express.static` | 공개 (재생용) |
+| `/api/admin/auth/*` | `admin/auth.ts` | login 외 관리자 필요 |
+| `/api/admin/reports` | `admin/reports.ts` | 관리자 |
+| `/api/admin/users` | `admin/users.ts` | 관리자 |
+| `/api/admin/content/*` | `admin/content.ts` | 관리자 |
+| `/api/admin/support/inquiries` | `admin/support.ts` | 관리자 |
+| `/api/admin/dashboard/stats` | `admin/dashboard.ts` | 관리자 |
 
 ### SQLite 테이블 (17개)
 
@@ -222,6 +242,12 @@ src/
 | 대화 (038 추가) | `conversations`, `chat_lines` |
 | 알림 (038 추가) | `activity_notifications` |
 | 팔로우 (065 추가) | `user_follows` |
+| 모더레이션 (075 추가) | `user_blocks`, `reports` |
+| 재생목록 (076 추가) | `playlists`, `playlist_items` |
+
+> 관리자 관련 컬럼은 테이블을 늘리지 않고 기존 테이블에 붙였다 (081):
+> `users.role` / `users.suspended`, `reports.status`,
+> `support_inquiries.admin_reply` / `replied_at`.
 
 > 알림은 `activity_notifications` **하나만** 쓴다.
 > 초기 목업용 `notifications` 테이블은 커밋 062에서 제거했고,
@@ -265,9 +291,16 @@ npm run dev          # http://localhost:4000
 cd vidshare/FrontServer
 npm install
 npm run dev          # http://localhost:3000
+
+# 관리자 콘솔 (터미널 3, 필요할 때만)
+cd vidshare/console
+npm install
+npm run dev          # http://localhost:3200
 ```
 
 - 데모 계정: `demo` / `demo1234`
+- 관리자 계정은 시드에 없다. 한 번만 만들면 된다:
+  `cd vidshare/BackendServer && npm run create-admin -- <handle> <password>`
 - LAN 접속 시 프론트는 `window.location.hostname:4000` 으로 API를 자동 지정한다
 - 검증 명령: `npx tsc --noEmit` + `npm run lint`
   (`app/layout.tsx` 의 `no-page-custom-font` 경고 1건은 기존 이슈로 무시)
@@ -283,7 +316,11 @@ npm run dev          # http://localhost:3000
 3. **한글 파일 편집 주의**: PowerShell `Get-Content | Set-Content` 는 UTF-8 한글을 깨뜨린다.
    에디터 도구로 편집할 것
 4. SQLite 현재 내용은 `BackendServer/data/DataBaseColumn.md` 에 자동 덤프된다 (gitignore).
-5. 남은 과제 목록은 [features/roadmap.md](../features/roadmap.md) 참고
+5. **관리자 라우트는 `requireAdmin(req)` 로 시작**한다 (`requireRequestUser` 가 아님).
+   관리자 화면을 늘릴 때는 `console/` 쪽만 고치고 FrontServer는 건드리지 않는다
+6. 실제 배포 전에 반드시 [배포 가이드](../deployment.md) 3장(크로스 도메인 쿠키·CORS)을
+   먼저 읽을 것 — 지금 설정 그대로 올리면 로그인이 되지 않는다
+7. 남은 과제 목록은 [features/roadmap.md](../features/roadmap.md) 참고
 
 ---
 

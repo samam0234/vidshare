@@ -13,6 +13,7 @@
 ```
 docs/
 ├── README.md                 ← 지금 이 파일 (docs 이용 가이드)
+├── deployment.md             ← 배포 가이드 (호스트 추천 + 올리기 전 필수 수정)
 ├── architecture/             ← 아키텍처
 │   └── overview.md
 ├── features/                 ← 추가 기능·로드맵
@@ -39,6 +40,7 @@ docs/
 | 다음에 무엇을 만들지 정한다 | `features/roadmap.md` |
 | “언제 뭐가 바뀌었지?” | `changelog/CHANGELOG.md` |
 | 보안상 주의할 점 | `security/security-notes.md` |
+| 실제 서버에 올린다 | `deployment.md` (**3장을 먼저 읽을 것**) |
 | 특정 커밋이 무엇을 했는지 (git 메시지보다 상세) | `commits/` |
 
 ---

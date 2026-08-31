@@ -63,6 +63,28 @@ export default function InquiryDetail({ id }: { id: string }) {
         <h1 className="mt-3 text-2xl font-bold">{item.subject}</h1>
         <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed">{item.body}</p>
       </article>
+
+      {item.adminReply ? (
+        <article className="surface mt-4 rounded-3xl border-l-4 border-l-[var(--accent)] p-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-xs font-semibold text-white">
+              고객센터 답변
+            </span>
+            {item.repliedAt ? (
+              <span className="text-xs text-[var(--text-muted)]">
+                {formatWhen(item.repliedAt)}
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed">
+            {item.adminReply}
+          </p>
+        </article>
+      ) : (
+        <p className="mt-4 px-2 text-xs text-[var(--text-muted)]">
+          답변이 등록되면 알림으로 알려드립니다.
+        </p>
+      )}
     </main>
   );
 }

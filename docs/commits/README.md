@@ -154,6 +154,10 @@ NNN-짧은-영문-slug.md
 | 078 | [078-messages-realtime-ws.md](./078-messages-realtime-ws.md) | `41dfaae` | 메시지 실시간화 (WebSocket) | 2026-09-01 |
 | 079 | [079-e2e-playwright.md](./079-e2e-playwright.md) | `596d730` | E2E 테스트 (Playwright) | 2026-09-01 |
 | 080 | [080-react-query.md](./080-react-query.md) | `c4e2ea2` | 서버 상태 캐싱 (React Query) | 2026-09-01 |
+| 081 | [081-admin-auth.md](./081-admin-auth.md) | `a6f9b5b` | 관리자 스키마·인증 기반 | 2026-09-01 |
+| 082 | [082-admin-api.md](./082-admin-api.md) | `b747b89` | 관리자 API (신고·유저·콘텐츠·고객센터) | 2026-09-01 |
+| 083 | [083-console-scaffold.md](./083-console-scaffold.md) | `8f49a8c` | 관리자 콘솔 앱 뼈대 (`console/`) | 2026-09-01 |
+| 084 | [084-console-screens.md](./084-console-screens.md) | `082f724` | 관리자 콘솔 화면 4종 | 2026-09-01 |
 
 ---
 

@@ -77,4 +77,7 @@ export type SupportInquiry = {
   body: string;
   authorName: string;
   createdAt: string;
+  /** 관리자 콘솔에서 답변이 등록되면 채워진다. */
+  adminReply?: string;
+  repliedAt?: string;
 };

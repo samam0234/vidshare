@@ -49,9 +49,23 @@ npm run dev
 npm run build      # dist/ 컴파일
 npm start          # 프로덕션 실행 (build 후)
 npm run typecheck  # 타입만 검사 (src + tests)
-npm test           # API 자동화 테스트 (임시 SQLite 사용)
+npm test           # API 자동화 테스트 (임시 SQLite 사용, 127건)
 npm run test:watch # 테스트 진행 상태 감지
 ```
+
+### 관리자 계정 만들기
+
+관리자는 **시드에 없습니다**(비밀번호를 소스에 남기지 않기 위해).
+`console/` 앱(:3200)에 로그인하려면 먼저 여기서 만들어야 합니다.
+
+```bash
+npm run create-admin -- <handle> <password> [name]
+
+# 이미 있는 일반 계정을 관리자로 승격 (비밀번호는 그대로 유지)
+npm run create-admin -- <handle> <password> --promote
+```
+
+이미 관리자인 핸들에 다시 실행하면 아무것도 바꾸지 않고 안내만 출력합니다(멱등).
 
 ---
 
@@ -106,6 +120,28 @@ npm run test:watch # 테스트 진행 상태 감지
 | GET | `/api/messages/:userId` | 대화 내역 |
 | POST | `/api/messages/:userId` | 메시지 전송 `{ content, isImage? }` |
 | GET | `/api/support/faq` | FAQ |
+
+### 관리자 API (`/api/admin/*`, 081~082)
+
+전부 관리자 세션 쿠키(`vidshare_admin_sid`)가 필요합니다. 일반 세션으로는 401입니다.
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | `/api/admin/auth/login` | 관리자 로그인 `{ handle, password }` |
+| POST | `/api/admin/auth/logout` | 로그아웃 |
+| GET | `/api/admin/auth/me` | 현재 관리자 |
+| GET | `/api/admin/dashboard/stats` | 운영 지표 8종 |
+| GET | `/api/admin/reports?status=` | 전체 신고 (open/resolved/dismissed) |
+| PATCH | `/api/admin/reports/:id` | 처리 상태 변경 `{ status }` |
+| GET | `/api/admin/users?q=` | 전체 유저 (role·suspended·가입일) |
+| PATCH | `/api/admin/users/:id/suspend` | 정지/해제 `{ suspended }` (관리자 대상은 400) |
+| DELETE | `/api/admin/content/shorts/:id` | 쇼츠 삭제 (댓글·재생목록 cascade) |
+| DELETE | `/api/admin/content/longform/:id` | 롱폼 삭제 |
+| DELETE | `/api/admin/content/community/:id` | 커뮤니티 글 삭제 |
+| DELETE | `/api/admin/content/comments/:id` | 댓글 삭제 |
+| GET | `/api/admin/support/inquiries?unreplied=1` | 전체 문의 |
+| GET | `/api/admin/support/inquiries/:id` | 문의 상세 |
+| PATCH | `/api/admin/support/inquiries/:id/reply` | 답변 `{ reply }` (작성자에게 알림) |
 
 루트 `GET /` 에 엔드포인트 목록이 있습니다.
 

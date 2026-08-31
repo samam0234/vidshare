@@ -8,6 +8,16 @@
 ## [Unreleased]
 
 ### Added
+- **관리자 콘솔** (커밋 081~084): 루트 `console/` 에 관리자 전용 Next.js 앱(포트 3200).
+  신고 조회·처리, 유저 목록·정지, 콘텐츠(쇼츠·롱폼·커뮤니티) 삭제, 고객센터 문의
+  전체 조회·답변, 운영 대시보드
+- **관리자 계정 체계** (커밋 081): `users.role`/`suspended`, 별도 세션 쿠키
+  `vidshare_admin_sid`, `requireAdmin` 가드, `/api/admin/auth/*`.
+  계정은 `npm run create-admin` 으로 생성(시드에 비밀번호를 두지 않음)
+- **고객센터 답변** (커밋 082·084): 관리자가 답변하면 작성자에게 알림이 가고
+  `/support/:id` 에 답변이 표시됨
+- **배포 가이드** ([docs/deployment.md](../deployment.md)): 호스트 추천과
+  올리기 전에 고쳐야 할 것(크로스 도메인 쿠키·CORS) 정리
 - **서버 상태 캐싱** (커밋 080): React Query 도입, 롱폼·커뮤니티·팔로잉피드·프로필·메시지 목록을 `useQuery` 로 전환
 - **E2E 테스트** (커밋 079): Playwright, 게스트 접근·로그인/로그아웃·커뮤니티 작성·메시지 실시간(WS) 8개 시나리오
 - **메시지 실시간화** (커밋 078): WebSocket (`/ws/conversations`), 대화 송수신을 실시간으로 브로드캐스트, REST 폴백 유지
@@ -64,6 +74,8 @@
 - 챗봇 봇 답변 마크다운 렌더링 (굵게·이탤릭·취소선·목록)
 
 ### Changed
+- 정지된 계정(`users.suspended`)은 로그인 시 403, 정지 시점에 기존 세션이 전부 끊김
+- 공개 `Author` 응답에 `role` 이 포함됨 (`suspended` 는 관리자 응답에만)
 - 쇼츠·롱폼 작성은 data URL을 저장하지 않고 업로드 URL 또는 http(s)만 허용
 - 쇼츠 생성 API는 로그인 필수 (`requireRequestUser`)
 - 챗봇 워크스페이스 게스트/회원 모드 분리 (게스트는 메모리, 회원은 SQLite 영속화)
@@ -96,10 +108,11 @@
 - 메시지 상대를 눌러도 대화창이 안 열리던 문제 (localStorage 하이드)
 
 ### 예정 (다음 작업자용, 상세는 features/roadmap.md)
-- **Phase A(P0) 전량 완료, Phase B 주요 항목 완료 (2026-08-31)**
-- 팔로잉 피드 화면, 팔로워/팔로잉 목록 화면 (API는 준비됨)
-- 실시간 알림/메시지 (SSE 또는 WebSocket)
-- 프론트 테스트, E2E(Playwright), 배포 파이프라인
+- **Phase A·B 전량 완료, Phase C 주요 항목 + 관리자 콘솔 완료 (2026-09-01)**
+- 실제 배포 (가이드는 [docs/deployment.md](../deployment.md), 아직 올리지 않음)
+- CI 파이프라인 (GitHub Actions)
+- 관리자 조치 감사 로그, 관리자 목록 페이지네이션
+- `ShortsFeed` React Query 전환, 접근성·성능 점검
 
 ---
 
