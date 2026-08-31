@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `064` |
 | **파일명** | `064-notification-settings-server.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `6d381ac` |
+| **Git 커밋 (full)** | `6d381acfd87a545466244149e759ae01c0008e1f` |
 | **날짜** | `2026-08-31` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |
