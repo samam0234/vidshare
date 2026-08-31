@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/*
+ * FrontServer/app/globals.css 의 팔레트를 옮겨 왔다(변수 이름 동일).
+ * 다만 콘솔은 운영자가 사용자 사이트와 헷갈리지 않도록 항상 다크 + 호박색
+ * 계열 액센트를 쓴다. 테마 토글은 두지 않았다.
+ * 팔레트를 바꿀 일이 생기면 두 파일을 함께 손봐야 한다.
+ */
+
+:root {
+  --bg: #0d0d11;
+  --bg-elevated: #16161d;
+  --bg-card: #1c1c25;
+  --nav: #12121a;
+  --text: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --border: #2a2a35;
+  --btn: #27272f;
+  --accent: #f59e0b;
+  --accent-soft: rgba(245, 158, 11, 0.14);
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.14);
+  --success: #22c55e;
+  --success-soft: rgba(34, 197, 94, 0.14);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --font-sans: "Noto Sans KR", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Noto Sans KR", system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 아이콘 선 사이로 클릭이 빠지지 않게 (FrontServer 와 같은 이유) */
+button svg,
+a svg,
+[role="button"] svg {
+  pointer-events: none;
+}
+
+.surface {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 999px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
