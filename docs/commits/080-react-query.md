@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `080` |
 | **파일명** | `080-react-query.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `c4e2ea2` |
+| **Git 커밋 (full)** | `c4e2ea254bcbd7b5a826a7829cddb442834c092f` |
 | **날짜** | `2026-09-01` |
 | **작성자** | `Claude (pair)` |
 | **브랜치** | `master` |
@@ -151,5 +151,5 @@ npm run test:e2e      # 8/8 통과 — 커뮤니티 작성/메시지(WS) 시나�
 - [x] 문서 번호·파일명 규칙 준수
 - [ ] 인덱스 표 업데이트 (`commits/README.md`)
 - [ ] CHANGELOG 반영 여부 결정
-- [ ] Git 해시 기입 (TBD 해소)
+- [x] Git 해시 기입 (TBD 해소)
 - [x] 민감 정보(키, 비밀번호, 개인정보) 없음

@@ -121,7 +121,7 @@ SQLite (vidshare.sqlite)
 | `/support`, `/support/[id]` | `FaqAccordion`+`SupportContact`, `InquiryDetail` | 문의는 로그인 |
 | `/login`, `/register` | 인증 폼 | — |
 
-공통 셸: `app/layout.tsx` → `ThemeProvider` + `AuthProvider` + `Navbar` + `Footer`
+공통 셸: `app/layout.tsx` → `ThemeProvider` + `QueryProvider`(080) + `AuthProvider` + `Navbar` + `Footer`
 
 ### `lib/` 모듈 역할
 
@@ -143,7 +143,7 @@ SQLite (vidshare.sqlite)
 
 | 종류 | 방식 |
 |------|------|
-| 서버 데이터 | 컴포넌트 로컬 `useState` + `useEffect` 페치 (React Query 미도입) |
+| 서버 데이터 | 목록형 5곳(롱폼·커뮤니티·팔로잉피드·프로필·메시지)은 React Query(080). 나머지(`ShortsFeed` 등)는 여전히 컴포넌트 로컬 `useState` + `useEffect` 페치 |
 | 알림 | `useSyncExternalStore` 전역 스토어 (Navbar·목록·팝업이 공유) |
 | 테마 | `useSyncExternalStore` + localStorage |
 | 인증 | `context/AuthContext` |
