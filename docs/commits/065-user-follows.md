@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `065` |
 | **파일명** | `065-user-follows.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `c1169ec` |
+| **Git 커밋 (full)** | `c1169eca5c6c6e75409621afc6234b8a71c9f7d2` |
 | **날짜** | `2026-08-31` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |
