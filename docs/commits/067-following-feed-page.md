@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `067` |
 | **파일명** | `067-following-feed-page.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `a0b0763` |
+| **Git 커밋 (full)** | `a0b0763b2e55199c6eabad260c29ef3ce259e666` |
 | **날짜** | `2026-09-01` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |

@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `068` |
 | **파일명** | `068-guest-route-search-fix.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `d3a43f0` |
+| **Git 커밋 (full)** | `d3a43f062c83d619de0a234b2bbdc6e78318200b` |
 | **날짜** | `2026-09-01` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |

@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `069` |
 | **파일명** | `069-follow-list-pages.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `637528c` |
+| **Git 커밋 (full)** | `637528ce0205f1ce3c6d52c04300a4fdab07bd0e` |
 | **날짜** | `2026-09-01` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |
