@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- **메시지 실시간화** (커밋 078): WebSocket (`/ws/conversations`), 대화 송수신을 실시간으로 브로드캐스트, REST 폴백 유지
 - **알림 실시간화** (커밋 077): SSE (`GET /api/notifications/stream`), 폴링 없이 새 알림 즉시 도착
 - **재생목록** (커밋 076): `playlists`/`playlist_items`, 프로필 탭 실구현, `/playlists/:id` 상세 페이지
 - **신고·차단** (커밋 075): `user_blocks`/`reports`, 차단 시 팔로우 관계 자동 해제, 쇼츠 피드에서 차단 유저 제외

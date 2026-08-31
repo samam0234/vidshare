@@ -1,7 +1,7 @@
 # 아키텍처 개요
 
 **상태**: 구현됨 — FrontServer(Next.js) + BackendServer(Express + SQLite) 전면 연동 완료
-**최종 갱신**: 2026-08-31 (Phase B 완료)
+**최종 갱신**: 2026-09-01 (Phase B 완료 — 메시지 실시간화까지)
 **대상 독자**: 이 저장소를 처음 인수받는 개발자/에이전트
 
 ---
@@ -45,7 +45,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 | 쇼츠 | 목록·상세·생성·좋아요·댓글, 실파일 업로드 (API 연동) |
 | 롱폼 | 목록·작성·상세 (API 연동) |
 | 커뮤니티 | 목록·작성·상세 (API 연동) |
-| 메시지 | 대화 목록·스레드·전송 (API 연동) |
+| 메시지 | 대화 목록·스레드·전송, WebSocket 실시간 송수신 (078) |
 | 고객센터 | FAQ, 문의 작성·목록·상세 (API 연동) |
 | 알림 | 목록·상세·읽음·삭제·수신 토글 (API 연동) |
 | 챗봇 | Locals/Vide/Shape 3모델, RAG, 멀티모달 첨부, 스레드 영속화 |
@@ -57,10 +57,10 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 | 항목 | 설명 |
 |------|------|
 | 실파일 업로드 | **057에서 로컬 `uploads/` 도입.** 트랜스코딩·비공개 URL·오브젝트 스토리지는 없음 |
-| 실시간성 | 알림·메시지 모두 폴링/수동 새로고침. WebSocket/SSE 없음 |
+| 실시간성 | **알림은 077(SSE), 메시지는 078(WebSocket)에서 실시간화.** 둘 다 단일 프로세스 `EventEmitter` 전제라 다중 인스턴스 확장 시 브로커(Redis 등) 필요. 읽음 처리 등 나머지 동작은 여전히 요청-응답 기반 |
 | 검색 | **063에서 통합 검색 도입.** 관련도 정렬·페이지네이션은 없음 |
 | 팔로우 | **065 API + 067·069 화면.** 페이지네이션·맞팔 표시는 없음 |
-| 테스트 | **백엔드 79건(066·071·074~077) + 프론트 순수함수 29건(070).** 컴포넌트·E2E·CI 는 없음 |
+| 테스트 | **백엔드 83건(066·071·074~078) + 프론트 순수함수 29건(070).** 컴포넌트·E2E·CI 는 없음 |
 | 마이그레이션 | 버전 테이블 없이 `initDb()` 에서 개별 처리 (`ensureColumn`, `DROP TABLE`) |
 | `lib/mock-data.ts` | 잔존. 일부 시드/폴백 용도로만 남아 있음 |
 
@@ -160,7 +160,7 @@ SQLite (vidshare.sqlite)
 ```
 src/
 ├── app.ts               ← Express 앱 조립 + 라우트 등록 + 엔드포인트 목록 응답
-├── index.ts             ← 서버 부팅 (LAN IP 출력 포함)
+├── index.ts             ← 서버 부팅 (LAN IP 출력, http.createServer + attachChatSocket)
 ├── auth/
 │   ├── accounts.ts      ← bcrypt 해시, 계정 생성/조회
 │   ├── sessions.ts      ← 세션 발급/검증
@@ -179,6 +179,10 @@ src/
 │   ├── schema.ts        ← CREATE TABLE 18개
 │   └── seed.ts
 ├── middleware/errorHandler.ts   ← HttpError → JSON 변환
+├── realtime/
+│   ├── notificationBus.ts   ← 알림 SSE용 owner_id 채널 EventEmitter (077)
+│   ├── chatBus.ts           ← 메시지 WS용 owner_id 채널 EventEmitter (078)
+│   └── chatSocket.ts        ← /ws/conversations 업그레이드 처리·인증·송수신 (078)
 ├── routes/              ← 13개 라우터
 ├── upload/files.ts      ← 디스크 경로·MIME 화이트리스트
 └── types/index.ts
@@ -196,6 +200,7 @@ src/
 | `/api/longform` | `longform.ts` | 생성 시 필요 |
 | `/api/community` | `community.ts` | 생성 시 필요 |
 | `/api/conversations` | `conversations.ts` | 필요 |
+| `/ws/conversations` | `realtime/chatSocket.ts` | 필요 (세션 쿠키, WebSocket 업그레이드) |
 | `/api/messages` | `messages.ts` | 필요 |
 | `/api/notifications` | `notifications.ts` | 필요 (`GET`, `PATCH /read-all`, `DELETE /`, `/:id`) |
 | `/api/support/faq`, `/api/support/inquiries` | `support.ts` | 문의는 필요 |
