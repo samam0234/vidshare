@@ -36,6 +36,7 @@ const memberNavLinks = [
   { href: "/community", label: "커뮤니티" },
   { href: "/chatbot", label: "챗봇" },
   { href: "/", label: "쇼츠" },
+  { href: "/following", label: "팔로잉" },
   { href: "/upload", label: "업로드" },
   { href: "/support", label: "고객센터" },
 ];
