@@ -16,6 +16,8 @@ function lanDevHosts() {
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: lanDevHosts(),
+  // Playwright E2E는 별도 distDir을 써서 평소 켜 둔 dev 서버(.next lock)와 충돌하지 않게 한다.
+  ...(process.env.PLAYWRIGHT_E2E ? { distDir: ".next-e2e" } : {}),
 };
 
 const lanIps = lanDevHosts().filter(
