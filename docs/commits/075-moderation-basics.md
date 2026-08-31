@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `075` |
 | **파일명** | `075-moderation-basics.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `8b7e00c` |
+| **Git 커밋 (full)** | `8b7e00cea8a7d863fd476a4d2030c4bddeaab0d5` |
 | **날짜** | `2026-09-01` |
 | **작성자** | `GitHub Copilot (pair)` |
 | **브랜치** | `master` |
