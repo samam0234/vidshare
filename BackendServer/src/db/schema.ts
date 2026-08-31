@@ -39,14 +39,6 @@ CREATE TABLE IF NOT EXISTS comments (
   time TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS notifications (
-  id TEXT PRIMARY KEY,
-  category TEXT NOT NULL,
-  message TEXT NOT NULL,
-  read INTEGER NOT NULL DEFAULT 0,
-  icon TEXT NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS chat_users (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,

@@ -35,14 +35,6 @@ export type NotificationCategory =
   | "system"
   | "follower";
 
-export type Notification = {
-  id: string;
-  category: NotificationCategory;
-  message: string;
-  read: boolean;
-  icon: string;
-};
-
 export type ChatUser = {
   id: string;
   name: string;

@@ -4,7 +4,6 @@ import type {
   Comment,
   FaqItem,
   Message,
-  Notification,
   Short,
 } from "../types";
 
@@ -132,58 +131,6 @@ export const seedComments: Comment[] = [
     author: "회의실탈출",
     text: "3번째 썰에서 진짜 터짐 😂",
     time: "30분 전",
-  },
-];
-
-export const seedNotifications: Notification[] = [
-  {
-    id: "n1",
-    category: "comment",
-    message: "💬 새로운 댓글이 달렸습니다.",
-    read: false,
-    icon: "💬",
-  },
-  {
-    id: "n2",
-    category: "like",
-    message: "👍 회원님 영상이 1,000 좋아요를 돌파했습니다!",
-    read: false,
-    icon: "👍",
-  },
-  {
-    id: "n3",
-    category: "follower",
-    message: "🔔 새로운 팔로워가 생겼습니다.",
-    read: true,
-    icon: "🔔",
-  },
-  {
-    id: "n4",
-    category: "system",
-    message: "📢 공지사항: 시스템 점검 예정 안내",
-    read: true,
-    icon: "📢",
-  },
-  {
-    id: "n5",
-    category: "system",
-    message: "🎥 오늘의 추천 영상이 있습니다.",
-    read: false,
-    icon: "🎥",
-  },
-  {
-    id: "n6",
-    category: "mention",
-    message: "💡 AI 추천: 취향 맞춤 영상이 있습니다.",
-    read: false,
-    icon: "💡",
-  },
-  {
-    id: "n7",
-    category: "mention",
-    message: "📢 친구가 회원님을 멘션했습니다.",
-    read: false,
-    icon: "📢",
   },
 ];
 

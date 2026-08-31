@@ -15,7 +15,6 @@ import type {
   FaqItem,
   LongformVideo,
   Message,
-  Notification,
   NotificationCategory,
   Short,
   SupportInquiry,
@@ -241,91 +240,6 @@ export function addComment(input: {
   });
   tx();
   return comment;
-}
-
-export function listNotifications(category?: string): Notification[] {
-  const rows = (
-    category && category !== "all"
-      ? getDb()
-          .prepare(
-            "SELECT id, category, message, read, icon FROM notifications WHERE category = ? ORDER BY rowid"
-          )
-          .all(category)
-      : getDb()
-          .prepare(
-            "SELECT id, category, message, read, icon FROM notifications ORDER BY rowid"
-          )
-          .all()
-  ) as Array<{
-    id: string;
-    category: NotificationCategory;
-    message: string;
-    read: number;
-    icon: string;
-  }>;
-  return rows.map((r) => ({
-    id: r.id,
-    category: r.category,
-    message: r.message,
-    read: Boolean(r.read),
-    icon: r.icon,
-  }));
-}
-
-export function deleteNotification(id: string): Notification | undefined {
-  const db = getDb();
-  const row = db
-    .prepare("SELECT id, category, message, read, icon FROM notifications WHERE id = ?")
-    .get(id) as
-    | {
-        id: string;
-        category: NotificationCategory;
-        message: string;
-        read: number;
-        icon: string;
-      }
-    | undefined;
-  if (!row) return undefined;
-  db.prepare("DELETE FROM notifications WHERE id = ?").run(id);
-  return {
-    id: row.id,
-    category: row.category,
-    message: row.message,
-    read: Boolean(row.read),
-    icon: row.icon,
-  };
-}
-
-export function patchNotification(
-  id: string,
-  read?: boolean
-): Notification | undefined {
-  const db = getDb();
-  if (typeof read === "boolean") {
-    const info = db
-      .prepare("UPDATE notifications SET read = ? WHERE id = ?")
-      .run(read ? 1 : 0, id);
-    if (info.changes === 0) return undefined;
-  }
-  const row = db
-    .prepare("SELECT id, category, message, read, icon FROM notifications WHERE id = ?")
-    .get(id) as
-    | {
-        id: string;
-        category: NotificationCategory;
-        message: string;
-        read: number;
-        icon: string;
-      }
-    | undefined;
-  if (!row) return undefined;
-  return {
-    id: row.id,
-    category: row.category,
-    message: row.message,
-    read: Boolean(row.read),
-    icon: row.icon,
-  };
 }
 
 export function listFaqs(): FaqItem[] {

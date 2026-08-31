@@ -7,7 +7,6 @@ import {
   seedFaqs,
   seedLoginPasswords,
   seedMessages,
-  seedNotifications,
   seedShorts,
 } from "../data/seedData";
 
@@ -29,10 +28,6 @@ export function seedIfEmpty(db: Database.Database) {
   const insertComment = db.prepare(
     `INSERT INTO comments (id, short_id, author, text, time)
      VALUES (@id, @short_id, @author, @text, @time)`
-  );
-  const insertNotif = db.prepare(
-    `INSERT INTO notifications (id, category, message, read, icon)
-     VALUES (@id, @category, @message, @read, @icon)`
   );
   const insertChatUser = db.prepare(
     `INSERT INTO chat_users (id, name, handle, avatar, last_message, online)
@@ -82,16 +77,6 @@ export function seedIfEmpty(db: Database.Database) {
         author: c.author,
         text: c.text,
         time: c.time,
-      });
-    }
-
-    for (const n of seedNotifications) {
-      insertNotif.run({
-        id: n.id,
-        category: n.category,
-        message: n.message,
-        read: n.read ? 1 : 0,
-        icon: n.icon,
       });
     }
 
