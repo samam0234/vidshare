@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- 사업자 정보확인 페이지 `/business` (커밋 089)
 - 개인정보처리방침 페이지 `/privacy` (커밋 088)
 - 이용약관 페이지 `/terms` (커밋 087)
 - FrontServer·console Cloudflare Workers 배포 (커밋 086, OpenNext). 백엔드는 Workers 에 올리지 않음

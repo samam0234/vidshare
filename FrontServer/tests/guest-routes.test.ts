@@ -20,6 +20,7 @@ describe("isGuestAllowedPath — 비회원 공개 경로", () => {
     "/playlists/1",
     "/terms",
     "/privacy",
+    "/business",
   ];
 
   for (const p of publicPaths) {

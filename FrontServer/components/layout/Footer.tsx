@@ -21,9 +21,9 @@ export default function Footer() {
             개인정보처리방침
           </Link>
           <span aria-hidden>|</span>
-          <a href="#" className="hover:text-[var(--text)] hover:underline">
+          <Link href="/business" className="hover:text-[var(--text)] hover:underline">
             사업자 정보확인
-          </a>
+          </Link>
           <span aria-hidden>|</span>
           <Link
             href="/support"

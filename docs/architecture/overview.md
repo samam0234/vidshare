@@ -135,6 +135,7 @@ SQLite (vidshare.sqlite)
 | `/chatbot`, `/chatbot/[id]` | `ChatbotWorkspace` | 게스트=Locals만 |
 | `/support`, `/support/[id]` | `FaqAccordion`+`SupportContact`, `InquiryDetail` | 문의는 로그인 |
 | `/login`, `/register` | 인증 폼 | — |
+| `/terms`, `/privacy`, `/business` | 이용약관·개인정보처리방침·사업자 정보 | 열람 자유 |
 
 공통 셸: `app/layout.tsx` → `ThemeProvider` + `QueryProvider`(080) + `AuthProvider` + `Navbar` + `Footer`
 
