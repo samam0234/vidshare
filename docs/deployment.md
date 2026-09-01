@@ -1,7 +1,7 @@
 # 배포 가이드
 
-**상태**: 가이드 문서 (아직 어디에도 배포하지 않음)
-**최종 갱신**: 2026-09-01
+**상태**: 가이드 문서 — Cloudflare Tunnel 경로로 코드 준비됨 (실제 터널 생성은 계정 작업)
+**최종 갱신**: 2026-09-02
 **대상**: VidShare를 처음 실제 서버에 올리려는 사람
 
 이 문서는 **무엇을 골라야 하는지**와 **올리기 전에 반드시 고쳐야 하는 것**을
@@ -29,31 +29,41 @@
 
 ## 2. 추천 조합
 
-### 권장안 — Railway(또는 Render) 1대 + Vercel 2개
+### 이 저장소의 권장안 — Cloudflare Tunnel + 상시 Node 3프로세스
+
+아티팩트(배포 가이드)의 제약 그대로다. **백엔드는 서버리스에 올리지 않는다.**
+SQLite 파일 + `uploads/` + WebSocket 이라 Workers/Pages Functions 로는 깨진다.
 
 | 대상 | 호스트 | 이유 |
 |------|--------|------|
-| BackendServer | **Railway** (Render / Fly.io도 동일 성격) | 영구 볼륨을 붙일 수 있고, WebSocket이 그대로 되고, 상시 프로세스라 SQLite가 성립. 설정이 가장 적음 |
-| FrontServer | **Vercel** | Next.js 기본 배포처. 빌드·프리뷰가 자동 |
-| console | **Vercel** (같은 계정, 별도 프로젝트) | 같은 이유. 별도 프로젝트로 두면 관리자 URL을 따로 숨길 수 있음 |
+| BackendServer | **이 PC 또는 VPS에서 `npm start`** + Cloudflare Tunnel | 영구 디스크와 상시 프로세스. HTTPS·WS는 Cloudflare가 붙인다 |
+| FrontServer | **Cloudflare Workers** (`npm run deploy` in `FrontServer/`) | OpenNext 어댑터. 현재 `https://vidshare-front.limjinheng0120.workers.dev` |
+| console | **Cloudflare Workers** (`npm run deploy` in `console/`) | 동일. 현재 `https://vidshare-console.limjinheng0120.workers.dev` |
 
-이 조합을 권하는 이유는 **지금 코드를 가장 적게 고치고 올릴 수 있어서**입니다.
-DB를 Postgres로 옮기거나 S3를 붙이는 작업 없이 그대로 동작합니다.
+도메인은 Cloudflare 존에 있어야 서브도메인 3개를 한 터널에 묶고 쿠키 `domain=.example.com` 이 된다.
+템플릿: [`cloudflare/config.template.yml`](../cloudflare/config.template.yml)
 
-### 대안
+### 대안 (아티팩트와 동일)
+
+| 대상 | 호스트 | 이유 |
+|------|--------|------|
+| BackendServer | Railway / Render / Fly.io | 영구 볼륨 + WS. Tunnel 대신 쓸 수 있음 |
+| FrontServer / console | Vercel 또는 Cloudflare Pages(정적/OpenNext) | 프론트만 |
+
+코드를 가장 적게 고치고 올리는 경로다. DB를 Postgres로 옮기거나 R2를 붙이지 않는다.
 
 | 방식 | 언제 | 대가 |
 |------|------|------|
-| **전부 한 VPS**(Oracle Cloud 무료 티어, Lightsail 등) + Nginx | 도메인 하나에 `/` 와 `/api` 를 같이 붙이고 싶을 때. **쿠키 문제가 통째로 사라지는** 방식 | Nginx·PM2·인증서(certbot)를 직접 관리 |
+| **전부 한 VPS** + Nginx | 도메인 하나에 `/` 와 `/api` 를 같이 붙이고 싶을 때. **쿠키 문제가 통째로 사라지는** 방식 | Nginx·PM2·인증서(certbot)를 직접 관리 |
 | **Docker Compose** 로 3개 컨테이너 | 위 VPS의 정돈된 버전 | Dockerfile 3개를 새로 써야 함 |
-| **Vercel에 백엔드까지** | — | **권장하지 않음.** SQLite·업로드·WS가 전부 깨짐. Postgres+S3로 갈아엎어야 함 |
+| **Workers/Pages에 백엔드까지** | — | **하지 않음.** SQLite·업로드·WS가 전부 깨짐 |
 
 ### 도메인 배치 (권장)
 
 ```
-app.example.com      → FrontServer   (Vercel)
-api.example.com      → BackendServer (Railway, 영구 볼륨)
-console.example.com  → console       (Vercel)
+app.example.com      → FrontServer   (localhost:3000, Tunnel)
+api.example.com      → BackendServer (localhost:4000, Tunnel)
+console.example.com  → console       (localhost:3200, Tunnel)
 ```
 
 관리자 콘솔은 **검색에 잡히지 않게** 되어 있습니다(`robots: index:false`).
@@ -86,14 +96,14 @@ res.cookie(SESSION_COOKIE, sid, {
 해결은 둘 중 하나입니다.
 
 - **(A) 같은 사이트로 묶기 — 권장.** 프론트와 API를 같은 등록 도메인 아래
-  (`app.example.com` ↔ `api.example.com`)에 두고 쿠키에 `domain: ".example.com"`
-  을 주거나, 아예 VPS + Nginx로 `example.com/api/*` 를 백엔드에 리버스 프록시.
+  (`app.example.com` ↔ `api.example.com`)에 두고 쿠키에 `COOKIE_DOMAIN=.example.com`
+  을 주거나, 아예 한 호스트에서 `/api/*` 를 백엔드에 리버스 프록시.
   **동일 사이트가 되면 `Lax` 그대로 동작하고, 이 항목은 신경 쓸 게 없어집니다.**
-- **(B) 진짜 크로스 사이트로 간다면** `sameSite: "none"` + `secure: true` 로
-  바꿔야 합니다. `None` 은 HTTPS에서만 유효하므로 인증서가 필수이고, CSRF
-  방어가 `Lax` 에 기대던 부분이 사라지니 그 대비도 함께 필요합니다.
+- **(B) 진짜 크로스 사이트로 간다면** `COOKIE_SAMESITE=none` (코드가 프로덕션에서
+  `secure` 를 켠다). HTTPS 필수이고, CSRF 방어가 `Lax` 에 기대던 부분이 사라지니
+  그 대비도 함께 필요합니다.
 
-두 파일 모두 고쳐야 합니다(사용자 세션·관리자 세션).
+`sessions.ts` / `adminSession.ts` 는 `COOKIE_DOMAIN` · `COOKIE_SAMESITE` 환경 변수를 읽는다.
 
 ### 3-2. CORS 화이트리스트
 
@@ -105,8 +115,8 @@ res.cookie(SESSION_COOKIE, sid, {
 CORS_ORIGIN=https://app.example.com,https://console.example.com
 ```
 
-`NODE_ENV=production` 일 때는 `isPrivateHostname` 경로를 아예 타지 않도록
-조여 두는 편이 안전합니다(현재는 env가 비면 사설망을 계속 허용).
+`NODE_ENV=production` 이면 사설망 자동 허용은 꺼진다. `CORS_ORIGIN` 이 비면
+브라우저 Origin 이 있는 요청은 전부 막힌다.
 
 ### 3-3. 관리자 계정 만들기
 
@@ -122,9 +132,8 @@ npm run create-admin -- <handle> <password> [name]
 npm run create-admin -- <handle> <password> --promote
 ```
 
-Railway·Render라면 대시보드의 셸(또는 `railway run`)에서 실행합니다.
-`SQLITE_PATH` 가 **실제 볼륨 경로를 가리키는 상태**여야 합니다 — 안 그러면
-컨테이너 임시 디스크에 관리자가 생기고 재시작 때 사라집니다.
+터널을 띄운 **그 기계**의 백엔드 폴더에서 실행한다.
+`SQLITE_PATH` 가 실제 남는 경로여야 한다 — 컨테이너 임시 디스크면 재시작 때 사라진다.
 
 ### 3-4. 그 외 점검
 
@@ -138,43 +147,66 @@ Railway·Render라면 대시보드의 셸(또는 `railway run`)에서 실행합�
 
 ---
 
-## 4. 단계별 절차 (권장안 기준)
+## 4. 단계별 절차 (Cloudflare Tunnel)
 
-### 4-1. BackendServer → Railway
+에이전트가 대신 할 수 없는 계정 작업은 5장 끝에 적어 두었다.
 
-1. 새 프로젝트 → GitHub 저장소 연결 → **Root Directory 를 `BackendServer`** 로 지정
-2. Build: `npm ci && npm run build` / Start: `npm start`
-   (`npm start` 는 `node dist/index.js`. `tsx` 가 아니라 컴파일된 결과를 씁니다)
-3. **Volume 을 추가**하고 마운트 경로를 정한다 (예: `/data`)
-4. 환경 변수:
-   ```env
-   NODE_ENV=production
-   PORT=4000
-   SQLITE_PATH=/data/vidshare.sqlite
-   UPLOADS_PATH=/data/uploads
-   CORS_ORIGIN=https://app.example.com,https://console.example.com
-   GOOGLE_API_KEY=...
-   GROQ_API_KEY=...
-   ```
-5. 배포 후 `https://api.example.com/api/health` 가 200인지 확인
-6. 셸에서 `npm run create-admin -- ...` 으로 관리자 생성 (3-3)
+### 4-1. 앱을 프로덕션 설정으로 띄우기
 
-> `SQLITE_PATH` 와 `UPLOADS_PATH` 를 **볼륨 안**으로 지정하는 것이 핵심입니다.
-> 기본값은 프로젝트 폴더 안이라 재배포 때 통째로 날아갑니다.
+백엔드 `BackendServer/.env`:
 
-### 4-2. FrontServer → Vercel
+```env
+NODE_ENV=production
+PORT=4000
+CORS_ORIGIN=https://app.example.com,https://console.example.com
+COOKIE_DOMAIN=.example.com
+COOKIE_SAMESITE=lax
+GOOGLE_API_KEY=...
+GROQ_API_KEY=...
+```
 
-1. 같은 저장소 임포트 → **Root Directory 를 `FrontServer`**
-2. 환경 변수: `NEXT_PUBLIC_API_URL=https://api.example.com`
-   (비워 두면 `lib/api.ts` 가 "현재 호스트:4000" 으로 추측합니다 — 프로덕션에선
-   반드시 명시)
-3. 배포 → `app.example.com` 연결
+프론트 `FrontServer/.env.local` · `console/.env.local`:
 
-### 4-3. console → Vercel (별도 프로젝트)
+```env
+NEXT_PUBLIC_API_URL=https://api.example.com
+```
 
-1. 같은 저장소 임포트 → **Root Directory 를 `console`**
-2. 환경 변수: `NEXT_PUBLIC_API_URL=https://api.example.com`
-3. 배포 → `console.example.com` 연결
+백엔드:
+
+```bash
+cd BackendServer && npm ci && npm run build && npm start
+```
+
+프론트·콘솔은 Cloudflare Workers 로 올린다 (OpenNext).
+
+```bash
+cd FrontServer && npm run deploy
+cd console && npm run deploy
+```
+
+로컬에서 Workers 런타임으로 미리 보려면 `npm run preview`.
+
+### 4-2. 터널
+
+1. [Cloudflare Zero Trust](https://one.dash.cloudflare.com) → Networks → Tunnels → Create → Cloudflared
+2. 이름 `vidshare`, 설치 명령을 **앱이 도는 기계**에서 실행
+3. Public Hostname 세 개: HTTP → `localhost:3000` / `4000` / `3200`
+   또는 [`cloudflare/config.template.yml`](../cloudflare/config.template.yml) 을 채워
+   `cloudflared tunnel --config ... run`
+4. DNS: `app` / `api` / `console` CNAME → `<TUNNEL_ID>.cfargotunnel.com` (프록시 켜기)
+
+임시 확인만 하려면 `cloudflared tunnel --url http://localhost:4000` 으로
+`*.trycloudflare.com` 을 받을 수 있다. 주소가 매번 바뀌고 프론트와 쿠키 도메인을
+맞추기 어려우니 **고정 터널 + 존** 을 쓴다.
+
+### 4-3. 관리자
+
+백엔드가 뜬 그 기계에서:
+
+```bash
+cd BackendServer
+npm run create-admin -- <handle> <password>
+```
 
 ### 4-4. 배포 후 확인 순서
 
@@ -188,6 +220,19 @@ Railway·Render라면 대시보드의 셸(또는 `railway run`)에서 실행합�
 6. 앱에서 신고 접수 → 콘솔 /reports 에 보이나
 7. 재배포 한 번 → 위 데이터가 그대로 남아 있나 (볼륨 확인)
 ```
+
+### 4-5. 직접 해야 하는 일 (에이전트/MCP가 못 함)
+
+| 항목 | 이유 |
+|------|------|
+| Cloudflare 계정 로그인 | 대시보드·`cloudflared` 인증 |
+| 존에 도메인 연결 (또는 이미 있는 존) | `app`/`api`/`console` 서브도메인 + `COOKIE_DOMAIN` |
+| 터널 만들기, 설치 명령 실행 | 자격 증명이 이 PC의 `%USERPROFILE%\.cloudflared\` 에 생김 |
+| `GOOGLE_API_KEY` / `GROQ_API_KEY` 를 `.env`에 넣기 | 채팅에 붙여 넣지 말 것 |
+| `npm run create-admin` | 관리자 비밀번호를 소스에 두지 않음 |
+| 세 서버를 켜 둔 채로 두기 | 터널은 로컬/VPS 프로세스가 살아 있어야 함 |
+
+`*.trycloudflare.com` 임시 URL은 터미널을 끄면 사라진다. 실서비스는 고정 터널을 쓴다.
 
 ---
 

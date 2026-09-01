@@ -1,7 +1,7 @@
 # 아키텍처 개요
 
 **상태**: 구현됨 — FrontServer(Next.js) + BackendServer(Express + SQLite) + console(관리자) 연동 완료
-**최종 갱신**: 2026-09-01 (관리자 콘솔 081~084까지)
+**최종 갱신**: 2026-09-02 (Cloudflare Workers 프론트 배포 + 쿠키/CORS 프로덕션 설정)
 **대상 독자**: 이 저장소를 처음 인수받는 개발자/에이전트
 
 ---
@@ -31,10 +31,18 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 
 | 폴더 | 역할 | 포트 |
 |------|------|------|
-| `vidshare/FrontServer/` | Next.js UI (사용자) | 3000 |
-| `vidshare/console/` | Next.js UI (관리자, 081~084) | 3200 |
-| `vidshare/BackendServer/` | Express API + SQLite | 4000 |
+| `vidshare/FrontServer/` | Next.js UI (사용자) | 3000 · Workers `vidshare-front` |
+| `vidshare/console/` | Next.js UI (관리자, 081~084) | 3200 · Workers `vidshare-console` |
+| `vidshare/BackendServer/` | Express API + SQLite | 4000 · Tunnel (Workers 금지) |
 | `vidshare/docs/` | 설계·이력·커밋 상세 | — |
+| `vidshare/cloudflare/` | Tunnel ingress 템플릿 | — |
+
+공개 URL (이 계정):
+
+- Front: https://vidshare-front.limjinheng0120.workers.dev
+- Console: https://vidshare-console.limjinheng0120.workers.dev
+
+배포 절차·직접 할 일: [deployment.md](../deployment.md)
 
 > 두 프론트가 **같은 백엔드**를 보지만 세션 쿠키 이름이 달라
 > (`vidshare_sid` / `vidshare_admin_sid`) 같은 브라우저에서 동시에

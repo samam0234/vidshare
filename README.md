@@ -110,7 +110,7 @@ CORS_ORIGIN=
 | 인증 | bcrypt + HttpOnly 세션 (SQLite), 사용자/관리자 세션 분리 |
 | 실파일 업로드 | 구현 (`POST /api/uploads`, 영상 100MB · 이미지 8MB) |
 | 테스트 | 백엔드 127건, 프론트 29건, E2E 8건 |
-| 배포 | **미배포.** 가이드만 준비됨 → [docs/deployment.md](./docs/deployment.md) |
+| 배포 | Front/console 는 Cloudflare Workers. 백엔드는 Tunnel. → [docs/deployment.md](./docs/deployment.md) |
 
 ---
 

@@ -159,6 +159,7 @@ NNN-짧은-영문-slug.md
 | 083 | [083-console-scaffold.md](./083-console-scaffold.md) | `8f49a8c` | 관리자 콘솔 앱 뼈대 (`console/`) | 2026-09-01 |
 | 084 | [084-console-screens.md](./084-console-screens.md) | `082f724` | 관리자 콘솔 화면 4종 | 2026-09-01 |
 | 085 | [085-cloudflare-tunnel-prep.md](./085-cloudflare-tunnel-prep.md) | `3054823` | Cloudflare Tunnel 배포 준비 (쿠키·CORS·API URL) | 2026-09-02 |
+| 086 | [086-cloudflare-opennext-workers.md](./086-cloudflare-opennext-workers.md) | `TBD` | Front/console Cloudflare Workers (OpenNext) | 2026-09-02 |
 
 ---
 

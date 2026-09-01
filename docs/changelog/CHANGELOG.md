@@ -8,6 +8,9 @@
 ## [Unreleased]
 
 ### Added
+- FrontServer·console Cloudflare Workers 배포 (커밋 086, OpenNext). 백엔드는 Workers 에 올리지 않음
+- 프로덕션 쿠키·CORS (커밋 085): `COOKIE_DOMAIN`/`COOKIE_SAMESITE`, `NODE_ENV=production` 이면 CORS 화이트리스트만
+- Cloudflare Tunnel 템플릿 `cloudflare/config.template.yml`
 - **관리자 콘솔** (커밋 081~084): 루트 `console/` 에 관리자 전용 Next.js 앱(포트 3200).
   신고 조회·처리, 유저 목록·정지, 콘텐츠(쇼츠·롱폼·커뮤니티) 삭제, 고객센터 문의
   전체 조회·답변, 운영 대시보드
