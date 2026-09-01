@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `086` |
 | **파일명** | `086-cloudflare-opennext-workers.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `7fc1818` |
+| **Git 커밋 (full)** | `7fc18185476736a48de934697b9ed71bc4d2bca1` |
 | **날짜** | `2026-09-02` |
 | **작성자** | `Grok` |
 | **브랜치** | `master` |
