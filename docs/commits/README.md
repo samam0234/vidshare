@@ -163,7 +163,7 @@ NNN-짧은-영문-slug.md
 | 087 | [087-terms-of-service.md](./087-terms-of-service.md) | `e78bbb6` | 이용약관 페이지 `/terms` | 2026-09-02 |
 | 088 | [088-privacy-policy.md](./088-privacy-policy.md) | `57af1e6` | 개인정보처리방침 페이지 `/privacy` | 2026-09-02 |
 | 089 | [089-business-info.md](./089-business-info.md) | `c3cf974` | 사업자 정보확인 페이지 `/business` | 2026-09-02 |
-| 090 | [090-docs-run-guide-and-legal.md](./090-docs-run-guide-and-legal.md) | `TBD` | 실행 가이드·법적 페이지·현재 기능 문서 전면 갱신 | 2026-09-02 |
+| 090 | [090-docs-run-guide-and-legal.md](./090-docs-run-guide-and-legal.md) | `2a3093e` | 실행 가이드·법적 페이지·현재 기능 문서 전면 갱신 | 2026-09-02 |
 
 ---
 
