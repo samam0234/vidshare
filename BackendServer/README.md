@@ -14,7 +14,7 @@
 | 런타임 | Node.js |
 | 프레임워크 | Express |
 | 언어 | TypeScript (`tsx` 개발 실행) |
-| CORS | `cors` (localhost + 사설망, `CORS_ORIGIN`으로 추가) |
+| CORS | 개발: localhost+사설망. 프로덕션: `CORS_ORIGIN` 화이트리스트만 |
 | DB | SQLite (`better-sqlite3`) |
 
 ---
@@ -38,7 +38,9 @@ npm run dev
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
 | `PORT` | `4000` | 서버 포트 |
-| `CORS_ORIGIN` | (비움) | 추가 허용 오리진. 비우면 localhost + 사설망 |
+| `CORS_ORIGIN` | (비움) | 개발에서 비우면 사설망 허용. **프로덕션은 프론트 오리진 필수** |
+| `COOKIE_DOMAIN` | (비움) | 예: `.example.com` (서브도메인 쿠키 공유) |
+| `COOKIE_SAMESITE` | `lax` | `lax` \| `strict` \| `none` (`none`은 HTTPS) |
 | `SQLITE_PATH` | `data/vidshare.sqlite` | DB 파일 경로 |
 | `UPLOADS_PATH` | `uploads/` | 사용자 업로드 파일 경로 |
 | `NODE_ENV` | `development` | 환경 |

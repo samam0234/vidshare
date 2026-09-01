@@ -3,7 +3,7 @@
 **작성일**: 2026-08-19  
 **성격**: 소규모 개인 프로젝트  
 
-**상태**: 프론트 UI + Express API + SQLite 인증/콘텐츠 + 로컬 파일 업로드까지 구현.
+**상태**: Front + console + Express/SQLite 연동 완료. 법적 페이지(`/terms` `/privacy` `/business`) 있음. Front/console 은 Cloudflare Workers.
 
 관련 문서: [README.md](./README.md) · [docs/architecture/overview.md](./docs/architecture/overview.md) · [docs/features/roadmap.md](./docs/features/roadmap.md)
 
@@ -45,16 +45,19 @@
 
 | 영역 | 역할 | 현재 |
 |------|------|------|
-| 쇼츠 피드 `/` | 세로 스냅, 빠르게 소비 | UI + mock |
-| 롱폼 `/longform` | 긴 영상 등록·상세 | 작성 시 일련번호, localStorage |
-| 커뮤니티 `/community` | 글·공유·토론 | 작성 시 일련번호, localStorage |
-| 업로드 `/upload` | 쇼츠 올리기 UI | 미리보기 데모 |
-| 프로필 `/profile/[id]` | 내/남 영상 라이브러리 | mock + 세션 사용자 |
-| 메시지 `/messages` | 1:1 대화 | 작성 기반, localStorage |
-| 알림 `/notifications` | 이벤트 목록 | 작성 시 생성 |
-| 챗봇 `/chatbot` | 이용 안내 대화 | 로컬 응답 |
-| 고객센터 `/support` | FAQ + 문의 | 유저 자가해결 + 문의 번호 |
+| 쇼츠 피드 `/` | 세로 스냅, 빠르게 소비 | UI + API |
+| 롱폼 `/longform` | 긴 영상 등록·상세 | API + SQLite |
+| 커뮤니티 `/community` | 글·공유·토론 | API + SQLite |
+| 업로드 `/upload` | 쇼츠 올리기 | 실파일 `uploads/` |
+| 프로필 `/profile/[id]` | 영상 라이브러리·팔로우 | API + 세션 |
+| 메시지 `/messages` | 1:1 대화 | API + WebSocket |
+| 알림 `/notifications` | 이벤트 목록 | API + SSE |
+| 챗봇 `/chatbot` | 이용 안내 대화 | LLM 3모델 |
+| 고객센터 `/support` | FAQ + 문의 | API |
 | 인증 `/login` `/register` | 가입·로그인 | SQLite + 쿠키 세션 |
+| 이용약관 `/terms` | 서비스 이용 조건 | 정적 페이지, 비회원 |
+| 개인정보처리방침 `/privacy` | 수집·이용 안내 | 정적 페이지, 비회원 |
+| 사업자 정보확인 `/business` | 상호·등록 정보 | 정적 페이지, 비회원 (번호 미등록) |
 
 ---
 
@@ -64,9 +67,9 @@
 
 ```
 브라우저
-  → FrontServer (Next.js :3000)   UI · 일부 localStorage
-  → BackendServer (Express :4000) REST · 인메모리 store · 세션
-  → (다음) SQLite 등 파일 DB
+  → FrontServer (Next.js :3000)   UI · API
+  → console (Next.js :3200)       관리자 UI
+  → BackendServer (Express :4000) REST · SQLite · 세션
 ```
 
 | 결정 | 채택 | 이유 |
@@ -155,11 +158,13 @@
 - 실시간화 (알림 SSE, 메시지 WebSocket)
 - 테스트 (백엔드 127건, 프론트 29건, E2E 8건)
 - **관리자 콘솔** (`console/` :3200) — 신고 처리·유저 정지·콘텐츠 삭제·문의 답변
+- 이용약관·개인정보처리방침·사업자 정보확인 (`/terms` `/privacy` `/business`)
+- Front/console Cloudflare Workers. 백엔드는 Tunnel
 
 ### 바로 다음
-1. **실제 배포** — [docs/deployment.md](./docs/deployment.md) 참고.
-   올리기 전에 크로스 도메인 세션 쿠키와 CORS를 먼저 고쳐야 한다
+1. 백엔드 Tunnel + `NEXT_PUBLIC_API_URL` 넣고 프론트 재배포 — [docs/deployment.md](./docs/deployment.md)
 2. CI (PR마다 3개 앱 검증)
+3. 사업자등록 후 `/business` 실정보 기입
 
 ### 그다음
 - 관리자 조치 감사 로그

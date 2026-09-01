@@ -37,8 +37,13 @@ npm run create-admin -- myadmin mypassword123
 `.env.local` (예시는 `.env.local.example`):
 
 ```env
-# 비우면 브라우저 주소의 호스트:4000 을 씁니다 (LAN IP 접속 포함).
+# 비우면 localhost:4000. LAN IP로 콘솔을 열면 그 IP:4000.
+# Workers 배포 빌드에는 반드시 백엔드 공개 URL.
 NEXT_PUBLIC_API_URL=
+```
+
+```bash
+npm run deploy    # Cloudflare Workers (vidshare-console)
 ```
 
 ---

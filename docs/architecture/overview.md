@@ -1,7 +1,7 @@
 # 아키텍처 개요
 
 **상태**: 구현됨 — FrontServer(Next.js) + BackendServer(Express + SQLite) + console(관리자) 연동 완료
-**최종 갱신**: 2026-09-02 (Cloudflare Workers 프론트 배포 + 쿠키/CORS 프로덕션 설정)
+**최종 갱신**: 2026-09-02 (법적 페이지 087~089 + 실행 가이드)
 **대상 독자**: 이 저장소를 처음 인수받는 개발자/에이전트
 
 ---
@@ -50,7 +50,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 
 ---
 
-## 2. 현재 구현 상태 (2026-08-26 기준)
+## 2. 현재 구현 상태 (2026-09-02 기준)
 
 ### ✅ 완료
 
@@ -64,7 +64,9 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 | 고객센터 | FAQ, 문의 작성·목록·상세 (API 연동) |
 | 알림 | 목록·상세·읽음·삭제·수신 토글 (API 연동) |
 | 챗봇 | Locals/Vide/Shape 3모델, RAG, 멀티모달 첨부, 스레드 영속화 |
-| 게스트 정책 | 비회원 열람 전용 (작성·메시지·업로드는 로그인 필요) |
+| 게스트 정책 | 비회원 열람 전용 (작성·메시지·업로드는 로그인 필요). 약관·개인정보·사업자는 열람 자유 |
+| 법적 문서 | `/terms` 이용약관, `/privacy` 개인정보처리방침, `/business` 사업자 정보확인 (푸터, 087~089) |
+| 검색·소셜 | 통합 검색, 팔로우, 팔로잉 피드, 재생목록, 신고·차단 |
 | localStorage 탈피 | 콘텐츠 상태를 전부 SQLite로 이관 (커밋 038~052) |
 
 ### ⚠️ 미완 / 알려진 한계
@@ -75,7 +77,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 | 실시간성 | **알림은 077(SSE), 메시지는 078(WebSocket)에서 실시간화.** 둘 다 단일 프로세스 `EventEmitter` 전제라 다중 인스턴스 확장 시 브로커(Redis 등) 필요. 읽음 처리 등 나머지 동작은 여전히 요청-응답 기반 |
 | 검색 | **063에서 통합 검색 도입.** 관련도 정렬·페이지네이션은 없음 |
 | 팔로우 | **065 API + 067·069 화면.** 페이지네이션·맞팔 표시는 없음 |
-| 테스트 | **백엔드 83건(066·071·074~078) + 프론트 순수함수 29건(070) + E2E 8건(079, Playwright).** 컴포넌트 단위 테스트·CI 연동은 없음 |
+| 테스트 | 백엔드 `npm test`, 프론트 `npm test` / `npm run test:e2e`. 컴포넌트 단위 테스트·CI 는 없음 |
 | 마이그레이션 | 버전 테이블 없이 `initDb()` 에서 개별 처리 (`ensureColumn`, `DROP TABLE`) |
 | `lib/mock-data.ts` | 잔존. 일부 시드/폴백 용도로만 남아 있음 |
 
@@ -124,7 +126,11 @@ SQLite (vidshare.sqlite)
 | Route | 컴포넌트 | 인증 |
 |-------|----------|------|
 | `/` | `ShortsFeed` | 열람 자유 |
+| `/search` | 통합 검색 | 열람 자유 |
+| `/following` | 팔로잉 피드 | 필요 |
 | `/profile/[id]` | `ProfilePageClient` | 열람 자유 |
+| `/profile/[id]/followers`, `.../following` | 팔로워·팔로잉 목록 | 열람 자유 |
+| `/playlists/[id]` | 재생목록 상세 | 열람 자유 |
 | `/upload` | `UploadForm` | 필요 |
 | `/longform`, `/longform/[id]` | `LongformList`, `LongformDetail` | 열람 자유 |
 | `/longform/write` | `LongformForm` | 필요 |
@@ -151,7 +157,7 @@ SQLite (vidshare.sqlite)
 | `chatbot-corpus.ts` | Shape 모델용 RAG 코퍼스 수집 |
 | `chatbot-models.ts` | 모델 티어 정의 (locals/vide/shape) |
 | `chat-files.ts` | 첨부 파일 → `ChatbotAttachment` 변환 |
-| `guest-routes.ts` | 비회원 리다이렉트 경로 |
+| `guest-routes.ts` | 비회원 허용 경로 (`/terms` `/privacy` `/business` 포함) |
 | `utils.ts` | `cn()`, 숫자 포맷 등 |
 | `mock-data.ts` | ⚠️ 잔존 시드. 신규 코드에서 사용 금지 |
 
