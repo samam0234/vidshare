@@ -17,9 +17,9 @@ export default function Footer() {
             이용약관
           </Link>
           <span aria-hidden>|</span>
-          <a href="#" className="hover:text-[var(--text)] hover:underline">
+          <Link href="/privacy" className="hover:text-[var(--text)] hover:underline">
             개인정보처리방침
-          </a>
+          </Link>
           <span aria-hidden>|</span>
           <a href="#" className="hover:text-[var(--text)] hover:underline">
             사업자 정보확인

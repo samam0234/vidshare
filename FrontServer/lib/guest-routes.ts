@@ -11,6 +11,7 @@ export function isGuestAllowedPath(pathname: string) {
   if (/^\/chatbot\/\d+$/.test(pathname)) return true;
   if (pathname === "/search") return true;
   if (pathname === "/terms") return true;
+  if (pathname === "/privacy") return true;
   if (/^\/profile\/[^/]+$/.test(pathname)) return true;
   if (/^\/profile\/[^/]+\/(followers|following)$/.test(pathname)) return true;
   if (/^\/playlists\/\d+$/.test(pathname)) return true;

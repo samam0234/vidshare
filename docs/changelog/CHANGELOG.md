@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- 개인정보처리방침 페이지 `/privacy` (커밋 088)
 - 이용약관 페이지 `/terms` (커밋 087)
 - FrontServer·console Cloudflare Workers 배포 (커밋 086, OpenNext). 백엔드는 Workers 에 올리지 않음
 - 프로덕션 쿠키·CORS (커밋 085): `COOKIE_DOMAIN`/`COOKIE_SAMESITE`, `NODE_ENV=production` 이면 CORS 화이트리스트만
