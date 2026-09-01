@@ -18,6 +18,7 @@ describe("isGuestAllowedPath — 비회원 공개 경로", () => {
     "/profile/u1/followers",
     "/profile/u1/following",
     "/playlists/1",
+    "/terms",
   ];
 
   for (const p of publicPaths) {

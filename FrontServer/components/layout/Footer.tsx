@@ -13,9 +13,9 @@ export default function Footer() {
     <footer className="mt-auto border-t border-[var(--border)] bg-[var(--nav)]">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 px-4 py-6 text-center text-sm text-[var(--text-muted)]">
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-          <a href="#" className="hover:text-[var(--text)] hover:underline">
+          <Link href="/terms" className="hover:text-[var(--text)] hover:underline">
             이용약관
-          </a>
+          </Link>
           <span aria-hidden>|</span>
           <a href="#" className="hover:text-[var(--text)] hover:underline">
             개인정보처리방침

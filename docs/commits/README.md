@@ -160,6 +160,7 @@ NNN-짧은-영문-slug.md
 | 084 | [084-console-screens.md](./084-console-screens.md) | `082f724` | 관리자 콘솔 화면 4종 | 2026-09-01 |
 | 085 | [085-cloudflare-tunnel-prep.md](./085-cloudflare-tunnel-prep.md) | `3054823` | Cloudflare Tunnel 배포 준비 (쿠키·CORS·API URL) | 2026-09-02 |
 | 086 | [086-cloudflare-opennext-workers.md](./086-cloudflare-opennext-workers.md) | `7fc1818` | Front/console Cloudflare Workers (OpenNext) | 2026-09-02 |
+| 087 | [087-terms-of-service.md](./087-terms-of-service.md) | `TBD` | 이용약관 페이지 `/terms` | 2026-09-02 |
 
 ---
 
