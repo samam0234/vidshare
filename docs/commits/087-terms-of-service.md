@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `087` |
 | **파일명** | `087-terms-of-service.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `e78bbb6` |
+| **Git 커밋 (full)** | `e78bbb66179f22c01c730f566a26cccd7b1dbea9` |
 | **날짜** | `2026-09-02` |
 | **작성자** | `Grok` |
 | **브랜치** | `master` |
