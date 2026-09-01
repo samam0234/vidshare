@@ -1,7 +1,7 @@
 /** VidShare Shape — LangGraph + RAG. 저장 대화 + 실제 플랫폼 데이터를 최대한 찾아 추론한다. */
 
 import { entrypoint, task } from "@langchain/langgraph";
-import { contentText, describeImages, makeChat, productLlmSpec, withSystem } from "./llm";
+import { chatCallOptions, contentText, describeImages, makeChat, productLlmSpec, withSystem, withTimeout } from "./llm";
 import {
   formatHits,
   ingestCorpus,
@@ -96,10 +96,13 @@ const generate = task(
     const memories = formatHits(input.hits);
     const platform = formatPlatformHits(input.platformHits);
     const snapshotJson = formatPlatformSnapshot(buildPlatformSnapshot(input.platformDocs));
-    const out = await llm.invoke(
-      withSystem(
-        shapeSystemPrompt(memories, platform, snapshotJson, input.imageDescriptions),
-        recent
+    const out = await withTimeout(
+      llm.invoke(
+        withSystem(
+          shapeSystemPrompt(memories, platform, snapshotJson, input.imageDescriptions),
+          recent
+        ),
+        chatCallOptions()
       )
     );
     const text = contentText(out.content);

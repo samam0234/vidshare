@@ -42,6 +42,25 @@ npm run dev
 | `SQLITE_PATH` | `data/vidshare.sqlite` | DB 파일 경로 |
 | `UPLOADS_PATH` | `uploads/` | 사용자 업로드 파일 경로 |
 | `NODE_ENV` | `development` | 환경 |
+| `CHAT_TIMEOUT_MS` | `45000` | 모델 호출 하나를 기다려 줄 상한 (아래 참고) |
+
+### 챗봇 응답이 느리거나 끊길 때
+
+`CHAT_TIMEOUT_MS` 는 **반드시 필요한 안전장치**입니다. 이게 없으면 업스트림이
+응답 없이 멎었을 때 우리 쪽에서 끊지 않아, OS TCP 타임아웃이 날 때까지 몇 분을
+매달린 뒤 `ETIMEDOUT` 이 사용자 화면에 그대로 뜹니다. 지금은 상한에서 잘라
+`504` + 안내 문구로 바꿉니다.
+
+주의할 점이 하나 있습니다 — `@langchain/google-genai` 는 `timeout` 도 `signal` 도
+실제 요청에 전달하지 않습니다. 그래서 `llm.ts` 의 `withTimeout()` 이
+`Promise.race` 로 한 겹 더 감쌉니다. **새 모델 호출을 추가할 때는 반드시
+`withTimeout(llm.invoke(..., chatCallOptions()))` 형태로 감싸세요.**
+
+`gemini-3.6-flash`(Vide 기본값)는 thinking 모델이라 같은 질문에도 5초~90초로
+편차가 크고, `thinkingBudget: 0` 으로 끌 수도 없습니다. 체감이 나쁘면
+`CHAT_MODEL_VIDE` 를 `gemini-3.1-flash-lite`(Locals가 쓰는 값, 1~7초)처럼
+가벼운 모델로 바꾸는 게 가장 효과가 큽니다. 무료 티어 할당량(429)에 걸려도
+느려지니 그쪽도 함께 확인하세요.
 
 ### 기타 명령
 

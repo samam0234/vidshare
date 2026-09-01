@@ -1,7 +1,7 @@
 /** VidShare Vide — LangGraph. 이 방 요약 + 최근 턴 + 실제 플랫폼 데이터로 깊게 답한다. */
 
 import { entrypoint, task } from "@langchain/langgraph";
-import { contentText, makeChat, productLlmSpec, supportsVision, withSystem } from "./llm";
+import { chatCallOptions, contentText, makeChat, productLlmSpec, supportsVision, withSystem, withTimeout } from "./llm";
 import {
   ingestCorpus,
   loadSummary,
@@ -56,15 +56,18 @@ const distill = task("vide-distill", async (input: VideIn) => {
     .join("\n")
     .slice(0, 6000);
   const prev = loadSummary(input.owner, input.threadKey);
-  const out = await llm.invoke(
-    withSystem(
-      "이 대화의 사실을 한국어로 짧게 요약하라. 이름, 결정, 미해결 질문만. 다른 설명은 하지 마라.",
-      [
-        {
-          role: "user",
-          content: `${prev ? `이전 요약:\n${prev}\n\n` : ""}새 대화:\n${blob}`,
-        },
-      ]
+  const out = await withTimeout(
+    llm.invoke(
+      withSystem(
+        "이 대화의 사실을 한국어로 짧게 요약하라. 이름, 결정, 미해결 질문만. 다른 설명은 하지 마라.",
+        [
+          {
+            role: "user",
+            content: `${prev ? `이전 요약:\n${prev}\n\n` : ""}새 대화:\n${blob}`,
+          },
+        ]
+      ),
+      chatCallOptions()
     )
   );
   const summary = contentText(out.content);
@@ -86,11 +89,14 @@ const answer = task(
     const recent = input.turns.slice(-spec.maxHistory);
     const platform = formatPlatformHits(input.platformHits);
     const snapshotJson = formatPlatformSnapshot(buildPlatformSnapshot(input.platformDocs));
-    const out = await llm.invoke(
-      withSystem(
-        videSystemPrompt(input.summary, platform, snapshotJson),
-        recent,
-        supportsVision("vide") ? input.images : []
+    const out = await withTimeout(
+      llm.invoke(
+        withSystem(
+          videSystemPrompt(input.summary, platform, snapshotJson),
+          recent,
+          supportsVision("vide") ? input.images : []
+        ),
+        chatCallOptions()
       )
     );
     const text = contentText(out.content);

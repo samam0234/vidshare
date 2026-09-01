@@ -1,6 +1,6 @@
 /** VidShare Locals — 단순 LangChain 대화. 이 방만 기억하고, 실제 플랫폼 데이터로 가볍게 근거를 댄다. */
 
-import { contentText, makeChat, productLlmSpec, supportsVision, withSystem } from "./llm";
+import { chatCallOptions, contentText, makeChat, productLlmSpec, supportsVision, withSystem, withTimeout } from "./llm";
 import {
   buildPlatformSnapshot,
   formatPlatformHits,
@@ -38,8 +38,11 @@ export async function runLocals(
   const platformHits = retrievePlatformInfo(last?.content ?? "", 6, platformDocs);
   const snapshotJson = formatPlatformSnapshot(buildPlatformSnapshot(platformDocs));
   const system = localsSystemPrompt(formatPlatformHits(platformHits), snapshotJson);
-  const out = await llm.invoke(
-    withSystem(system, window, supportsVision("locals") ? images : [])
+  const out = await withTimeout(
+    llm.invoke(
+      withSystem(system, window, supportsVision("locals") ? images : []),
+      chatCallOptions()
+    )
   );
   const text = contentText(out.content);
   if (!text) throw new Error("Locals가 빈 답을 반환했습니다.");
