@@ -161,7 +161,7 @@ NNN-짧은-영문-slug.md
 | 085 | [085-cloudflare-tunnel-prep.md](./085-cloudflare-tunnel-prep.md) | `3054823` | Cloudflare Tunnel 배포 준비 (쿠키·CORS·API URL) | 2026-09-02 |
 | 086 | [086-cloudflare-opennext-workers.md](./086-cloudflare-opennext-workers.md) | `7fc1818` | Front/console Cloudflare Workers (OpenNext) | 2026-09-02 |
 | 087 | [087-terms-of-service.md](./087-terms-of-service.md) | `e78bbb6` | 이용약관 페이지 `/terms` | 2026-09-02 |
-| 088 | [088-privacy-policy.md](./088-privacy-policy.md) | `TBD` | 개인정보처리방침 페이지 `/privacy` | 2026-09-02 |
+| 088 | [088-privacy-policy.md](./088-privacy-policy.md) | `57af1e6` | 개인정보처리방침 페이지 `/privacy` | 2026-09-02 |
 
 ---
 
