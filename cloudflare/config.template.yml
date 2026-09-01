@@ -1,0 +1,24 @@
+# Cloudflare Tunnel 설정 템플릿.
+# 1) cloudflared tunnel create vidshare
+# 2) 이 파일을 ~/.cloudflared/config.yml 로 복사하고
+#    tunnel / credentials-file / hostname 을 채운다.
+# 3) Cloudflare 대시보드에서 아래 호스트의 CNAME 을 <TUNNEL_ID>.cfargotunnel.com 으로 둔다.
+#
+# 시크릿(credentials json)은 저장소에 넣지 말 것.
+
+tunnel: <TUNNEL_ID>
+credentials-file: C:\Users\<YOU>\.cloudflared\<TUNNEL_ID>.json
+
+ingress:
+  - hostname: app.example.com
+    service: http://localhost:3000
+  - hostname: api.example.com
+    service: http://localhost:4000
+    originRequest:
+      # SSE·업로드·WebSocket
+      connectTimeout: 30s
+      keepAliveTimeout: 90s
+      disableChunkedEncoding: true
+  - hostname: console.example.com
+    service: http://localhost:3200
+  - service: http_status:404

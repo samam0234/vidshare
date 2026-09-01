@@ -15,15 +15,22 @@ import type {
   SupportInquiry,
 } from "@/types/content";
 
+function isLanHostname(hostname: string) {
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+  return false;
+}
+
 function resolveApiUrl() {
+  const fromEnv = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
   if (typeof window !== "undefined") {
     const { protocol, hostname } = window.location;
-    if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+    if (isLanHostname(hostname)) {
       return `${protocol}//${hostname}:4000`;
     }
   }
-  const fromEnv = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
-  if (fromEnv) return fromEnv;
   return "http://localhost:4000";
 }
 

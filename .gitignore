@@ -8,7 +8,9 @@ node_modules/
 
 # Next.js
 .next/
+.next-e2e/
 out/
+.open-next/
 
 # backend build / uploads / sqlite
 dist/
@@ -19,6 +21,11 @@ data/DataBaseColumn.md
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
+
+# Cloudflare tunnel credentials (never commit)
+.cloudflared/
+cloudflare/*.json
+!cloudflare/config.template.yml
 
 # logs / OS
 *.log

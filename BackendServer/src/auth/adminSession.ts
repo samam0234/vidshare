@@ -1,4 +1,8 @@
 import type { Request, Response } from "express";
+import {
+  sessionCookieClearOptions,
+  sessionCookieOptions,
+} from "./cookieOptions";
 
 /**
  * 관리자 콘솔은 일반 사이트와 **다른 쿠키 이름**을 쓴다.
@@ -15,15 +19,9 @@ export function readAdminSid(req: Request) {
 }
 
 export function setAdminSessionCookie(res: Response, sid: string) {
-  res.cookie(ADMIN_SESSION_COOKIE, sid, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: MAX_AGE_MS,
-  });
+  res.cookie(ADMIN_SESSION_COOKIE, sid, sessionCookieOptions(MAX_AGE_MS));
 }
 
 export function clearAdminSessionCookie(res: Response) {
-  res.clearCookie(ADMIN_SESSION_COOKIE, { path: "/" });
+  res.clearCookie(ADMIN_SESSION_COOKIE, sessionCookieClearOptions());
 }

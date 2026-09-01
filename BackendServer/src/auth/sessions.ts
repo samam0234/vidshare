@@ -1,6 +1,10 @@
 import { randomUUID } from "crypto";
 import type { Response } from "express";
 import { getDb } from "../db/client";
+import {
+  sessionCookieClearOptions,
+  sessionCookieOptions,
+} from "./cookieOptions";
 
 export const SESSION_COOKIE = "vidshare_sid";
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -31,15 +35,9 @@ export function destroySession(sid?: string | null) {
 }
 
 export function setSessionCookie(res: Response, sid: string) {
-  res.cookie(SESSION_COOKIE, sid, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: MAX_AGE_MS,
-  });
+  res.cookie(SESSION_COOKIE, sid, sessionCookieOptions(MAX_AGE_MS));
 }
 
 export function clearSessionCookie(res: Response) {
-  res.clearCookie(SESSION_COOKIE, { path: "/" });
+  res.clearCookie(SESSION_COOKIE, sessionCookieClearOptions());
 }

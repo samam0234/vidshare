@@ -48,6 +48,13 @@ export function isDevAllowedOrigin(origin: string, extra: string[]) {
   }
 }
 
+/** 프로덕션은 CORS_ORIGIN 화이트리스트만. 개발은 사설망도 허용. */
+export function isAllowedCorsOrigin(origin: string, extra: string[]) {
+  if (extra.includes("*") || extra.includes(origin)) return true;
+  if (process.env.NODE_ENV === "production") return false;
+  return isDevAllowedOrigin(origin, extra);
+}
+
 export function createApp() {
   const app = express();
 
@@ -59,7 +66,7 @@ export function createApp() {
   app.use(
     cors({
       origin(origin, callback) {
-        if (!origin || isDevAllowedOrigin(origin, extraOrigins)) {
+        if (!origin || isAllowedCorsOrigin(origin, extraOrigins)) {
           callback(null, true);
           return;
         }
