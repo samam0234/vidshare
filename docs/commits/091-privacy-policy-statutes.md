@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `091` |
 | **파일명** | `091-privacy-policy-statutes.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `4033f3b` |
+| **Git 커밋 (full)** | `4033f3ba2baa6be1c8e888754aea2ab8989e76d4` |
 | **날짜** | `2026-09-02` |
 | **작성자** | `Grok` |
 | **브랜치** | `master` |

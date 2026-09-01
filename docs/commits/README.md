@@ -164,7 +164,7 @@ NNN-짧은-영문-slug.md
 | 088 | [088-privacy-policy.md](./088-privacy-policy.md) | `57af1e6` | 개인정보처리방침 페이지 `/privacy` | 2026-09-02 |
 | 089 | [089-business-info.md](./089-business-info.md) | `c3cf974` | 사업자 정보확인 페이지 `/business` | 2026-09-02 |
 | 090 | [090-docs-run-guide-and-legal.md](./090-docs-run-guide-and-legal.md) | `2a3093e` | 실행 가이드·법적 페이지·현재 기능 문서 전면 갱신 | 2026-09-02 |
-| 091 | [091-privacy-policy-statutes.md](./091-privacy-policy-statutes.md) | `TBD` | 개인정보처리방침에 헌법·개인정보 보호법 조문 반영 | 2026-09-02 |
+| 091 | [091-privacy-policy-statutes.md](./091-privacy-policy-statutes.md) | `4033f3b` | 개인정보처리방침에 헌법·개인정보 보호법 조문 반영 | 2026-09-02 |
 
 ---
 
