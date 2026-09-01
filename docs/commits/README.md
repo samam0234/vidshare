@@ -158,7 +158,7 @@ NNN-짧은-영문-slug.md
 | 082 | [082-admin-api.md](./082-admin-api.md) | `b747b89` | 관리자 API (신고·유저·콘텐츠·고객센터) | 2026-09-01 |
 | 083 | [083-console-scaffold.md](./083-console-scaffold.md) | `8f49a8c` | 관리자 콘솔 앱 뼈대 (`console/`) | 2026-09-01 |
 | 084 | [084-console-screens.md](./084-console-screens.md) | `082f724` | 관리자 콘솔 화면 4종 | 2026-09-01 |
-| 085 | [085-cloudflare-tunnel-prep.md](./085-cloudflare-tunnel-prep.md) | `TBD` | Cloudflare Tunnel 배포 준비 (쿠키·CORS·API URL) | 2026-09-02 |
+| 085 | [085-cloudflare-tunnel-prep.md](./085-cloudflare-tunnel-prep.md) | `3054823` | Cloudflare Tunnel 배포 준비 (쿠키·CORS·API URL) | 2026-09-02 |
 
 ---
 
