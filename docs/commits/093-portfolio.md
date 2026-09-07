@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `093` |
 | **파일명** | `093-portfolio.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `003cc9a` |
+| **Git 커밋 (full)** | `003cc9a38f8cf46fadaeb61823feca6602cd3e40` |
 | **날짜** | `2026-09-08` |
 | **작성자** | `Claude` |
 | **브랜치** | `master` |

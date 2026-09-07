@@ -166,7 +166,7 @@ NNN-짧은-영문-slug.md
 | 090 | [090-docs-run-guide-and-legal.md](./090-docs-run-guide-and-legal.md) | `2a3093e` | 실행 가이드·법적 페이지·현재 기능 문서 전면 갱신 | 2026-09-02 |
 | 091 | [091-privacy-policy-statutes.md](./091-privacy-policy-statutes.md) | `4033f3b` | 개인정보처리방침에 헌법·개인정보 보호법 조문 반영 | 2026-09-02 |
 | 092 | [092-readme-project-intro.md](./092-readme-project-intro.md) | `c6798bf` | README 프로젝트 소개 재구성 + SQLite 테이블 개수 정정 | 2026-09-07 |
-| 093 | [093-portfolio.md](./093-portfolio.md) | `TBD` | 포트폴리오 문서·소개 사이트 + 푸터 "프로젝트 소개" 링크 | 2026-09-08 |
+| 093 | [093-portfolio.md](./093-portfolio.md) | `003cc9a` | 포트폴리오 문서·소개 사이트 + 푸터 "프로젝트 소개" 링크 | 2026-09-08 |
 
 ---
 
