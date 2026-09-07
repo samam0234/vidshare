@@ -8,6 +8,11 @@
 ## [Unreleased]
 
 ### Added
+- **포트폴리오 발표 슬라이드** (커밋 094): `portfolio/VidShare-포트폴리오.pptx`,
+  python-pptx 로 생성하는 23장짜리 서비스 소개 덱. API·파일 구조 같은 구현
+  디테일 대신 화면 스크린샷이 중심. 생성 스크립트(`build_pptx.py`)를
+  PowerPoint COM으로 직접 열어 검증하는 과정에서 OOXML 스키마 위반(중복
+  `effectLst` 로 "파일을 열 수 없음") 등 3건을 잡았다
 - **포트폴리오** (커밋 093): `portfolio/` 에 본문(Markdown·DOCX)과 정적 소개 사이트.
   실행 중인 앱에서 캡처한 스크린샷 20장, 사용자 사이트 푸터에 "프로젝트 소개" 링크
   (`/portfolio/index.html`). 원본은 `portfolio/site` 하나이고 `public/portfolio` 는
