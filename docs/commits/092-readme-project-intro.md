@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `092` |
 | **파일명** | `092-readme-project-intro.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `c6798bf` |
+| **Git 커밋 (full)** | `c6798bfca1c9ddc3bd9bf7fb16fb078e3d381072` |
 | **날짜** | `2026-09-07` |
 | **작성자** | `Claude` |
 | **브랜치** | `master` |
