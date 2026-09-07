@@ -25,7 +25,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
     │  /api/*        ← requireRequestUser
     │  /api/admin/*  ← requireAdmin
     ▼
-[SQLite]  BackendServer/data/vidshare.sqlite  (19개 테이블)
+[SQLite]  BackendServer/data/vidshare.sqlite  (22개 테이블)
 [Files]   BackendServer/uploads/  ← 영상·썸네일. DB에는 /uploads/<uuid>.ext 만 저장
 ```
 
@@ -198,7 +198,7 @@ src/
 │   └── seedData.ts
 ├── db/
 │   ├── client.ts        ← better-sqlite3 커넥션
-│   ├── schema.ts        ← CREATE TABLE 18개
+│   ├── schema.ts        ← CREATE TABLE 22개
 │   └── seed.ts
 ├── middleware/errorHandler.ts   ← HttpError → JSON 변환
 ├── realtime/
@@ -244,7 +244,7 @@ src/
 | `/api/admin/support/inquiries` | `admin/support.ts` | 관리자 |
 | `/api/admin/dashboard/stats` | `admin/dashboard.ts` | 관리자 |
 
-### SQLite 테이블 (17개)
+### SQLite 테이블 (22개)
 
 | 그룹 | 테이블 |
 |------|--------|

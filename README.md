@@ -1,16 +1,113 @@
 # VidShare
 
-숏폼 영상 공유 플랫폼 **VidShare** — 프론트엔드 / 백엔드 서버를 **이 폴더 안**에서 분리한 구조입니다.
+> **쇼츠 · 롱폼 · 커뮤니티 · 실시간 메시지 · AI 챗봇**을 하나로 묶은 영상 공유 플랫폼.
+> 사용자 웹앱 · 관리자 콘솔 · REST API 서버를 직접 설계하고 구현한 개인 프로젝트입니다.
+
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-better--sqlite3-003B57?logo=sqlite&logoColor=white)
+![LangChain](https://img.shields.io/badge/LangChain-LangGraph-1C3C3C?logo=langchain&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)
+![tests](https://img.shields.io/badge/backend_tests-137_passing-3FB950)
+
+| | 링크 |
+|---|---|
+| 사용자 사이트 | https://vidshare-front.limjinheng0120.workers.dev |
+| 관리자 콘솔 | https://vidshare-console.limjinheng0120.workers.dev |
+| 포트폴리오 | [portfolio/](./portfolio/) — 문서(Markdown·DOCX) + 소개 사이트 |
+| 구조 문서 | [docs/architecture/overview.md](./docs/architecture/overview.md) |
+
+> 배포된 프론트는 공개 백엔드 주소가 연결되기 전까지 **UI 확인용**입니다.
+> 전체 기능은 아래 [빠른 시작](#빠른-시작-실행-방법)으로 로컬에서 실행하세요.
+
+---
+
+## 프로젝트 소개
+
+숏폼 하나만 있는 클론이 아니라, **콘텐츠 소비 → 창작 → 소통 → 운영**까지의 한 사이클을
+직접 만들어 보는 것이 목표였습니다. 그래서 사용자 앱과 별개로 **관리자 콘솔을 독립 앱으로
+분리**했고, 신고·정지·삭제·문의 답변 같은 운영 동선을 실제로 돌아가게 구현했습니다.
+
+설계에서 특히 신경 쓴 부분:
+
+- **3-앱 분리** — 사용자(3000) · 관리자(3200) · API(4000). 세션 쿠키 이름까지 분리해
+  (`vidshare_sid` / `vidshare_admin_sid`) 같은 브라우저에서 두 세션이 서로를 덮지 않습니다.
+- **단일 통신 창구** — 프론트는 `lib/api.ts` 를 거치지 않고 `fetch` 하지 않습니다.
+  모든 응답은 `{ success, data?, error? }` 한 가지 형태(`ApiResult<T>`)로 통일했습니다.
+- **실시간 2종** — 알림은 SSE, 메시지는 WebSocket. 목적에 맞는 프로토콜을 각각 선택했습니다.
+- **직접 만든 AI 챗봇** — LangChain·LangGraph 로 3개 모델 티어(무료/요약/RAG)를 구성하고
+  플랫폼 데이터를 코퍼스로 넣어 서비스 문맥을 아는 챗봇을 붙였습니다.
+- **기록 남기기** — 커밋 90여 건 각각에 대해 배경·트레이드오프·검증 방법을
+  [docs/commits/](./docs/commits/) 에 남겼습니다.
+
+---
+
+## 주요 기능
+
+| 영역 | 내용 |
+|------|------|
+| 쇼츠 | 세로 스냅 피드, 좋아요/싫어요, 댓글·대댓글, 공유, 실파일 업로드(100MB) |
+| 롱폼 | 목록 · 작성 · 상세 |
+| 커뮤니티 | 게시글 목록 · 작성 · 상세 |
+| 소셜 | 팔로우, 팔로잉 피드, 팔로워/팔로잉 목록, 재생목록, 통합 검색 |
+| 메시지 | 대화 목록 · 스레드 · **WebSocket 실시간 송수신** (REST 폴백 유지) |
+| 알림 | **SSE 실시간 수신**, 읽음/삭제·벌크 처리, 수신 토글 |
+| AI 챗봇 | Locals / Vide / Shape 3티어, RAG, 이미지·PDF·DOCX 멀티모달 첨부 |
+| 모더레이션 | 유저·영상·댓글·커뮤니티 신고, 유저 차단(피드 필터링) |
+| 관리자 콘솔 | 신고 처리 · 유저 정지 · 콘텐츠 삭제 · 문의 답변 · 운영 대시보드 |
+| 인증 | bcrypt + HttpOnly 세션 쿠키, 사용자/관리자 분리 |
+| 법적 페이지 | 이용약관 · 개인정보처리방침(조문 근거 포함) · 사업자 정보확인 |
+
+---
+
+## 기술 스택
+
+| 구분 | 사용 기술 |
+|------|-----------|
+| 프론트엔드 | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, TanStack Query |
+| 백엔드 | Node.js, Express 4, TypeScript, better-sqlite3, `ws`, bcrypt, multer |
+| AI | LangChain, LangGraph, Google Gemini · Groq |
+| 데이터 | SQLite (22개 테이블), 로컬 디스크 파일 스토리지 |
+| 테스트 | `node --test` (백엔드 137건 · 프론트), Playwright E2E 8 시나리오 |
+| 배포 | Cloudflare Workers (OpenNext), Cloudflare Tunnel |
+
+---
+
+## 시스템 구성
 
 ```
-project/
-├── oldplanHTML/              ← 예전 HTML 프로토타입 (참고용)
-└── vidshare/                 ← 이 프로젝트 루트
-    ├── README.md             ← 지금 이 파일
-    ├── docs/                 ← 아키텍처, 커밋 기록, 배포 가이드, 보안 등
-    ├── FrontServer/          ← Next.js 프론트엔드 (사용자)  :3000
-    ├── console/              ← Next.js 프론트엔드 (관리자)  :3200
-    └── BackendServer/        ← Express REST API             :4000
+[Browser — 사용자]                    [Browser — 운영자]
+       │                                     │
+       ▼                                     ▼
+[FrontServer :3000]                   [console :3200]
+  Next.js · lib/api.ts                  Next.js · lib/adminApi.ts
+  쿠키 vidshare_sid                     쿠키 vidshare_admin_sid
+       │                                     │
+       └────── fetch(credentials: "include") ┘
+                        │
+                        ▼
+             [BackendServer :4000]  Express REST API
+                routes/ → data/store.ts → db/client.ts
+                /api/*        ← requireRequestUser
+                /api/admin/*  ← requireAdmin
+                /ws/conversations (WebSocket) · /api/notifications/stream (SSE)
+                        │
+                        ▼
+             [SQLite]  data/vidshare.sqlite
+             [Files]   uploads/  (DB엔 /uploads/<uuid>.ext 경로만)
+```
+
+```
+vidshare/                     ← 이 프로젝트 루트
+├── README.md                 ← 지금 이 파일
+├── docs/                     ← 아키텍처, 커밋 기록, 배포 가이드, 보안
+├── portfolio/                ← 포트폴리오 문서 + 소개 사이트
+├── FrontServer/              ← Next.js 프론트엔드 (사용자)  :3000
+├── console/                  ← Next.js 프론트엔드 (관리자)  :3200
+└── BackendServer/            ← Express REST API             :4000
 ```
 
 ---
@@ -114,6 +211,7 @@ API 공개 주소가 있으면 빌드 전에 `NEXT_PUBLIC_API_URL`을 넣습니�
 
 | 위치 | 내용 |
 |------|------|
+| [portfolio/](./portfolio/) | **포트폴리오** — 문서(Markdown·DOCX) + 소개 사이트 |
 | [plan.md](./plan.md) | 기획·계기·방식 비교 (계획서) |
 | [docs/architecture/overview.md](./docs/architecture/overview.md) | **현재 구조 전체** — 처음이면 여기부터 |
 | [docs/deployment.md](./docs/deployment.md) | **배포 가이드** (호스트 추천 + 올리기 전 필수 수정) |
@@ -133,7 +231,8 @@ API 공개 주소가 있으면 빌드 전에 `NEXT_PUBLIC_API_URL`을 넣습니�
 | BackendServer | REST + SQLite, SSE·WebSocket |
 | 인증 | bcrypt + HttpOnly 세션, 사용자/관리자 쿠키 분리 |
 | 업로드 | `POST /api/uploads` (영상 100MB · 이미지 8MB) |
-| 테스트 | 백엔드 `npm test` · 프론트 `npm test` · E2E `npm run test:e2e` |
+| 테스트 | 백엔드 137건 통과 · 프론트 `npm test` · E2E `npm run test:e2e` |
+| 미완 | CI 파이프라인 없음, 백엔드 공개 배포 전, 관리자 감사 로그 없음 ([roadmap](./docs/features/roadmap.md)) |
 | 배포 | Front/console = Cloudflare Workers. 백엔드 = Tunnel. [docs/deployment.md](./docs/deployment.md) |
 
 ---

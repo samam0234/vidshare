@@ -26,7 +26,7 @@
 - [x] 댓글 대댓글·수정·삭제, 신고·차단
 
 ### 백엔드
-- [x] Express + TypeScript + better-sqlite3 (18개 테이블)
+- [x] Express + TypeScript + better-sqlite3 (22개 테이블)
 - [x] 인증 (bcrypt + HttpOnly 세션 쿠키)
 - [x] 쇼츠·댓글·유저·롱폼·커뮤니티·대화·알림·고객센터·챗봇 REST API
 - [x] `requireRequestUser()` 인증 미들웨어, `owner_id` 스코프 격리
