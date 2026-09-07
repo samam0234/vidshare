@@ -35,6 +35,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 | `vidshare/console/` | Next.js UI (관리자, 081~084) | 3200 · Workers `vidshare-console` |
 | `vidshare/BackendServer/` | Express API + SQLite | 4000 · Tunnel (Workers 금지) |
 | `vidshare/docs/` | 설계·이력·커밋 상세 | — |
+| `vidshare/portfolio/` | 포트폴리오 문서(md·docx) + 소개 사이트 | 4500 (`serve.py`, 선택) |
 | `vidshare/cloudflare/` | Tunnel ingress 템플릿 | — |
 
 공개 URL (이 계정):

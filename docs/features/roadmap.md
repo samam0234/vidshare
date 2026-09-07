@@ -45,6 +45,7 @@
 - [x] 알림 벌크 읽음/삭제 (`PATCH /read-all`, `DELETE /api/notifications`)
 - [x] 알림 팝업 바깥 클릭 닫기
 - [x] Front/console Cloudflare Workers (OpenNext, 086). 백엔드는 Tunnel
+- [x] 포트폴리오 문서·소개 사이트 (093). 푸터 "프로젝트 소개" → `/portfolio/index.html`
 
 ---
 

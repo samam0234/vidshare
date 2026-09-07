@@ -25,6 +25,9 @@
 # production
 /build
 
+# portfolio/site 에서 복사해 오는 생성물 (npm run portfolio:sync)
+/public/portfolio/
+
 # misc
 .DS_Store
 *.pem

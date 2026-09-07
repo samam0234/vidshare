@@ -45,6 +45,19 @@
 
 ---
 
+## 화면
+
+| | |
+|---|---|
+| ![쇼츠 피드](./portfolio/site/assets/screenshots/front-feed.png) | ![관리자 대시보드](./portfolio/site/assets/screenshots/console-dashboard.png) |
+| **쇼츠 피드** — 세로 스냅, 좋아요·댓글·공유 | **운영 대시보드** — 미처리 신고·미답변 문의 |
+| ![AI 챗봇](./portfolio/site/assets/screenshots/front-chatbot.png) | ![통합 검색](./portfolio/site/assets/screenshots/front-search.png) |
+| **AI 챗봇** — 3모델, 대화 저장, 파일 첨부 | **통합 검색** — 쇼츠·롱폼·커뮤니티·유저 |
+
+전체 화면과 설명은 [포트폴리오 사이트](./portfolio/)에 있습니다.
+
+---
+
 ## 주요 기능
 
 | 영역 | 내용 |

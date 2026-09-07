@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>프론트엔드 — VidShare 포트폴리오</title>
+<meta name="description" content="Next.js 16 App Router 기반 사용자 웹앱. 27개 화면, lib/api.ts 단일 통신 창구, CSS 변수 디자인 시스템.">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="index.html"><span class="brand-mark">V</span> VidShare <span class="brand-sub">포트폴리오</span></a>
+    <nav class="nav-links">
+      <a href="index.html">개요</a>
+      <a href="frontend.html" class="is-active">프론트엔드</a>
+      <a href="console.html">관리자 콘솔</a>
+      <a href="backend.html">백엔드</a>
+    </nav>
+  </div>
+</header>
+
+<section class="page-head">
+  <div class="wrap">
+    <span class="eyebrow">애플리케이션 01 · 포트 3000</span>
+    <h1>FrontServer — 사용자 웹앱</h1>
+    <p>
+      비회원도 열람은 자유롭게, 창작과 소통은 로그인 후에.
+      27개 화면이 하나의 공통 셸 위에서 같은 통신 규약으로 동작합니다.
+    </p>
+    <ul class="tags">
+      <li class="tag">Next.js 16 App Router</li>
+      <li class="tag">React 19</li>
+      <li class="tag">TypeScript</li>
+      <li class="tag">Tailwind CSS v4</li>
+      <li class="tag">TanStack Query</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap layout">
+
+    <aside class="side">
+      <h5>이 페이지</h5>
+      <nav>
+        <a href="#overview">개요</a>
+        <a href="#engine">사용 엔진</a>
+        <a href="#features">상세 기능</a>
+        <a href="#api">API 연동</a>
+        <a href="#screens">내부 화면</a>
+        <a href="#design">디자인</a>
+        <a href="#issues">문제점 · 개선</a>
+        <a href="#future">미래 지향</a>
+      </nav>
+    </aside>
+
+    <main>
+
+      <!-- 개요 -->
+      <section class="anchor" id="overview">
+        <div class="sec-head reveal">
+          <span class="sec-tag">개요</span>
+          <h2>클라이언트 구조</h2>
+        </div>
+
+        <p class="reveal">
+          Next.js 16 App Router 기반 사용자 웹앱입니다. 27개 페이지가 하나의 공통 셸 위에서 동작합니다.
+          공통 셸은 바깥에서 안쪽으로 <code>ThemeProvider</code> → <code>QueryProvider</code> →
+          <code>AuthProvider</code> → <code>Navbar</code> + <code>Footer</code> 순서로 감쌉니다.
+          테마는 인증보다 바깥에 있어야 로그인 화면에서도 테마가 먼저 적용됩니다.
+        </p>
+
+        <div class="callout reveal">
+          <b>비회원 정책을 한 파일에 모았습니다.</b>
+          "열람은 자유, 작성·메시지·업로드는 로그인"이라는 규칙을 화면마다 흩어 두면
+          새 페이지를 추가할 때마다 빠뜨립니다. <code>lib/guest-routes.ts</code> 에 허용 경로를
+          목록으로 두고, 이 판정 로직에는 단위 테스트를 붙였습니다(오픈 리다이렉트 방지 포함).
+        </div>
+
+        <div class="code reveal"><span class="c">FrontServer/</span>
+├── <span class="p">app/</span>                 <span class="c"># 27개 페이지 (App Router)</span>
+├── <span class="p">components/</span>          <span class="c"># 44개 컴포넌트 · 약 6,200줄</span>
+│   ├── layout/          <span class="c"># Navbar, Footer</span>
+│   └── legal/           <span class="c"># LegalPage (약관·개인정보·사업자 공용)</span>
+├── <span class="p">context/</span>             <span class="c"># AuthContext, ThemeProvider, QueryProvider</span>
+├── <span class="p">lib/</span>                 <span class="c"># 통신·상태·유틸 13개 모듈</span>
+├── <span class="p">e2e/</span>                 <span class="c"># Playwright 8 시나리오</span>
+└── <span class="p">tests/</span>               <span class="c"># 순수 함수 단위 테스트 32건</span></div>
+      </section>
+
+      <!-- 사용 엔진 -->
+      <section class="anchor" id="engine">
+        <div class="sec-head reveal">
+          <span class="sec-tag">사용 엔진</span>
+          <h2>무엇을 왜 썼는가</h2>
+        </div>
+
+        <div class="table-wrap reveal">
+          <table>
+            <thead><tr><th>기술</th><th>역할</th><th>선택 이유</th></tr></thead>
+            <tbody>
+              <tr><td><b>Next.js 16</b><br><span style="color:var(--faint);font-size:13px">App Router</span></td><td>라우팅 · 렌더링</td><td>폴더 구조가 곧 URL 구조. <code>/community/[id]</code> 같은 상세 경로가 자연스럽게 나옵니다. 서버 컴포넌트로 초기 로드를 줄일 여지도 남습니다.</td></tr>
+              <tr><td><b>React 19</b></td><td>UI</td><td><code>useSyncExternalStore</code> 로 전역 스토어를 라이브러리 없이 만들 수 있습니다.</td></tr>
+              <tr><td><b>TypeScript</b></td><td>타입</td><td>백엔드 응답 타입을 <code>types/</code> 에 정의해 API 변경 시 프론트가 먼저 깨집니다.</td></tr>
+              <tr><td><b>Tailwind CSS v4</b></td><td>스타일</td><td>클래스가 마크업 옆에 있어 컴포넌트를 옮길 때 스타일이 따라옵니다. 팔레트는 CSS 변수로 분리했습니다.</td></tr>
+              <tr><td><b>TanStack Query</b></td><td>서버 상태</td><td>목록 화면의 중복 페치·캐시 무효화를 정리했습니다. 전면 도입이 아니라 이득이 확실한 5개 화면에만 적용했습니다.</td></tr>
+              <tr><td><b>Playwright</b></td><td>E2E</td><td>WebSocket 실시간 메시지처럼 단위 테스트로 확인할 수 없는 흐름을 검증합니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warn reveal">
+          <b>린트가 잡아낸 패턴 하나.</b>
+          React 19 / Next 16 환경에서는 <code>useEffect</code> 안의 <code>setState</code> 직접 호출이
+          <code>react-hooks/set-state-in-effect</code> 에러입니다. 저장소 전체에서
+          <code>queueMicrotask(() =&gt; setX(...))</code> 로 감싸는 방식으로 <b>통일</b>하고 그 규약을 문서에 적었습니다.
+          같은 문제를 각자 다른 방식으로 우회하면 나중에 어느 쪽이 의도된 것인지 알 수 없습니다.
+        </div>
+      </section>
+
+      <!-- 상세 기능 -->
+      <section class="anchor" id="features">
+        <div class="sec-head reveal">
+          <span class="sec-tag">상세 기능</span>
+          <h2>27개 화면</h2>
+        </div>
+
+        <div class="table-wrap reveal">
+          <table>
+            <thead><tr><th>경로</th><th>화면</th><th style="width:92px">인증</th></tr></thead>
+            <tbody>
+              <tr><td><code>/</code></td><td>쇼츠 세로 스냅 피드 — 좋아요/싫어요, 댓글 패널, 공유</td><td>열람 자유</td></tr>
+              <tr><td><code>/search</code></td><td>통합 검색 — 쇼츠·롱폼·커뮤니티·유저 4개 도메인 동시</td><td>열람 자유</td></tr>
+              <tr><td><code>/following</code></td><td>팔로잉 피드 — 팔로우한 크리에이터의 쇼츠 모아보기</td><td>필요</td></tr>
+              <tr><td><code>/profile/[id]</code></td><td>프로필 — 탭·정렬·그리드·재생목록</td><td>열람 자유</td></tr>
+              <tr><td><code>/profile/[id]/followers</code><br><code>/profile/[id]/following</code></td><td>팔로워 · 팔로잉 목록</td><td>열람 자유</td></tr>
+              <tr><td><code>/playlists/[id]</code></td><td>재생목록 상세 — 영상 추가·제거</td><td>열람 자유</td></tr>
+              <tr><td><code>/upload</code></td><td>쇼츠 업로드 — 실파일(영상 100MB · 이미지 8MB)</td><td>필요</td></tr>
+              <tr><td><code>/longform</code> 외 2개</td><td>롱폼 목록 · 작성 · 상세</td><td>작성만 필요</td></tr>
+              <tr><td><code>/community</code> 외 2개</td><td>커뮤니티 목록 · 작성 · 상세</td><td>작성만 필요</td></tr>
+              <tr><td><code>/messages</code>, <code>/messages/[id]</code></td><td>1:1 대화 — WebSocket 실시간 송수신</td><td>필요</td></tr>
+              <tr><td><code>/notifications</code> 외 1개</td><td>알림 — SSE 실시간, 읽음/삭제·벌크 처리·수신 토글</td><td>필요</td></tr>
+              <tr><td><code>/chatbot</code>, <code>/chatbot/[id]</code></td><td>AI 챗봇 워크스페이스 — 3모델, 첨부, 마크다운</td><td>게스트는 Locals만</td></tr>
+              <tr><td><code>/support</code>, <code>/support/[id]</code></td><td>고객센터 — FAQ + 문의 작성·목록·상세</td><td>문의는 필요</td></tr>
+              <tr><td><code>/login</code>, <code>/register</code></td><td>로그인 · 회원가입</td><td>—</td></tr>
+              <tr><td><code>/terms</code>, <code>/privacy</code>, <code>/business</code></td><td>이용약관 · 개인정보처리방침 · 사업자 정보확인</td><td>열람 자유</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="reveal">눈여겨볼 구현</h3>
+
+        <div class="grid grid-2">
+          <div class="card reveal">
+            <h4>댓글 — 1단계 스레드</h4>
+            <p style="color:var(--muted);margin-bottom:0">
+              <code>comments.parent_id</code> 로 대댓글을 만들되 <b>1단계까지만</b> 허용합니다.
+              2단계 이상 답글은 최상위로 평탄화합니다. 무한 중첩은 모바일 폭에서 읽을 수 없게 되고,
+              깊이 제한을 UI가 아니라 데이터 정규화 단계에서 거는 편이 안전합니다.
+            </p>
+          </div>
+          <div class="card reveal">
+            <h4>알림 — 전역 스토어</h4>
+            <p style="color:var(--muted);margin-bottom:0">
+              Navbar 배지, 알림 목록, 알림 팝업 세 곳이 같은 상태를 봐야 합니다.
+              <code>useSyncExternalStore</code> 기반 스토어(<code>notifications-store.ts</code>)로 묶어
+              어디서 읽음 처리를 해도 나머지 둘이 즉시 따라옵니다.
+            </p>
+          </div>
+          <div class="card reveal">
+            <h4>업로드 — 보내기 전에 거른다</h4>
+            <p style="color:var(--muted);margin-bottom:0">
+              <code>lib/media.ts</code> 가 전송 전에 용량·형식을 검사합니다.
+              서버도 같은 검사를 하지만, 100MB를 다 올린 뒤 거절당하는 경험을 피하기 위한 것입니다.
+              <b>클라이언트 검사는 편의이지 보안이 아니라는 전제</b>로 서버 검사를 없애지 않았습니다.
+            </p>
+          </div>
+          <div class="card reveal">
+            <h4>챗봇 — 게스트와 회원의 차이</h4>
+            <p style="color:var(--muted);margin-bottom:0">
+              비회원은 Locals 모델만 쓸 수 있고 대화는 메모리에만 남습니다(새로고침 시 소실).
+              회원은 3모델 전부와 SQLite 영속화를 씁니다. 로그인 유도를 막는 벽이 아니라
+              <b>기능 차이로</b> 드러나게 했습니다.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- API 연동 -->
+      <section class="anchor" id="api">
+        <div class="sec-head reveal">
+          <span class="sec-tag">API 연동</span>
+          <h2>통신 창구를 하나로</h2>
+        </div>
+
+        <p class="reveal">
+          프론트의 서버 통신은 <b><code>lib/api.ts</code> 단 하나의 모듈</b>로 모았습니다.
+          40개가 넘는 메서드가 모두 <code>ApiResult&lt;T&gt;</code> 를 반환하고,
+          <code>credentials: "include"</code> 로 세션 쿠키를 실어 보냅니다.
+          <b>이 모듈을 거치지 않는 <code>fetch</code> 는 금지</b>가 저장소 규약입니다.
+        </p>
+
+        <div class="code reveal"><span class="c">// 모든 응답이 같은 형태다</span>
+<span class="k">type</span> ApiResult&lt;T&gt; = { success: <span class="k">boolean</span>; data?: T; error?: <span class="k">string</span> };
+
+<span class="c">// 호출부는 성공/실패 분기 하나만 하면 된다</span>
+<span class="k">const</span> res = <span class="k">await</span> api.<span class="n">getCommunityPosts</span>();
+<span class="k">if</span> (!res.success) <span class="k">return</span> setError(res.error);
+setPosts(res.data);</div>
+
+        <div class="table-wrap reveal">
+          <table>
+            <thead><tr><th>모듈</th><th>역할</th></tr></thead>
+            <tbody>
+              <tr><td><code>api.ts</code></td><td><b>서버 통신 단일 창구.</b> 40+ 메서드, <code>ApiResult&lt;T&gt;</code> 반환. <code>uploadFile</code> 만 FormData</td></tr>
+              <tr><td><code>media.ts</code></td><td><code>/uploads</code> 상대 경로에 API 호스트를 붙이는 <code>mediaUrl()</code>, 용량·형식 검사</td></tr>
+              <tr><td><code>auth.ts</code></td><td>인증 헬퍼</td></tr>
+              <tr><td><code>notifications-store.ts</code></td><td><code>useSyncExternalStore</code> 기반 알림 전역 상태</td></tr>
+              <tr><td><code>guest-routes.ts</code></td><td>비회원 허용 경로 목록 · 오픈 리다이렉트 방지</td></tr>
+              <tr><td><code>chatbot-corpus.ts</code></td><td>Shape 모델용 RAG 코퍼스 수집</td></tr>
+              <tr><td><code>chatbot-models.ts</code></td><td>모델 티어 정의 (locals / vide / shape)</td></tr>
+              <tr><td><code>chat-files.ts</code></td><td>첨부 파일 → <code>ChatbotAttachment</code> 변환</td></tr>
+              <tr><td><code>content-store.ts</code></td><td>포맷 유틸 2개만 잔존 (localStorage 로직은 SQLite 이관 때 제거)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout ok reveal">
+          <b>LAN에서도 설정 없이 붙습니다.</b>
+          <code>NEXT_PUBLIC_API_URL</code> 이 비어 있으면 <code>window.location.hostname:4000</code> 을
+          자동으로 가리킵니다. 휴대폰으로 PC의 IP를 열어도 API 주소를 따로 넣을 필요가 없습니다.
+          다만 Workers 배포 빌드에는 반드시 명시해야 합니다.
+        </div>
+
+        <h3 class="reveal">실시간 연결</h3>
+        <div class="table-wrap reveal">
+          <table>
+            <thead><tr><th>기능</th><th>연결</th><th>프론트 처리</th></tr></thead>
+            <tbody>
+              <tr><td>알림</td><td>SSE <code>GET /api/notifications/stream</code></td><td>수신 즉시 전역 알림 스토어에 반영 → Navbar 배지·목록·팝업이 함께 갱신</td></tr>
+              <tr><td>메시지</td><td>WebSocket <code>/ws/conversations</code></td><td>스레드 화면에서 구독. <b>끊겨도 REST 폴백</b>으로 전송은 계속 동작</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="reveal">상태 관리 전략</h3>
+        <p class="reveal">한 가지 방식으로 통일하지 않고 <b>데이터 성격에 따라 나눴습니다.</b></p>
+        <div class="table-wrap reveal">
+          <table>
+            <thead><tr><th>종류</th><th>방식</th><th>이유</th></tr></thead>
+            <tbody>
+              <tr><td>서버 목록 데이터</td><td>TanStack Query</td><td>롱폼·커뮤니티·팔로잉 피드·프로필·메시지. 캐시·재검증이 이득인 화면</td></tr>
+              <tr><td>알림</td><td><code>useSyncExternalStore</code></td><td>세 컴포넌트가 같은 상태를 봐야 함</td></tr>
+              <tr><td>테마</td><td><code>useSyncExternalStore</code> + localStorage</td><td>리렌더 없이 즉시 반영</td></tr>
+              <tr><td>인증</td><td><code>context/AuthContext</code></td><td>앱 전역 1회 로드</td></tr>
+              <tr><td>쇼츠 피드 등</td><td>컴포넌트 로컬 <code>useState</code></td><td>낙관적 업데이트가 얽혀 있어 이전 보류 <span class="badge todo">개선 예정</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 내부 화면 -->
+      <section class="anchor" id="screens">
+        <div class="sec-head reveal">
+          <span class="sec-tag">내부 화면</span>
+          <h2>실제 동작 화면</h2>
+          <p>모두 실행 중인 앱에서 Playwright로 캡처했습니다. 클릭하면 확대됩니다.</p>
+        </div>
+
+        <div class="shots">
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-feed.png" width="1440" height="900" alt="쇼츠 피드 — 데스크톱" loading="lazy">
+            <figcaption><b>쇼츠 피드 <code>/</code></b>세로 스냅 스크롤. 우측 액션 바에 좋아요·싫어요·댓글·공유. 비회원도 열람 가능.</figcaption>
+          </figure>
+          <figure class="shot tall reveal">
+            <img src="assets/screenshots/front-feed-mobile.png" width="400" height="860" alt="쇼츠 피드 — 모바일 폭" loading="lazy">
+            <figcaption><b>쇼츠 피드 (모바일 폭)</b>세로 피드는 모바일에서 화면을 꽉 채웁니다.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-community.png" width="1440" height="900" alt="커뮤니티 목록" loading="lazy">
+            <figcaption><b>커뮤니티 <code>/community</code></b>글마다 일련번호가 붙어 상세에서 확인할 수 있습니다.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-longform.png" width="1440" height="900" alt="롱폼 목록" loading="lazy">
+            <figcaption><b>롱폼 <code>/longform</code></b>긴 영상 목록. 작성은 로그인이 필요합니다.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-search.png" width="1440" height="900" alt="통합 검색 결과" loading="lazy">
+            <figcaption><b>통합 검색 <code>/search</code></b>쇼츠·롱폼·커뮤니티·유저 네 도메인을 한 번에 조회합니다.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-profile.png" width="1440" height="900" alt="프로필 화면" loading="lazy">
+            <figcaption><b>프로필 <code>/profile/[id]</code></b>탭·정렬·그리드와 팔로워/팔로잉, 재생목록.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-chatbot.png" width="1440" height="900" alt="AI 챗봇 워크스페이스" loading="lazy">
+            <figcaption><b>AI 챗봇 <code>/chatbot</code></b>좌측에 저장된 대화, 하단에 모델 선택과 파일 첨부.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-messages.png" width="1440" height="900" alt="메시지 대화 목록" loading="lazy">
+            <figcaption><b>메시지 <code>/messages</code></b>WebSocket으로 실시간 송수신하며 REST 폴백을 유지합니다.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-notifications.png" width="1440" height="900" alt="알림 목록" loading="lazy">
+            <figcaption><b>알림 <code>/notifications</code></b>SSE로 즉시 도착. 전체 읽음·전체 삭제는 확인 모달을 거칩니다.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-upload.png" width="1440" height="900" alt="업로드 화면" loading="lazy">
+            <figcaption><b>업로드 <code>/upload</code></b>전송 전에 용량·형식을 검사합니다.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-following.png" width="1440" height="900" alt="팔로잉 피드" loading="lazy">
+            <figcaption><b>팔로잉 피드 <code>/following</code></b>팔로우한 크리에이터의 쇼츠만 모아 봅니다.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-support.png" width="1440" height="900" alt="고객센터" loading="lazy">
+            <figcaption><b>고객센터 <code>/support</code></b>FAQ는 누구나, 문의 작성은 로그인 후.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-login.png" width="1440" height="900" alt="로그인 화면" loading="lazy">
+            <figcaption><b>로그인 <code>/login</code></b>bcrypt + HttpOnly 세션 쿠키.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/screenshots/front-terms.png" width="1440" height="1277" alt="이용약관 페이지" loading="lazy">
+            <figcaption><b>이용약관 <code>/terms</code></b>약관·개인정보처리방침·사업자 정보는 <code>LegalPage</code> 컴포넌트를 공유합니다.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- 디자인 -->
+      <section class="anchor" id="design">
+        <div class="sec-head reveal">
+          <span class="sec-tag">디자인</span>
+          <h2>색을 코드에 직접 쓰지 않는다</h2>
+        </div>
+
+        <p class="reveal">
+          팔레트를 <b>시맨틱 CSS 변수 토큰</b>으로 정의하고, 컴포넌트에서는 토큰만 참조합니다.
+          라이트 모드는 <code>html.light</code> 에서 <b>변수만 재정의</b>하며 컴포넌트는 한 줄도 건드리지 않습니다.
+        </p>
+
+        <div class="code reveal"><span class="c">/* 다크(기본) */</span>
+:root {
+  <span class="n">--bg</span>: …;        <span class="n">--bg-card</span>: …;   <span class="n">--bg-elevated</span>: …;
+  <span class="n">--text</span>: …;      <span class="n">--text-muted</span>: …;
+  <span class="n">--accent</span>: …;    <span class="n">--accent-hot</span>: …;
+  <span class="n">--border</span>: …;    <span class="n">--btn</span>: …;  <span class="n">--danger</span>: …;  <span class="n">--shadow</span>: …;
+}
+
+<span class="c">/* 라이트 — 변수만 다시 쓴다 */</span>
+html.light { <span class="n">--bg</span>: …; <span class="n">--text</span>: …; … }</div>
+
+        <div class="callout reveal">
+          <b>하드코딩 색상 금지</b>가 저장소 규약입니다. 새 색이 필요하면 토큰을 늘립니다.
+          이 규칙 덕분에 다크/라이트 전환에서 "여기만 색이 안 바뀐다"는 문제가 생기지 않습니다.
+        </div>
+
+        <h3 class="reveal">두 앱의 색을 일부러 다르게</h3>
+        <p class="reveal">
+          사용자 앱은 <b>보라–파랑</b> 계열(<code>#7c3aed</code> → <code>#3ea6ff</code>),
+          관리자 콘솔은 <b>앰버</b> 계열입니다. 두 사이트를 동시에 띄워 두고 작업할 때
+          지금 어느 쪽을 보고 있는지 즉시 구분됩니다. 운영 화면에서 실수로 사용자 데이터를
+          건드리는 사고를 줄이는 값싼 장치입니다.
+        </p>
+
+        <h4 class="reveal">커스텀 유틸리티</h4>
+        <ul class="tags reveal" style="margin-bottom:16px">
+          <li class="tag">surface</li>
+          <li class="tag">glass-btn</li>
+          <li class="tag">logo-grad</li>
+          <li class="tag">shorts-snap</li>
+          <li class="tag">custom-scroll</li>
+        </ul>
+        <p class="reveal" style="color:var(--muted)">
+          Tailwind 클래스로 매번 조합하기엔 반복이 심한 패턴만 유틸리티로 승격했습니다.
+          <code>shorts-snap</code> 은 세로 스냅 스크롤, <code>glass-btn</code> 은 피드 위 반투명 버튼입니다.
+        </p>
+      </section>
+
+      <!-- 문제점 -->
+      <section class="anchor" id="issues">
+        <div class="sec-head reveal">
+          <span class="sec-tag">문제점 · 개선</span>
+          <h2>아직 못 한 것</h2>
+          <p>알고 미룬 것들입니다. 각각 왜 미뤘고 무엇을 할지 함께 적었습니다.</p>
+        </div>
+
+        <div class="table-wrap reveal">
+          <table>
+            <thead><tr><th>항목</th><th>현재 상태</th><th>계획</th><th style="width:78px">우선도</th></tr></thead>
+            <tbody>
+              <tr><td><b>서버 상태 일원화</b></td><td><code>ShortsFeed</code> 등은 아직 <code>useState</code> + <code>useEffect</code>. 낙관적 업데이트(좋아요 즉시 반영)가 얽혀 있어 이전이 단순 치환이 아님</td><td>낙관적 업데이트를 Query mutation의 <code>onMutate</code>/<code>onError</code> 롤백으로 이전</td><td><span class="badge todo">높음</span></td></tr>
+              <tr><td><b>컴포넌트 테스트</b></td><td>순수 함수 32건뿐. 렌더링 로직은 E2E 8건에만 의존</td><td>Testing Library 도입, 핵심 컴포넌트부터</td><td><span class="badge todo">높음</span></td></tr>
+              <tr><td><b>접근성</b></td><td>전면 점검 미실시. 키보드 내비게이션·ARIA·색 대비를 측정한 적 없음</td><td>기준선 감사 후 우선순위 결정</td><td><span class="badge plan">중간</span></td></tr>
+              <tr><td><b>성능</b></td><td>측정하지 않음. 번들 크기·LCP 수치를 모름</td><td>Lighthouse 기준선 → 이미지·번들 최적화</td><td><span class="badge plan">중간</span></td></tr>
+              <tr><td><b>페이지네이션</b></td><td>검색·팔로워 목록이 전량 반환. 데이터가 적어 드러나지 않을 뿐</td><td>커서 기반 페이징 (백엔드와 동시 작업)</td><td><span class="badge plan">중간</span></td></tr>
+              <tr><td><code>lib/mock-data.ts</code></td><td>약 65줄로 줄었지만 시드/폴백 용도로 잔존</td><td>완전 제거</td><td><span class="badge plan">낮음</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="reveal">해결한 문제 — 크로스 도메인에서 로그인이 안 되던 일</h3>
+        <div class="card reveal">
+          <p><b>증상</b> — Cloudflare Workers에 프론트를 올리자 로컬에서 되던 로그인이 실패했습니다.</p>
+          <p><b>원인</b> — 세션 쿠키가 <code>SameSite=Lax</code> 였습니다. 프론트와 API의 도메인이 다르면
+             브라우저가 쿠키를 싣지 않습니다. 개발에서는 둘 다 <code>localhost</code> 라 드러나지 않았습니다.</p>
+          <p><b>해결</b> — <code>COOKIE_DOMAIN</code> / <code>COOKIE_SAMESITE</code> 를 환경 변수로 빼고,
+             <code>NODE_ENV=production</code> 이면 CORS를 화이트리스트로만 열도록 바꿨습니다.
+             개발 편의(사설망 전체 허용)와 운영 안전을 환경으로 갈랐습니다.</p>
+          <p style="margin-bottom:0"><b>남긴 것</b> — 배포 전 필수 확인 항목으로 문서에 정리하고
+             <b>"지금 설정 그대로 올리면 로그인이 되지 않는다"</b>고 명시했습니다.
+             나중에 같은 함정에 빠지는 것을 막는 건 코드가 아니라 문장이었습니다.</p>
+        </div>
+      </section>
+
+      <!-- 미래 -->
+      <section class="anchor" id="future">
+        <div class="sec-head reveal">
+          <span class="sec-tag">미래 지향</span>
+          <h2>다음에 가고 싶은 방향</h2>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="card reveal">
+            <h4>무한 스크롤 + 가상 스크롤</h4>
+            <p style="color:var(--muted);margin-bottom:0">지금은 전량 렌더입니다. 피드가 수백 개가 되면 DOM 노드 수가 문제가 됩니다. 커서 페이징과 함께 가야 합니다.</p>
+          </div>
+          <div class="card reveal">
+            <h4>PWA · 오프라인 캐시</h4>
+            <p style="color:var(--muted);margin-bottom:0">숏폼 소비는 모바일이 주 무대입니다. 설치형 경험과 오프라인 목록 캐시로 체감을 올릴 여지가 큽니다.</p>
+          </div>
+          <div class="card reveal">
+            <h4>시청 지표 기반 정렬</h4>
+            <p style="color:var(--muted);margin-bottom:0">현재 피드는 최신순입니다. 시청 완료율을 수집하면 추천까지 가지 않아도 정렬을 개선할 수 있습니다.</p>
+          </div>
+          <div class="card reveal">
+            <h4>다국어 (i18n)</h4>
+            <p style="color:var(--muted);margin-bottom:0">문자열이 컴포넌트에 하드코딩되어 있습니다. 먼저 추출부터 해야 합니다.</p>
+          </div>
+        </div>
+
+        <div class="pager" style="margin-top:44px">
+          <a href="console.html"><span>다음</span><b>관리자 콘솔 →</b></a>
+          <a href="backend.html"><span>또는</span><b>백엔드 서버 →</b></a>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <div style="color:#fff;font-weight:750;font-size:16px;margin-bottom:4px">VidShare 포트폴리오</div>
+      <small>FrontServer — Next.js 16 · React 19 · TypeScript · Tailwind CSS v4</small>
+    </div>
+    <nav class="foot-links">
+      <a href="index.html">개요</a>
+      <a href="frontend.html">프론트엔드</a>
+      <a href="console.html">관리자 콘솔</a>
+      <a href="backend.html">백엔드</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

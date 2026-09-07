@@ -4,7 +4,11 @@
   "private": true,
   "description": "VidShare FrontServer — Next.js UI",
   "scripts": {
+    "portfolio:sync": "node scripts/sync-portfolio.mjs",
+    "portfolio:shots": "tsx scripts/capture-portfolio.ts",
+    "predev": "npm run portfolio:sync",
     "dev": "next dev -H 0.0.0.0",
+    "prebuild": "npm run portfolio:sync",
     "build": "next build",
     "start": "next start -H 0.0.0.0",
     "lint": "eslint",
@@ -12,6 +16,7 @@
     "test": "node --import tsx --test tests/**/*.test.ts",
     "test:e2e": "playwright test",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "predeploy": "npm run portfolio:sync",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },

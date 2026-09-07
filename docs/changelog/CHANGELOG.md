@@ -8,6 +8,10 @@
 ## [Unreleased]
 
 ### Added
+- **포트폴리오** (커밋 093): `portfolio/` 에 본문(Markdown·DOCX)과 정적 소개 사이트.
+  실행 중인 앱에서 캡처한 스크린샷 20장, 사용자 사이트 푸터에 "프로젝트 소개" 링크
+  (`/portfolio/index.html`). 원본은 `portfolio/site` 하나이고 `public/portfolio` 는
+  `npm run portfolio:sync` 로 만드는 생성물
 - README 프로젝트 소개·주요 기능·기술 스택·시스템 구성 섹션 (커밋 092).
   문서 4곳에 17/18/19개로 흩어져 있던 SQLite 테이블 수도 실제 22개로 통일
 - 실행 가이드·기능 목록 문서 전면 갱신 (커밋 090): 루트/`FrontServer` README, 약관 3페이지, 현재 기능
@@ -106,6 +110,9 @@
 - 죽은 코드: `store.ts` 의 `listNotifications`/`deleteNotification`/`patchNotification`, `seedNotifications`, `Notification` 타입
 
 ### Fixed
+- ESLint가 OpenNext 빌드 산출물(`.open-next/`)까지 검사하고 있던 문제 (커밋 093).
+  FrontServer 27,002건 / console 7,987건이 전부 생성 코드였고, 무시 규칙 추가 후
+  두 앱 모두 기존 폰트 경고 1건만 남는다
 - 비회원이 `/search` 와 팔로우 목록 페이지에 접근하지 못하던 문제 (커밋 068, 063 회귀)
 - `support_inquiries` 컬럼 불일치 (`author_id` → `owner_id`)
 - `useEffect` 내 `setState` 린트 위반 (`queueMicrotask` 래핑으로 통일)
