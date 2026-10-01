@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../../middleware/asyncRouter";
 import {
   createActivityNotification,
   getInquiryByIdAdmin,
@@ -13,25 +13,25 @@ const router = Router();
 const REPLY_MAX = 2000;
 
 /** GET /api/admin/support/inquiries?unreplied=1 */
-router.get("/inquiries", (req, res) => {
-  requireAdmin(req);
+router.get("/inquiries", async (req, res) => {
+  await requireAdmin(req);
   const unreplied = req.query.unreplied === "1" || req.query.unreplied === "true";
-  res.json({ success: true, data: listAllInquiries(unreplied) });
+  res.json({ success: true, data: await listAllInquiries(unreplied) });
 });
 
 /** GET /api/admin/support/inquiries/:id */
-router.get("/inquiries/:id", (req, res) => {
-  requireAdmin(req);
+router.get("/inquiries/:id", async (req, res) => {
+  await requireAdmin(req);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) throw new HttpError(400, "invalid id");
-  const item = getInquiryByIdAdmin(id);
+  const item = await getInquiryByIdAdmin(id);
   if (!item) throw new HttpError(404, "문의를 찾을 수 없습니다.");
   res.json({ success: true, data: item });
 });
 
 /** PATCH /api/admin/support/inquiries/:id/reply  body: { reply } */
-router.patch("/inquiries/:id/reply", (req, res) => {
-  requireAdmin(req);
+router.patch("/inquiries/:id/reply", async (req, res) => {
+  await requireAdmin(req);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) throw new HttpError(400, "invalid id");
 
@@ -43,11 +43,11 @@ router.patch("/inquiries/:id/reply", (req, res) => {
     throw new HttpError(400, `답변은 ${REPLY_MAX}자 이하여야 합니다.`);
   }
 
-  const item = replyToInquiry(id, reply.trim());
+  const item = await replyToInquiry(id, reply.trim());
   if (!item) throw new HttpError(404, "문의를 찾을 수 없습니다.");
 
   // 문의를 넣은 유저에게 알림 (기존 support.ts 의 알림 패턴과 동일한 href).
-  createActivityNotification(item.ownerId, {
+  await createActivityNotification(item.ownerId, {
     category: "system",
     message: `고객센터 문의 #${String(item.id).padStart(3, "0")} 에 답변이 등록되었습니다.`,
     href: `/support/${item.id}`,

@@ -1,5 +1,5 @@
 import { v4 as uuid } from "uuid";
-import { getDb } from "../db/client";
+import { getDb, withTx } from "../db/client";
 import { publishNotification } from "../realtime/notificationBus";
 import { publishChatLine } from "../realtime/chatBus";
 import type {
@@ -103,35 +103,34 @@ function toShort(row: ShortJoinRow): Short {
   };
 }
 
-export function listAuthors(): Author[] {
-  const rows = getDb()
-    .prepare(
-      "SELECT id, handle, name, bio, avatar, role FROM users ORDER BY created_at, id"
-    )
-    .all() as UserRow[];
+export async function listAuthors(): Promise<Author[]> {
+  const rows = await getDb().all<UserRow>(
+    "SELECT id, handle, name, bio, avatar, role FROM users ORDER BY created_at, id"
+  );
   return rows.map(toAuthor);
 }
 
-export function findAuthor(idOrHandle: string): Author | undefined {
+export async function findAuthor(idOrHandle: string): Promise<Author | undefined> {
   const key = idOrHandle.replace(/^@/, "").trim();
-  const row = getDb()
-    .prepare(
-      `SELECT id, handle, name, bio, avatar, role FROM users
-       WHERE id = ? OR lower(handle) = lower(?)`
-    )
-    .get(key, key) as UserRow | undefined;
+  const row = await getDb().get<UserRow>(
+    `SELECT id, handle, name, bio, avatar, role FROM users
+     WHERE id = ? OR lower(handle) = lower(?)`,
+    key,
+    key
+  );
   return row ? toAuthor(row) : undefined;
 }
 
-export function searchAuthors(q: string, limit = 20): Author[] {
+export async function searchAuthors(q: string, limit = 20): Promise<Author[]> {
   const like = `%${q.trim().toLowerCase().replace(/^@/, "")}%`;
-  const rows = getDb()
-    .prepare(
-      `SELECT id, handle, name, bio, avatar, role FROM users
-       WHERE lower(handle) LIKE ? OR lower(name) LIKE ?
-       ORDER BY created_at, id LIMIT ?`
-    )
-    .all(like, like, limit) as UserRow[];
+  const rows = await getDb().all<UserRow>(
+    `SELECT id, handle, name, bio, avatar, role FROM users
+     WHERE lower(handle) LIKE ? OR lower(name) LIKE ?
+     ORDER BY created_at, id LIMIT ?`,
+    like,
+    like,
+    limit
+  );
   return rows.map(toAuthor);
 }
 
@@ -139,82 +138,83 @@ export function searchAuthors(q: string, limit = 20): Author[] {
 // Follows
 // ---------------------------------------------------------------------------
 
-export function isFollowing(followerId: string, followingId: string): boolean {
-  const row = getDb()
-    .prepare(
-      "SELECT 1 AS x FROM user_follows WHERE follower_id = ? AND following_id = ?"
-    )
-    .get(followerId, followingId) as { x: number } | undefined;
+export async function isFollowing(followerId: string, followingId: string): Promise<boolean> {
+  const row = await getDb().get<{ x: number }>(
+    "SELECT 1 AS x FROM user_follows WHERE follower_id = ? AND following_id = ?",
+    followerId,
+    followingId
+  );
   return Boolean(row);
 }
 
-export function countFollowers(userId: string): number {
-  const row = getDb()
-    .prepare("SELECT COUNT(*) AS c FROM user_follows WHERE following_id = ?")
-    .get(userId) as { c: number };
-  return row.c;
+export async function countFollowers(userId: string): Promise<number> {
+  const row = await getDb().get<{ c: number }>(
+    "SELECT COUNT(*) AS c FROM user_follows WHERE following_id = ?",
+    userId
+  );
+  return row?.c ?? 0;
 }
 
-export function countFollowing(userId: string): number {
-  const row = getDb()
-    .prepare("SELECT COUNT(*) AS c FROM user_follows WHERE follower_id = ?")
-    .get(userId) as { c: number };
-  return row.c;
+export async function countFollowing(userId: string): Promise<number> {
+  const row = await getDb().get<{ c: number }>(
+    "SELECT COUNT(*) AS c FROM user_follows WHERE follower_id = ?",
+    userId
+  );
+  return row?.c ?? 0;
 }
 
 /** 이미 팔로우 중이면 아무것도 하지 않는다(멱등). */
-export function followUser(followerId: string, followingId: string): boolean {
-  getDb()
-    .prepare(
-      `INSERT OR IGNORE INTO user_follows (follower_id, following_id, created_at)
-       VALUES (?, ?, ?)`
-    )
-    .run(followerId, followingId, new Date().toISOString());
+export async function followUser(followerId: string, followingId: string): Promise<boolean> {
+  await getDb().run(
+    `INSERT INTO user_follows (follower_id, following_id, created_at)
+     VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
+    followerId,
+    followingId,
+    new Date().toISOString()
+  );
   return true;
 }
 
-export function unfollowUser(followerId: string, followingId: string): boolean {
-  getDb()
-    .prepare(
-      "DELETE FROM user_follows WHERE follower_id = ? AND following_id = ?"
-    )
-    .run(followerId, followingId);
+export async function unfollowUser(followerId: string, followingId: string): Promise<boolean> {
+  await getDb().run(
+    "DELETE FROM user_follows WHERE follower_id = ? AND following_id = ?",
+    followerId,
+    followingId
+  );
   return true;
 }
 
-export function listFollowers(userId: string): Author[] {
-  const rows = getDb()
-    .prepare(
-      `SELECT u.id, u.handle, u.name, u.bio, u.avatar, u.role
-       FROM user_follows f JOIN users u ON u.id = f.follower_id
-       WHERE f.following_id = ? ORDER BY f.created_at DESC`
-    )
-    .all(userId) as UserRow[];
+export async function listFollowers(userId: string): Promise<Author[]> {
+  const rows = await getDb().all<UserRow>(
+    `SELECT u.id, u.handle, u.name, u.bio, u.avatar, u.role
+     FROM user_follows f JOIN users u ON u.id = f.follower_id
+     WHERE f.following_id = ? ORDER BY f.created_at DESC`,
+    userId
+  );
   return rows.map(toAuthor);
 }
 
-export function listFollowing(userId: string): Author[] {
-  const rows = getDb()
-    .prepare(
-      `SELECT u.id, u.handle, u.name, u.bio, u.avatar, u.role
-       FROM user_follows f JOIN users u ON u.id = f.following_id
-       WHERE f.follower_id = ? ORDER BY f.created_at DESC`
-    )
-    .all(userId) as UserRow[];
+export async function listFollowing(userId: string): Promise<Author[]> {
+  const rows = await getDb().all<UserRow>(
+    `SELECT u.id, u.handle, u.name, u.bio, u.avatar, u.role
+     FROM user_follows f JOIN users u ON u.id = f.following_id
+     WHERE f.follower_id = ? ORDER BY f.created_at DESC`,
+    userId
+  );
   return rows.map(toAuthor);
 }
 
 /** 내가 팔로우한 사람들의 쇼츠 (팔로잉 피드) */
-export function listFollowingShorts(userId: string, limit = 50): Short[] {
-  const rows = getDb()
-    .prepare(
-      `${SHORT_SELECT}
-       WHERE s.author_id IN (
-         SELECT following_id FROM user_follows WHERE follower_id = ?
-       )
-       ORDER BY s.created_at DESC, s.id DESC LIMIT ?`
-    )
-    .all(userId, limit) as ShortJoinRow[];
+export async function listFollowingShorts(userId: string, limit = 50): Promise<Short[]> {
+  const rows = await getDb().all<ShortJoinRow>(
+    `${SHORT_SELECT}
+     WHERE s.author_id IN (
+       SELECT following_id FROM user_follows WHERE follower_id = ?
+     )
+     ORDER BY s.created_at DESC, s.id DESC LIMIT ?`,
+    userId,
+    limit
+  );
   return rows.map(toShort);
 }
 
@@ -222,51 +222,55 @@ export function listFollowingShorts(userId: string, limit = 50): Short[] {
 // Blocks & Reports
 // ---------------------------------------------------------------------------
 
-export function isBlocked(blockerId: string, blockedId: string): boolean {
-  const row = getDb()
-    .prepare(
-      "SELECT 1 AS x FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?"
-    )
-    .get(blockerId, blockedId) as { x: number } | undefined;
+export async function isBlocked(blockerId: string, blockedId: string): Promise<boolean> {
+  const row = await getDb().get<{ x: number }>(
+    "SELECT 1 AS x FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?",
+    blockerId,
+    blockedId
+  );
   return Boolean(row);
 }
 
 /** 서로 차단 관계인지 (양방향). 팔로우 요청 차단에 쓴다. */
-export function isBlockedEitherWay(aId: string, bId: string): boolean {
-  return isBlocked(aId, bId) || isBlocked(bId, aId);
+export async function isBlockedEitherWay(aId: string, bId: string): Promise<boolean> {
+  return (await isBlocked(aId, bId)) || (await isBlocked(bId, aId));
 }
 
 /** 차단하면 서로의 팔로우 관계도 함께 끊는다. */
-export function blockUser(blockerId: string, blockedId: string): void {
-  const db = getDb();
-  const tx = db.transaction(() => {
-    db.prepare(
-      `INSERT OR IGNORE INTO user_blocks (blocker_id, blocked_id, created_at)
-       VALUES (?, ?, ?)`
-    ).run(blockerId, blockedId, new Date().toISOString());
-    db.prepare(
-      "DELETE FROM user_follows WHERE (follower_id = ? AND following_id = ?) OR (follower_id = ? AND following_id = ?)"
-    ).run(blockerId, blockedId, blockedId, blockerId);
+export async function blockUser(blockerId: string, blockedId: string): Promise<void> {
+  await withTx(async (tx) => {
+    await tx.run(
+      `INSERT INTO user_blocks (blocker_id, blocked_id, created_at)
+       VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
+      blockerId,
+      blockedId,
+      new Date().toISOString()
+    );
+    await tx.run(
+      "DELETE FROM user_follows WHERE (follower_id = ? AND following_id = ?) OR (follower_id = ? AND following_id = ?)",
+      blockerId,
+      blockedId,
+      blockedId,
+      blockerId
+    );
   });
-  tx();
 }
 
-export function unblockUser(blockerId: string, blockedId: string): void {
-  getDb()
-    .prepare(
-      "DELETE FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?"
-    )
-    .run(blockerId, blockedId);
+export async function unblockUser(blockerId: string, blockedId: string): Promise<void> {
+  await getDb().run(
+    "DELETE FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?",
+    blockerId,
+    blockedId
+  );
 }
 
-export function listBlockedUsers(blockerId: string): Author[] {
-  const rows = getDb()
-    .prepare(
-      `SELECT u.id, u.handle, u.name, u.bio, u.avatar, u.role
-       FROM user_blocks b JOIN users u ON u.id = b.blocked_id
-       WHERE b.blocker_id = ? ORDER BY b.created_at DESC`
-    )
-    .all(blockerId) as UserRow[];
+export async function listBlockedUsers(blockerId: string): Promise<Author[]> {
+  const rows = await getDb().all<UserRow>(
+    `SELECT u.id, u.handle, u.name, u.bio, u.avatar, u.role
+     FROM user_blocks b JOIN users u ON u.id = b.blocked_id
+     WHERE b.blocker_id = ? ORDER BY b.created_at DESC`,
+    blockerId
+  );
   return rows.map(toAuthor);
 }
 
@@ -280,25 +284,22 @@ export function isReportTargetType(v: unknown): v is ReportTargetType {
   );
 }
 
-export function createReport(input: {
+export async function createReport(input: {
   reporterId: string;
   targetType: ReportTargetType;
   targetId: string;
   reason: string;
-}): { id: number } {
-  const info = getDb()
-    .prepare(
-      `INSERT INTO reports (reporter_id, target_type, target_id, reason, created_at)
-       VALUES (?, ?, ?, ?, ?)`
-    )
-    .run(
-      input.reporterId,
-      input.targetType,
-      input.targetId,
-      input.reason,
-      new Date().toISOString()
-    );
-  return { id: Number(info.lastInsertRowid) };
+}): Promise<{ id: number }> {
+  const info = await getDb().run<{ id: number }>(
+    `INSERT INTO reports (reporter_id, target_type, target_id, reason, created_at)
+     VALUES (?, ?, ?, ?, ?) RETURNING id`,
+    input.reporterId,
+    input.targetType,
+    input.targetId,
+    input.reason,
+    new Date().toISOString()
+  );
+  return { id: info.rows[0].id };
 }
 
 // ---------------------------------------------------------------------------
@@ -337,98 +338,105 @@ const PLAYLIST_SELECT = `
   FROM playlists p
 `;
 
-export function listPlaylistsByOwner(ownerId: string): Playlist[] {
-  const rows = getDb()
-    .prepare(`${PLAYLIST_SELECT} WHERE p.owner_id = ? ORDER BY p.id DESC`)
-    .all(ownerId) as PlaylistRow[];
+export async function listPlaylistsByOwner(ownerId: string): Promise<Playlist[]> {
+  const rows = await getDb().all<PlaylistRow>(
+    `${PLAYLIST_SELECT} WHERE p.owner_id = ? ORDER BY p.id DESC`,
+    ownerId
+  );
   return rows.map(toPlaylist);
 }
 
-export function getPlaylistById(id: number): Playlist | undefined {
-  const row = getDb()
-    .prepare(`${PLAYLIST_SELECT} WHERE p.id = ?`)
-    .get(id) as PlaylistRow | undefined;
+export async function getPlaylistById(id: number): Promise<Playlist | undefined> {
+  const row = await getDb().get<PlaylistRow>(`${PLAYLIST_SELECT} WHERE p.id = ?`, id);
   return row ? toPlaylist(row) : undefined;
 }
 
-export function createPlaylist(ownerId: string, title: string): Playlist {
-  const info = getDb()
-    .prepare(
-      "INSERT INTO playlists (owner_id, title, created_at) VALUES (?, ?, ?)"
-    )
-    .run(ownerId, title, new Date().toISOString());
-  return getPlaylistById(Number(info.lastInsertRowid))!;
+export async function createPlaylist(ownerId: string, title: string): Promise<Playlist> {
+  const info = await getDb().run<{ id: number }>(
+    "INSERT INTO playlists (owner_id, title, created_at) VALUES (?, ?, ?) RETURNING id",
+    ownerId,
+    title,
+    new Date().toISOString()
+  );
+  return (await getPlaylistById(info.rows[0].id))!;
 }
 
 /** 본인 재생목록만 삭제 가능. */
-export function deletePlaylist(id: number, ownerId: string): boolean {
-  const info = getDb()
-    .prepare("DELETE FROM playlists WHERE id = ? AND owner_id = ?")
-    .run(id, ownerId);
+export async function deletePlaylist(id: number, ownerId: string): Promise<boolean> {
+  const info = await getDb().run(
+    "DELETE FROM playlists WHERE id = ? AND owner_id = ?",
+    id,
+    ownerId
+  );
   return info.changes > 0;
 }
 
-export function listPlaylistItems(playlistId: number): Short[] {
-  const rows = getDb()
-    .prepare(
-      `${SHORT_SELECT}
-       JOIN playlist_items pi ON pi.short_id = s.id
-       WHERE pi.playlist_id = ?
-       ORDER BY pi.added_at DESC`
-    )
-    .all(playlistId) as ShortJoinRow[];
+export async function listPlaylistItems(playlistId: number): Promise<Short[]> {
+  const rows = await getDb().all<ShortJoinRow>(
+    `${SHORT_SELECT}
+     JOIN playlist_items pi ON pi.short_id = s.id
+     WHERE pi.playlist_id = ?
+     ORDER BY pi.added_at DESC`,
+    playlistId
+  );
   return rows.map(toShort);
 }
 
 /** 본인 재생목록에만 추가 가능. 이미 있으면 조용히 무시(멱등). */
-export function addPlaylistItem(
+export async function addPlaylistItem(
   playlistId: number,
   ownerId: string,
   shortId: string
-): boolean {
+): Promise<boolean> {
   const db = getDb();
-  const playlist = db
-    .prepare("SELECT id FROM playlists WHERE id = ? AND owner_id = ?")
-    .get(playlistId, ownerId);
+  const playlist = await db.get(
+    "SELECT id FROM playlists WHERE id = ? AND owner_id = ?",
+    playlistId,
+    ownerId
+  );
   if (!playlist) return false;
-  const short = db.prepare("SELECT id FROM shorts WHERE id = ?").get(shortId);
+  const short = await db.get("SELECT id FROM shorts WHERE id = ?", shortId);
   if (!short) return false;
 
-  db.prepare(
-    `INSERT OR IGNORE INTO playlist_items (playlist_id, short_id, added_at)
-     VALUES (?, ?, ?)`
-  ).run(playlistId, shortId, new Date().toISOString());
+  await db.run(
+    `INSERT INTO playlist_items (playlist_id, short_id, added_at)
+     VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
+    playlistId,
+    shortId,
+    new Date().toISOString()
+  );
   return true;
 }
 
-export function removePlaylistItem(
+export async function removePlaylistItem(
   playlistId: number,
   ownerId: string,
   shortId: string
-): boolean {
+): Promise<boolean> {
   const db = getDb();
-  const playlist = db
-    .prepare("SELECT id FROM playlists WHERE id = ? AND owner_id = ?")
-    .get(playlistId, ownerId);
+  const playlist = await db.get(
+    "SELECT id FROM playlists WHERE id = ? AND owner_id = ?",
+    playlistId,
+    ownerId
+  );
   if (!playlist) return false;
-  db.prepare(
-    "DELETE FROM playlist_items WHERE playlist_id = ? AND short_id = ?"
-  ).run(playlistId, shortId);
+  await db.run(
+    "DELETE FROM playlist_items WHERE playlist_id = ? AND short_id = ?",
+    playlistId,
+    shortId
+  );
   return true;
 }
 
-export function listShorts(q?: string, viewerId?: string): Short[] {
+export async function listShorts(q?: string, viewerId?: string): Promise<Short[]> {
   const query = q?.trim().toLowerCase() ?? "";
   const blockClause = viewerId
     ? "AND s.author_id NOT IN (SELECT blocked_id FROM user_blocks WHERE blocker_id = ?)"
     : "";
+  const viewerParams = viewerId ? [viewerId] : [];
   if (!query) {
     const sql = `${SHORT_SELECT} WHERE 1=1 ${blockClause} ORDER BY s.created_at DESC, s.id DESC`;
-    const rows = (
-      viewerId
-        ? getDb().prepare(sql).all(viewerId)
-        : getDb().prepare(sql).all()
-    ) as ShortJoinRow[];
+    const rows = await getDb().all<ShortJoinRow>(sql, ...viewerParams);
     return rows.map(toShort);
   }
   const like = `%${query}%`;
@@ -436,39 +444,32 @@ export function listShorts(q?: string, viewerId?: string): Short[] {
      WHERE (lower(s.title) LIKE ? OR lower(u.handle) LIKE ? OR lower(s.description) LIKE ?)
      ${blockClause}
      ORDER BY s.created_at DESC, s.id DESC`;
-  const rows = (
-    viewerId
-      ? getDb().prepare(sql).all(like, like, like, viewerId)
-      : getDb().prepare(sql).all(like, like, like)
-  ) as ShortJoinRow[];
+  const rows = await getDb().all<ShortJoinRow>(sql, like, like, like, ...viewerParams);
   return rows.map(toShort);
 }
 
-export function getShort(id: string): Short | undefined {
-  const row = getDb()
-    .prepare(`${SHORT_SELECT} WHERE s.id = ?`)
-    .get(id) as ShortJoinRow | undefined;
+export async function getShort(id: string): Promise<Short | undefined> {
+  const row = await getDb().get<ShortJoinRow>(`${SHORT_SELECT} WHERE s.id = ?`, id);
   return row ? toShort(row) : undefined;
 }
 
-export function listShortsByAuthor(authorId: string): Short[] {
-  const rows = getDb()
-    .prepare(
-      `${SHORT_SELECT} WHERE s.author_id = ? ORDER BY s.created_at DESC, s.id DESC`
-    )
-    .all(authorId) as ShortJoinRow[];
+export async function listShortsByAuthor(authorId: string): Promise<Short[]> {
+  const rows = await getDb().all<ShortJoinRow>(
+    `${SHORT_SELECT} WHERE s.author_id = ? ORDER BY s.created_at DESC, s.id DESC`,
+    authorId
+  );
   return rows.map(toShort);
 }
 
-export function createShort(input: {
+export async function createShort(input: {
   title: string;
   description?: string;
   gradient?: string;
   videoUrl?: string;
   thumb?: string;
   authorId: string;
-}): Short {
-  const author = findAuthor(input.authorId);
+}): Promise<Short> {
+  const author = await findAuthor(input.authorId);
   if (!author) throw new Error("작성자를 찾을 수 없습니다.");
 
   const id = `s-${uuid().slice(0, 8)}`;
@@ -477,52 +478,44 @@ export function createShort(input: {
     input.gradient || "linear-gradient(160deg, #7c3aed, #3ea6ff)";
   const description = input.description ?? "";
 
-  getDb()
-    .prepare(
-      `INSERT INTO shorts
-        (id, title, description, author_id, likes, comment_count, views, video_url, thumb, gradient, created_at)
-       VALUES (?, ?, ?, ?, 0, 0, '0', ?, ?, ?, ?)`
-    )
-    .run(
-      id,
-      input.title,
-      description,
-      author.id,
-      input.videoUrl ?? null,
-      input.thumb ?? null,
-      gradient,
-      createdAt
-    );
+  await getDb().run(
+    `INSERT INTO shorts
+      (id, title, description, author_id, likes, comment_count, views, video_url, thumb, gradient, created_at)
+     VALUES (?, ?, ?, ?, 0, 0, '0', ?, ?, ?, ?)`,
+    id,
+    input.title,
+    description,
+    author.id,
+    input.videoUrl ?? null,
+    input.thumb ?? null,
+    gradient,
+    createdAt
+  );
 
-  return getShort(id)!;
+  return (await getShort(id))!;
 }
 
-export function likeShort(id: string, unlike: boolean) {
+export async function likeShort(id: string, unlike: boolean) {
   const db = getDb();
-  const row = db.prepare("SELECT likes FROM shorts WHERE id = ?").get(id) as
-    | { likes: number }
-    | undefined;
+  const row = await db.get<{ likes: number }>("SELECT likes FROM shorts WHERE id = ?", id);
   if (!row) return undefined;
   const likes = unlike ? Math.max(0, row.likes - 1) : row.likes + 1;
-  db.prepare("UPDATE shorts SET likes = ? WHERE id = ?").run(likes, id);
+  await db.run("UPDATE shorts SET likes = ? WHERE id = ?", likes, id);
   return { id, likes };
 }
 
-export function listComments(shortId: string): Comment[] {
-  const rows = getDb()
-    .prepare(
-      "SELECT id, short_id, author, text, time, parent_id, author_id FROM comments WHERE short_id = ? ORDER BY rowid"
-    )
-    .all(shortId) as Array<{
-    id: string;
-    short_id: string;
-    author: string;
-    text: string;
-    time: string;
-    parent_id: string | null;
-    author_id: string | null;
-  }>;
-  return rows.map((r) => ({
+type CommentRow = {
+  id: string;
+  short_id: string;
+  author: string;
+  text: string;
+  time: string;
+  parent_id: string | null;
+  author_id: string | null;
+};
+
+function toComment(r: CommentRow): Comment {
+  return {
     id: r.id,
     shortId: r.short_id,
     author: r.author,
@@ -530,29 +523,37 @@ export function listComments(shortId: string): Comment[] {
     time: r.time,
     ...(r.parent_id ? { parentId: r.parent_id } : {}),
     ...(r.author_id ? { authorId: r.author_id } : {}),
-  }));
+  };
 }
 
-export function addComment(input: {
+export async function listComments(shortId: string): Promise<Comment[]> {
+  const rows = await getDb().all<CommentRow>(
+    "SELECT id, short_id, author, text, time, parent_id, author_id FROM comments WHERE short_id = ? ORDER BY seq",
+    shortId
+  );
+  return rows.map(toComment);
+}
+
+export async function addComment(input: {
   shortId: string;
   text: string;
   author: string;
   authorId?: string;
   parentId?: string;
-}): Comment | undefined {
+}): Promise<Comment | undefined> {
   const db = getDb();
-  const short = db
-    .prepare("SELECT id FROM shorts WHERE id = ?")
-    .get(input.shortId) as { id: string } | undefined;
+  const short = await db.get<{ id: string }>(
+    "SELECT id FROM shorts WHERE id = ?",
+    input.shortId
+  );
   if (!short) return undefined;
 
   let parentId: string | undefined;
   if (input.parentId) {
-    const parent = db
-      .prepare("SELECT id, short_id, parent_id FROM comments WHERE id = ?")
-      .get(input.parentId) as
-      | { id: string; short_id: string; parent_id: string | null }
-      | undefined;
+    const parent = await db.get<{ id: string; short_id: string; parent_id: string | null }>(
+      "SELECT id, short_id, parent_id FROM comments WHERE id = ?",
+      input.parentId
+    );
     if (!parent || parent.short_id !== input.shortId) return undefined;
     // 1단계까지만 허용. 대대댓글은 최상위 부모에 붙인다.
     parentId = parent.parent_id ?? parent.id;
@@ -568,10 +569,9 @@ export function addComment(input: {
     ...(input.authorId ? { authorId: input.authorId } : {}),
   };
 
-  const tx = db.transaction(() => {
-    db.prepare(
-      "INSERT INTO comments (id, short_id, author, text, time, parent_id, author_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).run(
+  await withTx(async (tx) => {
+    await tx.run(
+      "INSERT INTO comments (id, short_id, author, text, time, parent_id, author_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
       comment.id,
       comment.shortId,
       comment.author,
@@ -580,49 +580,34 @@ export function addComment(input: {
       parentId ?? null,
       input.authorId ?? null
     );
-    db.prepare(
-      "UPDATE shorts SET comment_count = comment_count + 1 WHERE id = ?"
-    ).run(input.shortId);
+    await tx.run(
+      "UPDATE shorts SET comment_count = comment_count + 1 WHERE id = ?",
+      input.shortId
+    );
   });
-  tx();
   return comment;
 }
 
 /** 본인 댓글만 수정할 수 있다. 있는지/소유인지를 구분하지 않고 undefined 로 통일. */
-export function updateComment(
+export async function updateComment(
   id: string,
   userId: string,
   text: string
-): Comment | undefined {
+): Promise<Comment | undefined> {
   const db = getDb();
-  const row = db
-    .prepare("SELECT author_id FROM comments WHERE id = ?")
-    .get(id) as { author_id: string | null } | undefined;
+  const row = await db.get<{ author_id: string | null }>(
+    "SELECT author_id FROM comments WHERE id = ?",
+    id
+  );
   if (!row || row.author_id !== userId) return undefined;
 
-  db.prepare("UPDATE comments SET text = ? WHERE id = ?").run(text, id);
-  const updated = db
-    .prepare(
-      "SELECT id, short_id, author, text, time, parent_id, author_id FROM comments WHERE id = ?"
-    )
-    .get(id) as {
-    id: string;
-    short_id: string;
-    author: string;
-    text: string;
-    time: string;
-    parent_id: string | null;
-    author_id: string | null;
-  };
-  return {
-    id: updated.id,
-    shortId: updated.short_id,
-    author: updated.author,
-    text: updated.text,
-    time: updated.time,
-    ...(updated.parent_id ? { parentId: updated.parent_id } : {}),
-    ...(updated.author_id ? { authorId: updated.author_id } : {}),
-  };
+  const updated = await db.run<CommentRow>(
+    `UPDATE comments SET text = ? WHERE id = ?
+     RETURNING id, short_id, author, text, time, parent_id, author_id`,
+    text,
+    id
+  );
+  return toComment(updated.rows[0]);
 }
 
 /**
@@ -630,35 +615,37 @@ export function updateComment(
  * comment_count 를 줄인다. 소유권 검사는 호출자가 한다
  * (`deleteComment` = 본인 확인, `adminDeleteComment` = 관리자 권한).
  */
-function deleteCommentRow(id: string, shortId: string) {
-  const db = getDb();
-  const tx = db.transaction(() => {
-    const replies = db
-      .prepare("SELECT COUNT(*) AS c FROM comments WHERE parent_id = ?")
-      .get(id) as { c: number };
-    db.prepare("DELETE FROM comments WHERE parent_id = ?").run(id);
-    db.prepare("DELETE FROM comments WHERE id = ?").run(id);
-    db.prepare(
-      "UPDATE shorts SET comment_count = MAX(0, comment_count - ?) WHERE id = ?"
-    ).run(1 + replies.c, shortId);
+async function deleteCommentRow(id: string, shortId: string) {
+  await withTx(async (tx) => {
+    const replies = await tx.get<{ c: number }>(
+      "SELECT COUNT(*) AS c FROM comments WHERE parent_id = ?",
+      id
+    );
+    await tx.run("DELETE FROM comments WHERE parent_id = ?", id);
+    await tx.run("DELETE FROM comments WHERE id = ?", id);
+    await tx.run(
+      "UPDATE shorts SET comment_count = GREATEST(0, comment_count - ?) WHERE id = ?",
+      1 + (replies?.c ?? 0),
+      shortId
+    );
   });
-  tx();
 }
 
 /** 본인 댓글만 삭제. */
-export function deleteComment(id: string, userId: string): boolean {
-  const row = getDb()
-    .prepare("SELECT short_id, author_id FROM comments WHERE id = ?")
-    .get(id) as { short_id: string; author_id: string | null } | undefined;
+export async function deleteComment(id: string, userId: string): Promise<boolean> {
+  const row = await getDb().get<{ short_id: string; author_id: string | null }>(
+    "SELECT short_id, author_id FROM comments WHERE id = ?",
+    id
+  );
   if (!row || row.author_id !== userId) return false;
-  deleteCommentRow(id, row.short_id);
+  await deleteCommentRow(id, row.short_id);
   return true;
 }
 
-export function listFaqs(): FaqItem[] {
-  const rows = getDb()
-    .prepare("SELECT id, question, answers FROM faqs ORDER BY rowid")
-    .all() as Array<{ id: string; question: string; answers: string }>;
+export async function listFaqs(): Promise<FaqItem[]> {
+  const rows = await getDb().all<{ id: string; question: string; answers: string }>(
+    "SELECT id, question, answers FROM faqs ORDER BY seq"
+  );
   return rows.map((r) => ({
     id: r.id,
     question: r.question,
@@ -666,19 +653,15 @@ export function listFaqs(): FaqItem[] {
   }));
 }
 
-export function listChatUsers(): ChatUser[] {
-  const rows = getDb()
-    .prepare(
-      "SELECT id, name, handle, avatar, last_message, online FROM chat_users ORDER BY rowid"
-    )
-    .all() as Array<{
+export async function listChatUsers(): Promise<ChatUser[]> {
+  const rows = await getDb().all<{
     id: string;
     name: string;
     handle: string;
     avatar: string | null;
     last_message: string;
     online: number;
-  }>;
+  }>("SELECT id, name, handle, avatar, last_message, online FROM chat_users ORDER BY seq");
   return rows.map((r) => ({
     id: r.id,
     name: r.name,
@@ -689,23 +672,22 @@ export function listChatUsers(): ChatUser[] {
   }));
 }
 
-export function getChatUser(userId: string): ChatUser | undefined {
-  return listChatUsers().find((u) => u.id === userId);
+export async function getChatUser(userId: string): Promise<ChatUser | undefined> {
+  return (await listChatUsers()).find((u) => u.id === userId);
 }
 
-export function listMessages(peerId: string): Message[] {
-  const rows = getDb()
-    .prepare(
-      "SELECT id, peer_id, type, content, is_image, time FROM messages WHERE peer_id = ? ORDER BY rowid"
-    )
-    .all(peerId) as Array<{
+export async function listMessages(peerId: string): Promise<Message[]> {
+  const rows = await getDb().all<{
     id: string;
     peer_id: string;
     type: "me" | "other";
     content: string;
     is_image: number;
     time: string;
-  }>;
+  }>(
+    "SELECT id, peer_id, type, content, is_image, time FROM messages WHERE peer_id = ? ORDER BY seq",
+    peerId
+  );
   return rows.map((r) => ({
     id: r.id,
     userId: r.peer_id,
@@ -716,16 +698,16 @@ export function listMessages(peerId: string): Message[] {
   }));
 }
 
-export function sendMessage(input: {
+export async function sendMessage(input: {
   peerId: string;
   content: string;
   isImage: boolean;
   time: string;
-}): Message | undefined {
-  const db = getDb();
-  const user = db
-    .prepare("SELECT id FROM chat_users WHERE id = ?")
-    .get(input.peerId) as { id: string } | undefined;
+}): Promise<Message | undefined> {
+  const user = await getDb().get<{ id: string }>(
+    "SELECT id FROM chat_users WHERE id = ?",
+    input.peerId
+  );
   if (!user) return undefined;
 
   const msg: Message = {
@@ -737,10 +719,9 @@ export function sendMessage(input: {
     time: input.time,
   };
 
-  const tx = db.transaction(() => {
-    db.prepare(
-      "INSERT INTO messages (id, peer_id, type, content, is_image, time) VALUES (?, ?, ?, ?, ?, ?)"
-    ).run(
+  await withTx(async (tx) => {
+    await tx.run(
+      "INSERT INTO messages (id, peer_id, type, content, is_image, time) VALUES (?, ?, ?, ?, ?, ?)",
       msg.id,
       input.peerId,
       msg.type,
@@ -748,12 +729,12 @@ export function sendMessage(input: {
       input.isImage ? 1 : 0,
       msg.time
     );
-    db.prepare("UPDATE chat_users SET last_message = ? WHERE id = ?").run(
+    await tx.run(
+      "UPDATE chat_users SET last_message = ? WHERE id = ?",
       input.isImage ? "(이미지)" : input.content,
       input.peerId
     );
   });
-  tx();
   return msg;
 }
 
@@ -793,56 +774,51 @@ function toLongform(row: LongformRow): LongformVideo {
   };
 }
 
-export function listLongform(): LongformVideo[] {
-  const rows = getDb()
-    .prepare(`${LONGFORM_SELECT} ORDER BY l.id DESC`)
-    .all() as LongformRow[];
+export async function listLongform(): Promise<LongformVideo[]> {
+  const rows = await getDb().all<LongformRow>(`${LONGFORM_SELECT} ORDER BY l.id DESC`);
   return rows.map(toLongform);
 }
 
-export function getLongformById(id: number): LongformVideo | undefined {
-  const row = getDb()
-    .prepare(`${LONGFORM_SELECT} WHERE l.id = ?`)
-    .get(id) as LongformRow | undefined;
+export async function getLongformById(id: number): Promise<LongformVideo | undefined> {
+  const row = await getDb().get<LongformRow>(`${LONGFORM_SELECT} WHERE l.id = ?`, id);
   return row ? toLongform(row) : undefined;
 }
 
-export function searchLongform(q: string, limit = 20): LongformVideo[] {
+export async function searchLongform(q: string, limit = 20): Promise<LongformVideo[]> {
   const like = `%${q.trim().toLowerCase()}%`;
-  const rows = getDb()
-    .prepare(
-      `${LONGFORM_SELECT}
-       WHERE lower(l.title) LIKE ? OR lower(l.description) LIKE ? OR lower(u.name) LIKE ?
-       ORDER BY l.id DESC LIMIT ?`
-    )
-    .all(like, like, like, limit) as LongformRow[];
+  const rows = await getDb().all<LongformRow>(
+    `${LONGFORM_SELECT}
+     WHERE lower(l.title) LIKE ? OR lower(l.description) LIKE ? OR lower(u.name) LIKE ?
+     ORDER BY l.id DESC LIMIT ?`,
+    like,
+    like,
+    like,
+    limit
+  );
   return rows.map(toLongform);
 }
 
-export function createLongform(input: {
+export async function createLongform(input: {
   title: string;
   description?: string;
   videoUrl?: string;
   thumb?: string;
   gradient?: string;
   authorId: string;
-}): LongformVideo {
+}): Promise<LongformVideo> {
   const createdAt = new Date().toISOString();
-  const info = getDb()
-    .prepare(
-      `INSERT INTO longform (title, description, video_url, thumb, gradient, author_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(
-      input.title,
-      input.description ?? "",
-      input.videoUrl ?? "",
-      input.thumb ?? null,
-      input.gradient || "linear-gradient(160deg, #7c3aed, #3ea6ff)",
-      input.authorId,
-      createdAt
-    );
-  return getLongformById(Number(info.lastInsertRowid))!;
+  const info = await getDb().run<{ id: number }>(
+    `INSERT INTO longform (title, description, video_url, thumb, gradient, author_id, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+    input.title,
+    input.description ?? "",
+    input.videoUrl ?? "",
+    input.thumb ?? null,
+    input.gradient || "linear-gradient(160deg, #7c3aed, #3ea6ff)",
+    input.authorId,
+    createdAt
+  );
+  return (await getLongformById(info.rows[0].id))!;
 }
 
 // ---------------------------------------------------------------------------
@@ -874,44 +850,45 @@ function toCommunity(row: CommunityRow): CommunityPost {
   };
 }
 
-export function listCommunity(): CommunityPost[] {
-  const rows = getDb()
-    .prepare(`${COMMUNITY_SELECT} ORDER BY c.id DESC`)
-    .all() as CommunityRow[];
+export async function listCommunity(): Promise<CommunityPost[]> {
+  const rows = await getDb().all<CommunityRow>(`${COMMUNITY_SELECT} ORDER BY c.id DESC`);
   return rows.map(toCommunity);
 }
 
-export function getCommunityById(id: number): CommunityPost | undefined {
-  const row = getDb()
-    .prepare(`${COMMUNITY_SELECT} WHERE c.id = ?`)
-    .get(id) as CommunityRow | undefined;
+export async function getCommunityById(id: number): Promise<CommunityPost | undefined> {
+  const row = await getDb().get<CommunityRow>(`${COMMUNITY_SELECT} WHERE c.id = ?`, id);
   return row ? toCommunity(row) : undefined;
 }
 
-export function searchCommunity(q: string, limit = 20): CommunityPost[] {
+export async function searchCommunity(q: string, limit = 20): Promise<CommunityPost[]> {
   const like = `%${q.trim().toLowerCase()}%`;
-  const rows = getDb()
-    .prepare(
-      `${COMMUNITY_SELECT}
-       WHERE lower(c.title) LIKE ? OR lower(c.body) LIKE ? OR lower(u.name) LIKE ?
-       ORDER BY c.id DESC LIMIT ?`
-    )
-    .all(like, like, like, limit) as CommunityRow[];
+  const rows = await getDb().all<CommunityRow>(
+    `${COMMUNITY_SELECT}
+     WHERE lower(c.title) LIKE ? OR lower(c.body) LIKE ? OR lower(u.name) LIKE ?
+     ORDER BY c.id DESC LIMIT ?`,
+    like,
+    like,
+    like,
+    limit
+  );
   return rows.map(toCommunity);
 }
 
-export function createCommunity(input: {
+export async function createCommunity(input: {
   title: string;
   body: string;
   authorId: string;
-}): CommunityPost {
+}): Promise<CommunityPost> {
   const createdAt = new Date().toISOString();
-  const info = getDb()
-    .prepare(
-      `INSERT INTO community_posts (title, body, author_id, created_at) VALUES (?, ?, ?, ?)`
-    )
-    .run(input.title, input.body, input.authorId, createdAt);
-  return getCommunityById(Number(info.lastInsertRowid))!;
+  const info = await getDb().run<{ id: number }>(
+    `INSERT INTO community_posts (title, body, author_id, created_at)
+     VALUES (?, ?, ?, ?) RETURNING id`,
+    input.title,
+    input.body,
+    input.authorId,
+    createdAt
+  );
+  return (await getCommunityById(info.rows[0].id))!;
 }
 
 // ---------------------------------------------------------------------------
@@ -937,82 +914,88 @@ function toChatbotThread(row: ChatbotThreadRow): ChatbotThread {
   };
 }
 
-export function listChatbotThreads(ownerId: string): ChatbotThread[] {
-  const rows = getDb()
-    .prepare(
-      `SELECT id, owner_id, title, model, created_at, updated_at
-       FROM chatbot_threads WHERE owner_id = ? ORDER BY updated_at DESC, id DESC`
-    )
-    .all(ownerId) as ChatbotThreadRow[];
+export async function listChatbotThreads(ownerId: string): Promise<ChatbotThread[]> {
+  const rows = await getDb().all<ChatbotThreadRow>(
+    `SELECT id, owner_id, title, model, created_at, updated_at
+     FROM chatbot_threads WHERE owner_id = ? ORDER BY updated_at DESC, id DESC`,
+    ownerId
+  );
   return rows.map(toChatbotThread);
 }
 
-export function getChatbotThread(
+export async function getChatbotThread(
   id: number,
   ownerId: string
-): ChatbotThread | undefined {
-  const row = getDb()
-    .prepare(
-      `SELECT id, owner_id, title, model, created_at, updated_at
-       FROM chatbot_threads WHERE id = ? AND owner_id = ?`
-    )
-    .get(id, ownerId) as ChatbotThreadRow | undefined;
+): Promise<ChatbotThread | undefined> {
+  const row = await getDb().get<ChatbotThreadRow>(
+    `SELECT id, owner_id, title, model, created_at, updated_at
+     FROM chatbot_threads WHERE id = ? AND owner_id = ?`,
+    id,
+    ownerId
+  );
   return row ? toChatbotThread(row) : undefined;
 }
 
-export function createChatbotThread(
+export async function createChatbotThread(
   ownerId: string,
   input: { title?: string; model?: ChatbotThreadModel }
-): ChatbotThread {
+): Promise<ChatbotThread> {
   const now = new Date().toISOString();
   const model = input.model ?? "locals";
   const db = getDb();
-  const info = db
-    .prepare(
-      `INSERT INTO chatbot_threads (owner_id, title, model, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?)`
-    )
-    .run(ownerId, "", model, now, now);
-  const id = Number(info.lastInsertRowid);
+  const info = await db.run<{ id: number }>(
+    `INSERT INTO chatbot_threads (owner_id, title, model, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?) RETURNING id`,
+    ownerId,
+    "",
+    model,
+    now,
+    now
+  );
+  const id = info.rows[0].id;
   const title = input.title?.trim() || `챗봇 대화 #${String(id).padStart(3, "0")}`;
-  db.prepare("UPDATE chatbot_threads SET title = ? WHERE id = ?").run(title, id);
-  return getChatbotThread(id, ownerId)!;
+  await db.run("UPDATE chatbot_threads SET title = ? WHERE id = ?", title, id);
+  return (await getChatbotThread(id, ownerId))!;
 }
 
-export function renameChatbotThread(
+export async function renameChatbotThread(
   id: number,
   ownerId: string,
   title: string
-): ChatbotThread | undefined {
-  const db = getDb();
-  const info = db
-    .prepare(
-      "UPDATE chatbot_threads SET title = ?, updated_at = ? WHERE id = ? AND owner_id = ?"
-    )
-    .run(title, new Date().toISOString(), id, ownerId);
+): Promise<ChatbotThread | undefined> {
+  const info = await getDb().run(
+    "UPDATE chatbot_threads SET title = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
+    title,
+    new Date().toISOString(),
+    id,
+    ownerId
+  );
   if (info.changes === 0) return undefined;
   return getChatbotThread(id, ownerId);
 }
 
-export function setChatbotThreadModel(
+export async function setChatbotThreadModel(
   id: number,
   ownerId: string,
   model: ChatbotThreadModel
-): ChatbotThread | undefined {
-  const db = getDb();
-  const info = db
-    .prepare(
-      "UPDATE chatbot_threads SET model = ?, updated_at = ? WHERE id = ? AND owner_id = ?"
-    )
-    .run(model, new Date().toISOString(), id, ownerId);
+): Promise<ChatbotThread | undefined> {
+  const info = await getDb().run(
+    "UPDATE chatbot_threads SET model = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
+    model,
+    new Date().toISOString(),
+    id,
+    ownerId
+  );
   if (info.changes === 0) return undefined;
   return getChatbotThread(id, ownerId);
 }
 
-export function deleteChatbotThread(id: number, ownerId: string): boolean {
-  const info = getDb()
-    .prepare("DELETE FROM chatbot_threads WHERE id = ? AND owner_id = ?")
-    .run(id, ownerId);
+export async function deleteChatbotThread(id: number, ownerId: string): Promise<boolean> {
+  const info = await getDb().run(
+    "DELETE FROM chatbot_threads WHERE id = ? AND owner_id = ?",
+    id,
+    ownerId
+  );
   return info.changes > 0;
 }
 
@@ -1038,17 +1021,16 @@ function toChatbotMessage(row: ChatbotMessageRow): ChatbotThreadMessage {
   };
 }
 
-export function listChatbotMessages(threadId: number): ChatbotThreadMessage[] {
-  const rows = getDb()
-    .prepare(
-      `SELECT id, thread_id, role, content, attachments, created_at
-       FROM chatbot_messages WHERE thread_id = ? ORDER BY id`
-    )
-    .all(threadId) as ChatbotMessageRow[];
+export async function listChatbotMessages(threadId: number): Promise<ChatbotThreadMessage[]> {
+  const rows = await getDb().all<ChatbotMessageRow>(
+    `SELECT id, thread_id, role, content, attachments, created_at
+     FROM chatbot_messages WHERE thread_id = ? ORDER BY id`,
+    threadId
+  );
   return rows.map(toChatbotMessage);
 }
 
-export function addChatbotThreadMessage(
+export async function addChatbotThreadMessage(
   threadId: number,
   ownerId: string,
   input: {
@@ -1056,40 +1038,35 @@ export function addChatbotThreadMessage(
     content: string;
     attachments?: ChatbotAttachment[];
   }
-): ChatbotThreadMessage | undefined {
+): Promise<ChatbotThreadMessage | undefined> {
   const db = getDb();
-  const thread = getChatbotThread(threadId, ownerId);
+  const thread = await getChatbotThread(threadId, ownerId);
   if (!thread) return undefined;
 
   const createdAt = new Date().toISOString();
-  const info = db
-    .prepare(
-      `INSERT INTO chatbot_messages (thread_id, role, content, attachments, created_at)
-       VALUES (?, ?, ?, ?, ?)`
-    )
-    .run(
-      threadId,
-      input.role,
-      input.content,
-      input.attachments?.length ? JSON.stringify(input.attachments) : null,
-      createdAt
-    );
+  const info = await db.run<ChatbotMessageRow>(
+    `INSERT INTO chatbot_messages (thread_id, role, content, attachments, created_at)
+     VALUES (?, ?, ?, ?, ?)
+     RETURNING id, thread_id, role, content, attachments, created_at`,
+    threadId,
+    input.role,
+    input.content,
+    input.attachments?.length ? JSON.stringify(input.attachments) : null,
+    createdAt
+  );
 
   const autoTitle =
     input.role === "user" && thread.title.startsWith("챗봇 대화")
       ? input.content.trim().slice(0, 28) || thread.title
       : thread.title;
-  db.prepare(
-    "UPDATE chatbot_threads SET title = ?, updated_at = ? WHERE id = ?"
-  ).run(autoTitle, createdAt, threadId);
+  await db.run(
+    "UPDATE chatbot_threads SET title = ?, updated_at = ? WHERE id = ?",
+    autoTitle,
+    createdAt,
+    threadId
+  );
 
-  const row = db
-    .prepare(
-      `SELECT id, thread_id, role, content, attachments, created_at
-       FROM chatbot_messages WHERE id = ?`
-    )
-    .get(Number(info.lastInsertRowid)) as ChatbotMessageRow;
-  return toChatbotMessage(row);
+  return toChatbotMessage(info.rows[0]);
 }
 
 // ---------------------------------------------------------------------------
@@ -1115,43 +1092,44 @@ function toConversation(row: ConversationRow): Conversation {
   };
 }
 
-export function listConversations(ownerId: string): Conversation[] {
-  const rows = getDb()
-    .prepare(
-      `SELECT id, owner_id, target_name, target_handle, last_message, created_at
-       FROM conversations WHERE owner_id = ? ORDER BY id DESC`
-    )
-    .all(ownerId) as ConversationRow[];
+export async function listConversations(ownerId: string): Promise<Conversation[]> {
+  const rows = await getDb().all<ConversationRow>(
+    `SELECT id, owner_id, target_name, target_handle, last_message, created_at
+     FROM conversations WHERE owner_id = ? ORDER BY id DESC`,
+    ownerId
+  );
   return rows.map(toConversation);
 }
 
-export function getConversationById(
+export async function getConversationById(
   id: number,
   ownerId: string
-): Conversation | undefined {
-  const row = getDb()
-    .prepare(
-      `SELECT id, owner_id, target_name, target_handle, last_message, created_at
-       FROM conversations WHERE id = ? AND owner_id = ?`
-    )
-    .get(id, ownerId) as ConversationRow | undefined;
+): Promise<Conversation | undefined> {
+  const row = await getDb().get<ConversationRow>(
+    `SELECT id, owner_id, target_name, target_handle, last_message, created_at
+     FROM conversations WHERE id = ? AND owner_id = ?`,
+    id,
+    ownerId
+  );
   return row ? toConversation(row) : undefined;
 }
 
-export function createConversation(
+export async function createConversation(
   ownerId: string,
   input: { targetName: string; targetHandle?: string }
-): Conversation {
+): Promise<Conversation> {
   const name = input.targetName.trim();
   const handle = (input.targetHandle ?? name).replace(/^@/, "").trim() || name;
   const createdAt = new Date().toISOString();
-  const info = getDb()
-    .prepare(
-      `INSERT INTO conversations (owner_id, target_name, target_handle, last_message, created_at)
-       VALUES (?, ?, ?, '', ?)`
-    )
-    .run(ownerId, name, handle, createdAt);
-  return getConversationById(Number(info.lastInsertRowid), ownerId)!;
+  const info = await getDb().run<{ id: number }>(
+    `INSERT INTO conversations (owner_id, target_name, target_handle, last_message, created_at)
+     VALUES (?, ?, ?, '', ?) RETURNING id`,
+    ownerId,
+    name,
+    handle,
+    createdAt
+  );
+  return (await getConversationById(info.rows[0].id, ownerId))!;
 }
 
 type ChatLineRow = {
@@ -1174,46 +1152,44 @@ function toChatLine(row: ChatLineRow): ChatLine {
   };
 }
 
-export function listChatLines(conversationId: number): ChatLine[] {
-  const rows = getDb()
-    .prepare(
-      `SELECT id, conversation_id, type, content, is_image, created_at
-       FROM chat_lines WHERE conversation_id = ? ORDER BY id`
-    )
-    .all(conversationId) as ChatLineRow[];
+export async function listChatLines(conversationId: number): Promise<ChatLine[]> {
+  const rows = await getDb().all<ChatLineRow>(
+    `SELECT id, conversation_id, type, content, is_image, created_at
+     FROM chat_lines WHERE conversation_id = ? ORDER BY id`,
+    conversationId
+  );
   return rows.map(toChatLine);
 }
 
-export function addChatLine(
+export async function addChatLine(
   conversationId: number,
   ownerId: string,
   input: { type: "me" | "other"; content: string; isImage?: boolean }
-): ChatLine | undefined {
+): Promise<ChatLine | undefined> {
   const db = getDb();
-  const conv = getConversationById(conversationId, ownerId);
+  const conv = await getConversationById(conversationId, ownerId);
   if (!conv) return undefined;
 
   const createdAt = new Date().toISOString();
-  const info = db
-    .prepare(
-      `INSERT INTO chat_lines (conversation_id, type, content, is_image, created_at)
-       VALUES (?, ?, ?, ?, ?)`
-    )
-    .run(conversationId, input.type, input.content, input.isImage ? 1 : 0, createdAt);
+  const info = await db.run<ChatLineRow>(
+    `INSERT INTO chat_lines (conversation_id, type, content, is_image, created_at)
+     VALUES (?, ?, ?, ?, ?)
+     RETURNING id, conversation_id, type, content, is_image, created_at`,
+    conversationId,
+    input.type,
+    input.content,
+    input.isImage ? 1 : 0,
+    createdAt
+  );
 
   const preview = input.isImage ? "(이미지)" : input.content.slice(0, 40);
-  db.prepare("UPDATE conversations SET last_message = ? WHERE id = ?").run(
+  await db.run(
+    "UPDATE conversations SET last_message = ? WHERE id = ?",
     preview,
     conversationId
   );
 
-  const row = db
-    .prepare(
-      `SELECT id, conversation_id, type, content, is_image, created_at
-       FROM chat_lines WHERE id = ?`
-    )
-    .get(Number(info.lastInsertRowid)) as ChatLineRow;
-  const line = toChatLine(row);
+  const line = toChatLine(info.rows[0]);
   publishChatLine(ownerId, line);
   return line;
 }
@@ -1254,35 +1230,40 @@ function toInquiry(row: InquiryRow): SupportInquiry {
   };
 }
 
-export function listInquiries(ownerId: string): SupportInquiry[] {
-  const rows = getDb()
-    .prepare(`${INQUIRY_SELECT} WHERE i.owner_id = ? ORDER BY i.id DESC`)
-    .all(ownerId) as InquiryRow[];
+export async function listInquiries(ownerId: string): Promise<SupportInquiry[]> {
+  const rows = await getDb().all<InquiryRow>(
+    `${INQUIRY_SELECT} WHERE i.owner_id = ? ORDER BY i.id DESC`,
+    ownerId
+  );
   return rows.map(toInquiry);
 }
 
-export function getInquiryById(
+export async function getInquiryById(
   id: number,
   ownerId: string
-): SupportInquiry | undefined {
-  const row = getDb()
-    .prepare(`${INQUIRY_SELECT} WHERE i.id = ? AND i.owner_id = ?`)
-    .get(id, ownerId) as InquiryRow | undefined;
+): Promise<SupportInquiry | undefined> {
+  const row = await getDb().get<InquiryRow>(
+    `${INQUIRY_SELECT} WHERE i.id = ? AND i.owner_id = ?`,
+    id,
+    ownerId
+  );
   return row ? toInquiry(row) : undefined;
 }
 
-export function createInquiry(
+export async function createInquiry(
   ownerId: string,
   input: { subject: string; body: string }
-): SupportInquiry {
+): Promise<SupportInquiry> {
   const createdAt = new Date().toISOString();
-  const info = getDb()
-    .prepare(
-      `INSERT INTO support_inquiries (owner_id, subject, body, created_at)
-       VALUES (?, ?, ?, ?)`
-    )
-    .run(ownerId, input.subject, input.body, createdAt);
-  return getInquiryById(Number(info.lastInsertRowid), ownerId)!;
+  const info = await getDb().run<{ id: number }>(
+    `INSERT INTO support_inquiries (owner_id, subject, body, created_at)
+     VALUES (?, ?, ?, ?) RETURNING id`,
+    ownerId,
+    input.subject,
+    input.body,
+    createdAt
+  );
+  return (await getInquiryById(info.rows[0].id, ownerId))!;
 }
 
 // ---------------------------------------------------------------------------
@@ -1299,6 +1280,8 @@ type ActivityNotificationRow = {
   created_at: string;
 };
 
+const NOTIFICATION_COLUMNS = "id, owner_id, category, message, href, read, created_at";
+
 function toActivityNotification(
   row: ActivityNotificationRow
 ): AppNotification {
@@ -1312,120 +1295,127 @@ function toActivityNotification(
   };
 }
 
-export function listActivityNotifications(
+export async function listActivityNotifications(
   ownerId: string,
   category?: string
-): AppNotification[] {
-  const rows = (
+): Promise<AppNotification[]> {
+  const rows =
     category && category !== "all"
-      ? getDb()
-          .prepare(
-            `SELECT id, owner_id, category, message, href, read, created_at
-             FROM activity_notifications WHERE owner_id = ? AND category = ?
-             ORDER BY id DESC`
-          )
-          .all(ownerId, category)
-      : getDb()
-          .prepare(
-            `SELECT id, owner_id, category, message, href, read, created_at
-             FROM activity_notifications WHERE owner_id = ? ORDER BY id DESC`
-          )
-          .all(ownerId)
-  ) as ActivityNotificationRow[];
+      ? await getDb().all<ActivityNotificationRow>(
+          `SELECT ${NOTIFICATION_COLUMNS}
+           FROM activity_notifications WHERE owner_id = ? AND category = ?
+           ORDER BY id DESC`,
+          ownerId,
+          category
+        )
+      : await getDb().all<ActivityNotificationRow>(
+          `SELECT ${NOTIFICATION_COLUMNS}
+           FROM activity_notifications WHERE owner_id = ? ORDER BY id DESC`,
+          ownerId
+        );
   return rows.map(toActivityNotification);
 }
 
-export function getActivityNotification(
+export async function getActivityNotification(
   id: number,
   ownerId: string
-): AppNotification | undefined {
-  const row = getDb()
-    .prepare(
-      `SELECT id, owner_id, category, message, href, read, created_at
-       FROM activity_notifications WHERE id = ? AND owner_id = ?`
-    )
-    .get(id, ownerId) as ActivityNotificationRow | undefined;
+): Promise<AppNotification | undefined> {
+  const row = await getDb().get<ActivityNotificationRow>(
+    `SELECT ${NOTIFICATION_COLUMNS}
+     FROM activity_notifications WHERE id = ? AND owner_id = ?`,
+    id,
+    ownerId
+  );
   return row ? toActivityNotification(row) : undefined;
 }
 
 /** 사용자가 알림을 받는지 여부. 행이 없으면 기본값 true. */
-export function getNotificationsEnabled(userId: string): boolean {
-  const row = getDb()
-    .prepare("SELECT notifications_enabled FROM users WHERE id = ?")
-    .get(userId) as { notifications_enabled: number } | undefined;
+export async function getNotificationsEnabled(userId: string): Promise<boolean> {
+  const row = await getDb().get<{ notifications_enabled: number }>(
+    "SELECT notifications_enabled FROM users WHERE id = ?",
+    userId
+  );
   return row ? Boolean(row.notifications_enabled) : true;
 }
 
-export function setNotificationsEnabled(
+export async function setNotificationsEnabled(
   userId: string,
   enabled: boolean
-): boolean {
-  getDb()
-    .prepare("UPDATE users SET notifications_enabled = ? WHERE id = ?")
-    .run(enabled ? 1 : 0, userId);
+): Promise<boolean> {
+  await getDb().run(
+    "UPDATE users SET notifications_enabled = ? WHERE id = ?",
+    enabled ? 1 : 0,
+    userId
+  );
   return enabled;
 }
 
 /** 수신을 꺼 둔 사용자는 저장하지 않고 undefined 를 돌려준다. */
-export function createActivityNotification(
+export async function createActivityNotification(
   ownerId: string,
   input: { category: NotificationCategory; message: string; href?: string }
-): AppNotification | undefined {
-  if (!getNotificationsEnabled(ownerId)) return undefined;
+): Promise<AppNotification | undefined> {
+  if (!(await getNotificationsEnabled(ownerId))) return undefined;
   const createdAt = new Date().toISOString();
-  const info = getDb()
-    .prepare(
-      `INSERT INTO activity_notifications (owner_id, category, message, href, read, created_at)
-       VALUES (?, ?, ?, ?, 0, ?)`
-    )
-    .run(ownerId, input.category, input.message, input.href ?? null, createdAt);
-  const notification = getActivityNotification(Number(info.lastInsertRowid), ownerId)!;
+  const info = await getDb().run<ActivityNotificationRow>(
+    `INSERT INTO activity_notifications (owner_id, category, message, href, read, created_at)
+     VALUES (?, ?, ?, ?, 0, ?)
+     RETURNING ${NOTIFICATION_COLUMNS}`,
+    ownerId,
+    input.category,
+    input.message,
+    input.href ?? null,
+    createdAt
+  );
+  const notification = toActivityNotification(info.rows[0]);
   publishNotification(ownerId, notification);
   return notification;
 }
 
-export function patchActivityNotification(
+export async function patchActivityNotification(
   id: number,
   ownerId: string,
   read?: boolean
-): AppNotification | undefined {
-  const db = getDb();
+): Promise<AppNotification | undefined> {
   if (typeof read === "boolean") {
-    const info = db
-      .prepare(
-        "UPDATE activity_notifications SET read = ? WHERE id = ? AND owner_id = ?"
-      )
-      .run(read ? 1 : 0, id, ownerId);
+    const info = await getDb().run(
+      "UPDATE activity_notifications SET read = ? WHERE id = ? AND owner_id = ?",
+      read ? 1 : 0,
+      id,
+      ownerId
+    );
     if (info.changes === 0) return undefined;
   }
   return getActivityNotification(id, ownerId);
 }
 
-export function deleteActivityNotification(
+export async function deleteActivityNotification(
   id: number,
   ownerId: string
-): AppNotification | undefined {
-  const existing = getActivityNotification(id, ownerId);
+): Promise<AppNotification | undefined> {
+  const existing = await getActivityNotification(id, ownerId);
   if (!existing) return undefined;
-  getDb()
-    .prepare("DELETE FROM activity_notifications WHERE id = ? AND owner_id = ?")
-    .run(id, ownerId);
+  await getDb().run(
+    "DELETE FROM activity_notifications WHERE id = ? AND owner_id = ?",
+    id,
+    ownerId
+  );
   return existing;
 }
 
-export function markAllActivityNotificationsRead(ownerId: string): number {
-  const info = getDb()
-    .prepare(
-      "UPDATE activity_notifications SET read = 1 WHERE owner_id = ? AND read = 0"
-    )
-    .run(ownerId);
+export async function markAllActivityNotificationsRead(ownerId: string): Promise<number> {
+  const info = await getDb().run(
+    "UPDATE activity_notifications SET read = 1 WHERE owner_id = ? AND read = 0",
+    ownerId
+  );
   return info.changes;
 }
 
-export function deleteAllActivityNotifications(ownerId: string): number {
-  const info = getDb()
-    .prepare("DELETE FROM activity_notifications WHERE owner_id = ?")
-    .run(ownerId);
+export async function deleteAllActivityNotifications(ownerId: string): Promise<number> {
+  const info = await getDb().run(
+    "DELETE FROM activity_notifications WHERE owner_id = ?",
+    ownerId
+  );
   return info.changes;
 }
 
@@ -1452,18 +1442,17 @@ type AdminReportRow = {
   created_at: string;
 };
 
-export function listAllReports(status?: ReportStatus): AdminReport[] {
+export async function listAllReports(status?: ReportStatus): Promise<AdminReport[]> {
   const where = status ? "WHERE r.status = ?" : "";
-  const rows = getDb()
-    .prepare(
-      `SELECT r.id, r.reporter_id, r.target_type, r.target_id, r.reason,
-              r.status, r.created_at, u.handle AS reporter_handle
-       FROM reports r
-       JOIN users u ON u.id = r.reporter_id
-       ${where}
-       ORDER BY r.id DESC`
-    )
-    .all(...(status ? [status] : [])) as AdminReportRow[];
+  const rows = await getDb().all<AdminReportRow>(
+    `SELECT r.id, r.reporter_id, r.target_type, r.target_id, r.reason,
+            r.status, r.created_at, u.handle AS reporter_handle
+     FROM reports r
+     JOIN users u ON u.id = r.reporter_id
+     ${where}
+     ORDER BY r.id DESC`,
+    ...(status ? [status] : [])
+  );
 
   return rows.map((row) => ({
     id: row.id,
@@ -1479,10 +1468,8 @@ export function listAllReports(status?: ReportStatus): AdminReport[] {
   }));
 }
 
-export function setReportStatus(id: number, status: ReportStatus): boolean {
-  const info = getDb()
-    .prepare("UPDATE reports SET status = ? WHERE id = ?")
-    .run(status, id);
+export async function setReportStatus(id: number, status: ReportStatus): Promise<boolean> {
+  const info = await getDb().run("UPDATE reports SET status = ? WHERE id = ?", status, id);
   return info.changes > 0;
 }
 
@@ -1491,16 +1478,15 @@ type AdminUserRow = UserRow & {
   created_at: string;
 };
 
-export function listAllUsersForAdmin(q?: string): AdminUser[] {
+export async function listAllUsersForAdmin(q?: string): Promise<AdminUser[]> {
   const like = q?.trim() ? `%${q.trim().toLowerCase().replace(/^@/, "")}%` : null;
-  const rows = getDb()
-    .prepare(
-      `SELECT id, handle, name, bio, avatar, role, suspended, created_at
-       FROM users
-       ${like ? "WHERE lower(handle) LIKE ? OR lower(name) LIKE ?" : ""}
-       ORDER BY created_at DESC, id`
-    )
-    .all(...(like ? [like, like] : [])) as AdminUserRow[];
+  const rows = await getDb().all<AdminUserRow>(
+    `SELECT id, handle, name, bio, avatar, role, suspended, created_at
+     FROM users
+     ${like ? "WHERE lower(handle) LIKE ? OR lower(name) LIKE ?" : ""}
+     ORDER BY created_at DESC, id`,
+    ...(like ? [like, like] : [])
+  );
 
   return rows.map((row) => ({
     ...toAuthor(row),
@@ -1514,45 +1500,44 @@ export function listAllUsersForAdmin(q?: string): AdminUser[] {
  * 있던 브라우저도 즉시 끊는다 — 매 요청마다 suspended 를 다시 확인하는 대신
  * "정지 시점에 한 번" 정리하는 쪽을 택했다.
  */
-export function setUserSuspended(userId: string, suspended: boolean): boolean {
-  const db = getDb();
-  const tx = db.transaction(() => {
-    const info = db
-      .prepare("UPDATE users SET suspended = ? WHERE id = ?")
-      .run(suspended ? 1 : 0, userId);
+export async function setUserSuspended(userId: string, suspended: boolean): Promise<boolean> {
+  return withTx(async (tx) => {
+    const info = await tx.run(
+      "UPDATE users SET suspended = ? WHERE id = ?",
+      suspended ? 1 : 0,
+      userId
+    );
     if (info.changes > 0 && suspended) {
-      db.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
+      await tx.run("DELETE FROM sessions WHERE user_id = ?", userId);
     }
     return info.changes > 0;
   });
-  return tx();
 }
 
 /** 쇼츠 삭제. comments/playlist_items 는 FK ON DELETE CASCADE 로 함께 사라진다. */
-export function adminDeleteShort(id: string): boolean {
-  const info = getDb().prepare("DELETE FROM shorts WHERE id = ?").run(id);
+export async function adminDeleteShort(id: string): Promise<boolean> {
+  const info = await getDb().run("DELETE FROM shorts WHERE id = ?", id);
   return info.changes > 0;
 }
 
-export function adminDeleteLongform(id: number): boolean {
-  const info = getDb().prepare("DELETE FROM longform WHERE id = ?").run(id);
+export async function adminDeleteLongform(id: number): Promise<boolean> {
+  const info = await getDb().run("DELETE FROM longform WHERE id = ?", id);
   return info.changes > 0;
 }
 
-export function adminDeleteCommunityPost(id: number): boolean {
-  const info = getDb()
-    .prepare("DELETE FROM community_posts WHERE id = ?")
-    .run(id);
+export async function adminDeleteCommunityPost(id: number): Promise<boolean> {
+  const info = await getDb().run("DELETE FROM community_posts WHERE id = ?", id);
   return info.changes > 0;
 }
 
 /** 소유자와 무관하게 댓글 삭제. 답글 정리·카운트 감소는 본인 삭제와 동일. */
-export function adminDeleteComment(id: string): boolean {
-  const row = getDb()
-    .prepare("SELECT short_id FROM comments WHERE id = ?")
-    .get(id) as { short_id: string } | undefined;
+export async function adminDeleteComment(id: string): Promise<boolean> {
+  const row = await getDb().get<{ short_id: string }>(
+    "SELECT short_id FROM comments WHERE id = ?",
+    id
+  );
   if (!row) return false;
-  deleteCommentRow(id, row.short_id);
+  await deleteCommentRow(id, row.short_id);
   return true;
 }
 
@@ -1570,52 +1555,64 @@ function toAdminInquiry(row: InquiryRow): AdminInquiry {
 }
 
 /** 소유자 필터 없이 전체 문의. `unreplied` 면 아직 답변 없는 것만. */
-export function listAllInquiries(unreplied = false): AdminInquiry[] {
-  const rows = getDb()
-    .prepare(
-      `${INQUIRY_SELECT}
-       ${unreplied ? "WHERE i.admin_reply IS NULL" : ""}
-       ORDER BY i.id DESC`
-    )
-    .all() as InquiryRow[];
+export async function listAllInquiries(unreplied = false): Promise<AdminInquiry[]> {
+  const rows = await getDb().all<InquiryRow>(
+    `${INQUIRY_SELECT}
+     ${unreplied ? "WHERE i.admin_reply IS NULL" : ""}
+     ORDER BY i.id DESC`
+  );
   return rows.map(toAdminInquiry);
 }
 
-export function getInquiryByIdAdmin(id: number): AdminInquiry | undefined {
-  const row = getDb()
-    .prepare(`${INQUIRY_SELECT} WHERE i.id = ?`)
-    .get(id) as InquiryRow | undefined;
+export async function getInquiryByIdAdmin(id: number): Promise<AdminInquiry | undefined> {
+  const row = await getDb().get<InquiryRow>(`${INQUIRY_SELECT} WHERE i.id = ?`, id);
   return row ? toAdminInquiry(row) : undefined;
 }
 
-export function replyToInquiry(
+export async function replyToInquiry(
   id: number,
   reply: string
-): AdminInquiry | undefined {
-  const info = getDb()
-    .prepare(
-      "UPDATE support_inquiries SET admin_reply = ?, replied_at = ? WHERE id = ?"
-    )
-    .run(reply, new Date().toISOString(), id);
+): Promise<AdminInquiry | undefined> {
+  const info = await getDb().run(
+    "UPDATE support_inquiries SET admin_reply = ?, replied_at = ? WHERE id = ?",
+    reply,
+    new Date().toISOString(),
+    id
+  );
   if (info.changes === 0) return undefined;
   return getInquiryByIdAdmin(id);
 }
 
-export function adminStats(): AdminStats {
+export async function adminStats(): Promise<AdminStats> {
   const db = getDb();
-  const count = (sql: string) => (db.prepare(sql).get() as { c: number }).c;
+  const count = async (sql: string) => (await db.get<{ c: number }>(sql))?.c ?? 0;
+  const [
+    userCount,
+    suspendedCount,
+    openReportCount,
+    inquiryCount,
+    unrepliedInquiryCount,
+    shortCount,
+    longformCount,
+    communityCount,
+  ] = await Promise.all([
+    count("SELECT COUNT(*) AS c FROM users"),
+    count("SELECT COUNT(*) AS c FROM users WHERE suspended = 1"),
+    count("SELECT COUNT(*) AS c FROM reports WHERE status = 'open'"),
+    count("SELECT COUNT(*) AS c FROM support_inquiries"),
+    count("SELECT COUNT(*) AS c FROM support_inquiries WHERE admin_reply IS NULL"),
+    count("SELECT COUNT(*) AS c FROM shorts"),
+    count("SELECT COUNT(*) AS c FROM longform"),
+    count("SELECT COUNT(*) AS c FROM community_posts"),
+  ]);
   return {
-    userCount: count("SELECT COUNT(*) AS c FROM users"),
-    suspendedCount: count("SELECT COUNT(*) AS c FROM users WHERE suspended = 1"),
-    openReportCount: count(
-      "SELECT COUNT(*) AS c FROM reports WHERE status = 'open'"
-    ),
-    inquiryCount: count("SELECT COUNT(*) AS c FROM support_inquiries"),
-    unrepliedInquiryCount: count(
-      "SELECT COUNT(*) AS c FROM support_inquiries WHERE admin_reply IS NULL"
-    ),
-    shortCount: count("SELECT COUNT(*) AS c FROM shorts"),
-    longformCount: count("SELECT COUNT(*) AS c FROM longform"),
-    communityCount: count("SELECT COUNT(*) AS c FROM community_posts"),
+    userCount,
+    suspendedCount,
+    openReportCount,
+    inquiryCount,
+    unrepliedInquiryCount,
+    shortCount,
+    longformCount,
+    communityCount,
   };
 }

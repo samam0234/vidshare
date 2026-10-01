@@ -1,6 +1,6 @@
 # 업로드 파일
 
-사용자가 올린 영상·썸네일이 여기 저장됩니다. 파일명은 UUID + 확장자입니다.
+사용자가 올린 영상·썸네일이 저장됩니다. 파일명은 UUID + 확장자입니다.
 
 | 항목 | 값 |
 |------|-----|
@@ -9,6 +9,11 @@
 | 이미지 | jpg / png / webp / gif, 최대 8MB |
 | 영상 | mp4 / webm / mov, 최대 100MB |
 
-경로를 바꾸려면 `BackendServer/.env` 의 `UPLOADS_PATH` 를 씁니다. 비우면 이 폴더입니다.
+실제 저장 위치는 `BackendServer/.env` 의 `UPLOADS_PATH` 입니다. 비우면 이 폴더를 씁니다.
+
+| 환경 | 권장 `UPLOADS_PATH` |
+|------|---------------------|
+| 로컬 (내 PC) | `D:\vidshare-data\uploads` |
+| 운영 (Oracle VM) | `/mnt/vidshare-data/uploads` — Caddy 가 직접 서빙 |
 
 이 폴더의 실제 미디어 파일은 Git에 올리지 않습니다.

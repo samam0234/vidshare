@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { Router } from "express";
+import { Router } from "../middleware/asyncRouter";
 import { HttpError } from "../middleware/errorHandler";
 import {
   createAccount,
@@ -38,8 +38,8 @@ function requireFields(body: Record<string, unknown>, keys: string[]) {
 }
 
 /** POST /api/auth/register */
-router.post("/register", (req, res) => {
-  if (getRequestPublicUser(req)) {
+router.post("/register", async (req, res) => {
+  if (await getRequestPublicUser(req)) {
     throw new HttpError(400, "이미 로그인되어 있습니다. 로그아웃 후 가입해 주세요.");
   }
 
@@ -61,23 +61,23 @@ router.post("/register", (req, res) => {
   if (password.length > PASSWORD_MAX) {
     throw new HttpError(400, `비밀번호는 ${PASSWORD_MAX}자 이하여야 합니다.`);
   }
-  if (findAccount(handle)) {
+  if (await findAccount(handle)) {
     throw new HttpError(409, "이미 사용 중인 핸들입니다.");
   }
 
-  const account = createAccount({ handle, name, password });
-  const sid = createSession(account.id);
+  const account = await createAccount({ handle, name, password });
+  const sid = await createSession(account.id);
   setSessionCookie(res, sid);
   res.status(201).json({ success: true, data: toPublicUser(account) });
 });
 
 /** POST /api/auth/login */
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   requireFields(body, ["handle", "password"]);
   const handle = normalizeHandle(String(body.handle));
   const password = String(body.password);
-  const account = findAccount(handle);
+  const account = await findAccount(handle);
   if (
     !account ||
     !account.passwordHash ||
@@ -88,21 +88,21 @@ router.post("/login", (req, res) => {
   if (account.suspended) {
     throw new HttpError(403, "정지된 계정입니다. 고객센터로 문의해 주세요.");
   }
-  const sid = createSession(account.id);
+  const sid = await createSession(account.id);
   setSessionCookie(res, sid);
   res.json({ success: true, data: toPublicUser(account) });
 });
 
 /** POST /api/auth/logout */
-router.post("/logout", (req, res) => {
-  destroySession(readSid(req));
+router.post("/logout", async (req, res) => {
+  await destroySession(readSid(req));
   clearSessionCookie(res);
   res.json({ success: true, data: { ok: true } });
 });
 
 /** GET /api/auth/me */
-router.get("/me", (req, res) => {
-  const user = getRequestPublicUser(req);
+router.get("/me", async (req, res) => {
+  const user = await getRequestPublicUser(req);
   if (!user) throw new HttpError(401, "로그인이 필요합니다.");
   res.json({ success: true, data: user });
 });

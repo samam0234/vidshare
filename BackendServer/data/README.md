@@ -1,86 +1,45 @@
-# Backend SQLite
+# data/
 
-이 폴더는 BackendServer가 쓰는 **SQLite 파일 DB** 위치입니다.
+DB 는 **PostgreSQL** 로 옮겼습니다(096). 이 폴더에는 더 이상 실제 DB 가 없습니다.
+남은 용도는 두 가지입니다.
 
 | 파일 | Git | 설명 |
 |------|-----|------|
 | `.gitkeep` | 추적 | 빈 `data/` 폴더를 저장소에 유지 |
-| `vidshare.sqlite` | 무시 | 실제 DB. 서버 재시작해도 내용이 남음 |
-| `vidshare.sqlite-wal` / `-shm` | 무시 | WAL 보조 파일 |
-| `DataBaseColumn.md` | 무시 | 테이블·컬럼·행 덤프. 쓰기 시 자동 갱신 |
+| `DataBaseColumn.md` | 무시 | `npm run db:doc` 으로 만드는 테이블·컬럼·데이터 덤프 |
+| `vidshare.sqlite` (+ `-wal`, `-shm`) | 무시 | **예전** SQLite DB. `npm run db:import-sqlite` 의 기본 원본 |
 
-경로를 바꾸려면 `BackendServer/.env` 의 `SQLITE_PATH` 를 씁니다. 비우면 이 폴더의 `vidshare.sqlite` 입니다.
+## DB 는 어디에 있나
 
-처음 파일이 없거나 `users` 가 비어 있으면 `src/data/seedData.ts` 로 **한 번만** 시드합니다.  
-이미 데이터가 있으면 시드하지 않습니다.
+| 환경 | 위치 |
+|------|------|
+| 로컬 (내 PC) | Postgres 16 서비스 `postgresql-x64-16`, 데이터 디렉터리 `D:\PostgreSQL\16\data` |
+| 운영 (Oracle VM) | `/mnt/vidshare-data/pgdata` (블록 볼륨) |
 
-초기화: `vidshare.sqlite` 와 `.sqlite-wal` / `.sqlite-shm` 을 지우고 `npm run dev`.
+접속 문자열은 `BackendServer/.env` 의 `DATABASE_URL` 입니다.
 
----
+## 스키마 · 시드
 
-## 테이블
+- 스키마: `src/db/migrations/` (버전 순 적용, `schema_migrations` 테이블에 기록)
+- 시드: `src/data/seedData.ts` — `users` 가 비어 있을 때 **한 번만** 넣는다
 
-| 테이블 | 역할 | 시드 행 |
-|--------|------|---------|
-| `users` | 계정 (핸들·이름·비밀번호 해시) | 5 |
-| `sessions` | 로그인 세션 (`vidshare_sid`) | 0 (로그인 시 생성) |
-| `shorts` | 쇼츠 | 5 |
-| `comments` | 쇼츠 댓글 | 3 |
-| `notifications` | 알림 | 7 |
-| `chat_users` | 메시지 상대 | 3 |
-| `messages` | 1:1 메시지 | 4 |
-| `faqs` | 고객센터 FAQ | 4 |
+## 시드 계정
 
-커뮤니티·롱폼 글은 아직 프론트 `localStorage` 라 여기 없습니다.
-
----
-
-## 시드로 등록되는 계정 (`users`)
-
-비밀번호가 있는 계정만 `/api/auth/login` 이 됩니다. 해시만 저장합니다.
-
-| id | 핸들 | 이름 | 로그인 |
-|----|------|------|--------|
-| `u-demo` | `demo` | Demo User | `demo` / `demo1234` |
-| `u-me` | `usernumber02345` | Usernumber 02345 | 같은 비밀번호 `demo1234` |
-| `u1` | `깃털유머` | 깃털유머 | 불가 (시드 크리에이터) |
-| `u2` | `오피스유머` | 오피스유머 | 불가 |
-| `u3` | `일상드립` | 일상드립 | 불가 |
-
-회원가입(`POST /api/auth/register`)으로 생긴 계정은 이 표에 없고, 로컬 `vidshare.sqlite` 에만 추가됩니다.
-
----
-
-## 시드 쇼츠 (`shorts`)
-
-| id | 제목 | 작성자 |
+| id | 핸들 | 로그인 |
 |----|------|--------|
-| `s1` | 쉬고 돈 적게 주는 알바의 실체 ㅋㅋㅋ | `u1` 깃털유머 |
-| `s2` | 진짜 웃긴 직장썰 모음 | `u2` 오피스유머 |
-| `s3` | 출근 5분 전 알람의 공포 | `u3` 일상드립 |
-| `s4` | 카페 알바 첫날 생존기 | `u1` 깃털유머 |
-| `s5` | 팀장님 피드백 번역기 | `u2` 오피스유머 |
+| `u-demo` | `demo` | `demo` / `demo1234` |
+| `u-me` | `usernumber02345` | 같은 비밀번호 `demo1234` |
+| `u1` `u2` `u3` | 시드 크리에이터 | 불가 (비밀번호 없음) |
 
----
+> 운영 DB 에 시드 계정이 생겼다면 비밀번호가 공개된 계정이므로 지우거나 정지하세요
+> (관리자 콘솔 → 유저 → 정지).
 
-## 시드 댓글 (`comments`)
+## SQLite 에서 옮기기 (1회)
 
-| id | 쇼츠 | 작성 표시명 |
-|----|------|-------------|
-| `c1` | `s1` | 웃긴사람 |
-| `c2` | `s1` | 퇴근요정 |
-| `c3` | `s2` | 회의실탈출 |
+```bash
+npm run db:import-sqlite                 # data/vidshare.sqlite → DATABASE_URL
+npm run db:import-sqlite -- --from D:\vidshare-data\backups\sqlite-final\vidshare.sqlite
+npm run db:import-sqlite -- --replace    # 대상 DB 를 비우고 다시
+```
 
----
-
-## 그 외 시드
-
-| 테이블 | 내용 |
-|--------|------|
-| `notifications` | `n1`~`n7` (댓글·좋아요·팔로워·공지·추천·멘션) |
-| `chat_users` | `u1` 깃털유머, `u2` 오피스유머, `u3` 일상드립 |
-| `messages` | `u1` 대화 2개, `u2` 1개, `u3` 1개 |
-| `faqs` | `q1` 재생 안 됨, `q2` 프로필 링크, `q3` 프로필 사진, `q4` 재생이 느림 |
-
-스키마 SQL: `src/db/schema.ts`  
-시드 데이터: `src/data/seedData.ts`
+끝나면 테이블별 행 수 비교표를 찍고, 다르면 종료 코드 1 로 끝납니다.

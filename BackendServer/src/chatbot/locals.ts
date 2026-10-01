@@ -35,8 +35,8 @@ export async function runLocals(
   const llm = makeChat("locals");
   const window = turns.slice(-spec.maxHistory);
   const last = [...turns].reverse().find((m) => m.role === "user");
-  const platformHits = retrievePlatformInfo(last?.content ?? "", 6, platformDocs);
-  const snapshotJson = formatPlatformSnapshot(buildPlatformSnapshot(platformDocs));
+  const platformHits = await retrievePlatformInfo(last?.content ?? "", 6, platformDocs);
+  const snapshotJson = formatPlatformSnapshot(await buildPlatformSnapshot(platformDocs));
   const system = localsSystemPrompt(formatPlatformHits(platformHits), snapshotJson);
   const out = await withTimeout(
     llm.invoke(

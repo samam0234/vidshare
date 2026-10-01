@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../middleware/asyncRouter";
 import { HttpError } from "../middleware/errorHandler";
 import { getRequestPublicUser } from "../auth/requestUser";
 import {
@@ -14,18 +14,18 @@ import {
 
 const router = Router();
 
-router.get("/status", (_req, res) => {
+router.get("/status", async (_req, res) => {
   res.json({ success: true, data: { llm: hasLlmKey() } });
 });
 
 /** POST /api/chatbot/complete */
-router.post("/complete", (req, res, next) => {
+router.post("/complete", async (req, res, next) => {
   void (async () => {
     const product = String(req.body?.product ?? "locals") as Product;
     const spec = productSpec(product);
     if (!spec) throw new HttpError(400, "알 수 없는 모델입니다.");
 
-    const user = getRequestPublicUser(req);
+    const user = await getRequestPublicUser(req);
     if (spec.memberOnly && !user) {
       throw new HttpError(401, "회원만 이 모델을 쓸 수 있습니다.");
     }

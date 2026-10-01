@@ -12,6 +12,7 @@ import {
   formatPlatformHits,
   formatPlatformSnapshot,
   retrievePlatformInfo,
+  type PlatformHit,
 } from "./platform";
 import type { ImageInput, PlatformDoc, Turn } from "./types";
 
@@ -55,7 +56,7 @@ const distill = task("vide-distill", async (input: VideIn) => {
     .map((m) => `${m.role === "user" ? "사용자" : "봇"}: ${m.content}`)
     .join("\n")
     .slice(0, 6000);
-  const prev = loadSummary(input.owner, input.threadKey);
+  const prev = await loadSummary(input.owner, input.threadKey);
   const out = await withTimeout(
     llm.invoke(
       withSystem(
@@ -71,7 +72,7 @@ const distill = task("vide-distill", async (input: VideIn) => {
     )
   );
   const summary = contentText(out.content);
-  if (summary) saveSummary(input.owner, input.threadKey, summary);
+  if (summary) await saveSummary(input.owner, input.threadKey, summary);
   return summary || prev;
 });
 
@@ -83,12 +84,12 @@ const retrievePlatform = task("vide-retrieve-platform", async (input: VideIn) =>
 
 const answer = task(
   "vide-answer",
-  async (input: VideIn & { summary: string; platformHits: ReturnType<typeof retrievePlatformInfo> }) => {
+  async (input: VideIn & { summary: string; platformHits: PlatformHit[] }) => {
     const spec = productLlmSpec("vide");
     const llm = makeChat("vide");
     const recent = input.turns.slice(-spec.maxHistory);
     const platform = formatPlatformHits(input.platformHits);
-    const snapshotJson = formatPlatformSnapshot(buildPlatformSnapshot(input.platformDocs));
+    const snapshotJson = formatPlatformSnapshot(await buildPlatformSnapshot(input.platformDocs));
     const out = await withTimeout(
       llm.invoke(
         withSystem(
@@ -106,7 +107,7 @@ const answer = task(
 );
 
 const videGraph = entrypoint("vide", async (input: VideIn) => {
-  ingestCorpus(
+  await ingestCorpus(
     input.owner,
     input.turns.map((t) => ({
       threadKey: input.threadKey,

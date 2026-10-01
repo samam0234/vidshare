@@ -1,4 +1,4 @@
-/** VidShare 플랫폼 실데이터(쇼츠·댓글·FAQ) 검색. SQLite에서 매 호출마다 조회하므로 항상 최신이다. */
+/** VidShare 플랫폼 실데이터(쇼츠·댓글·FAQ) 검색. DB에서 매 호출마다 조회하므로 항상 최신이다. */
 
 import { getDb } from "../db/client";
 import { tokens } from "./store";
@@ -24,31 +24,29 @@ function scoreText(qTokens: Set<string>, text: string) {
 }
 
 /** 쇼츠 제목/설명, 쇼츠 댓글, FAQ, (있으면) 클라이언트가 보낸 커뮤니티·롱폼을 사용자 질문 토큰과 매칭해 관련도 순으로 반환한다. */
-export function retrievePlatformInfo(
+export async function retrievePlatformInfo(
   query: string,
   limit = 12,
   clientDocs: ClientPlatformDoc[] = []
-): PlatformHit[] {
+): Promise<PlatformHit[]> {
   const qTokens = new Set(tokens(query));
   if (qTokens.size === 0) return [];
 
   const db = getDb();
   const hits: PlatformHit[] = [];
 
-  const shorts = db
-    .prepare(
-      `SELECT s.id, s.title, s.description, s.likes, s.comment_count, u.handle
-       FROM shorts s JOIN users u ON u.id = s.author_id
-       ORDER BY s.created_at DESC LIMIT 300`
-    )
-    .all() as Array<{
+  const shorts = await db.all<{
     id: string;
     title: string;
     description: string;
     likes: number;
     comment_count: number;
     handle: string;
-  }>;
+  }>(
+    `SELECT s.id, s.title, s.description, s.likes, s.comment_count, u.handle
+     FROM shorts s JOIN users u ON u.id = s.author_id
+     ORDER BY s.created_at DESC LIMIT 300`
+  );
   for (const s of shorts) {
     const score = scoreText(qTokens, `${s.title} ${s.description}`);
     if (score <= 0) continue;
@@ -60,13 +58,11 @@ export function retrievePlatformInfo(
     });
   }
 
-  const comments = db
-    .prepare(
-      `SELECT c.text, s.title
-       FROM comments c JOIN shorts s ON s.id = c.short_id
-       ORDER BY c.id DESC LIMIT 300`
-    )
-    .all() as Array<{ text: string; title: string }>;
+  const comments = await db.all<{ text: string; title: string }>(
+    `SELECT c.text, s.title
+     FROM comments c JOIN shorts s ON s.id = c.short_id
+     ORDER BY c.id DESC LIMIT 300`
+  );
   for (const c of comments) {
     const score = scoreText(qTokens, c.text);
     if (score <= 0) continue;
@@ -78,10 +74,9 @@ export function retrievePlatformInfo(
     });
   }
 
-  const faqs = db.prepare(`SELECT question, answers FROM faqs`).all() as Array<{
-    question: string;
-    answers: string;
-  }>;
+  const faqs = await db.all<{ question: string; answers: string }>(
+    `SELECT question, answers FROM faqs`
+  );
   for (const f of faqs) {
     let answerText = f.answers;
     try {
@@ -130,24 +125,30 @@ export type PlatformSnapshot = {
 };
 
 /** 질문 키워드 매칭과 무관하게 항상 넣어줄 전체 현황. 개요/통계 질문("쇼츠 몇 개야?")에 답할 근거가 된다. */
-export function buildPlatformSnapshot(clientDocs: ClientPlatformDoc[] = []): PlatformSnapshot {
+export async function buildPlatformSnapshot(
+  clientDocs: ClientPlatformDoc[] = []
+): Promise<PlatformSnapshot> {
   const db = getDb();
-  const count = (sql: string) => (db.prepare(sql).get() as { c: number }).c;
+  const count = async (sql: string) => (await db.get<{ c: number }>(sql))?.c ?? 0;
 
-  const topShorts = db
-    .prepare(
+  const [topShorts, shortCount, commentCount, userCount, faqCount] = await Promise.all([
+    db.all<{ title: string; likes: number; comment_count: number; handle: string }>(
       `SELECT s.title, s.likes, s.comment_count, u.handle
        FROM shorts s JOIN users u ON u.id = s.author_id
        ORDER BY s.likes DESC LIMIT 5`
-    )
-    .all() as Array<{ title: string; likes: number; comment_count: number; handle: string }>;
+    ),
+    count(`SELECT COUNT(*) c FROM shorts`),
+    count(`SELECT COUNT(*) c FROM comments`),
+    count(`SELECT COUNT(*) c FROM users`),
+    count(`SELECT COUNT(*) c FROM faqs`),
+  ]);
 
   const localOnlyNote = "이 사용자 브라우저의 localStorage 기준(다른 유저 글은 안 보임)";
 
   return {
     generatedAt: new Date().toISOString(),
     shorts: {
-      count: count(`SELECT COUNT(*) c FROM shorts`),
+      count: shortCount,
       top: topShorts.map((s) => ({
         title: s.title,
         likes: s.likes,
@@ -155,9 +156,9 @@ export function buildPlatformSnapshot(clientDocs: ClientPlatformDoc[] = []): Pla
         author: `@${s.handle}`,
       })),
     },
-    comments: { count: count(`SELECT COUNT(*) c FROM comments`) },
-    users: { count: count(`SELECT COUNT(*) c FROM users`) },
-    faq: { count: count(`SELECT COUNT(*) c FROM faqs`) },
+    comments: { count: commentCount },
+    users: { count: userCount },
+    faq: { count: faqCount },
     community: {
       count: clientDocs.filter((d) => d.kind === "community").length,
       note: localOnlyNote,

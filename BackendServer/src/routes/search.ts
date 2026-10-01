@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../middleware/asyncRouter";
 import {
   listShorts,
   searchAuthors,
@@ -11,7 +11,7 @@ const router = Router();
 const EMPTY = { shorts: [], longform: [], community: [], users: [] };
 
 /** GET /api/search?q=&limit= — 쇼츠·롱폼·커뮤니티·유저 통합 검색 */
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
   const q = String(req.query.q ?? "").trim();
   if (!q) {
     res.json({ success: true, data: { query: "", ...EMPTY } });
@@ -25,10 +25,10 @@ router.get("/", (req, res) => {
     success: true,
     data: {
       query: q,
-      shorts: listShorts(q).slice(0, limit),
-      longform: searchLongform(q, limit),
-      community: searchCommunity(q, limit),
-      users: searchAuthors(q, limit),
+      shorts: (await listShorts(q)).slice(0, limit),
+      longform: await searchLongform(q, limit),
+      community: await searchCommunity(q, limit),
+      users: await searchAuthors(q, limit),
     },
   });
 });

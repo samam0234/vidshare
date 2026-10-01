@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../middleware/asyncRouter";
 import {
   createActivityNotification,
   createLongform,
@@ -12,15 +12,15 @@ import { checkMediaUrl } from "../upload/files";
 const router = Router();
 
 /** GET /api/longform */
-router.get("/", (_req, res) => {
-  res.json({ success: true, data: listLongform() });
+router.get("/", async (_req, res) => {
+  res.json({ success: true, data: await listLongform() });
 });
 
 /** GET /api/longform/:id */
-router.get("/:id", (req, res) => {
+router.get("/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) throw new HttpError(400, "invalid id");
-  const item = getLongformById(id);
+  const item = await getLongformById(id);
   if (!item) throw new HttpError(404, "Longform not found");
   res.json({ success: true, data: item });
 });
@@ -39,14 +39,14 @@ function optionalMediaUrl(value: unknown, kind: "image" | "video") {
 }
 
 /** POST /api/longform  body: { title, description?, videoUrl?, thumb?, gradient? } */
-router.post("/", (req, res) => {
-  const user = requireRequestUser(req);
+router.post("/", async (req, res) => {
+  const user = await requireRequestUser(req);
   const { title, description, videoUrl, thumb, gradient } = req.body ?? {};
   if (!title || typeof title !== "string" || !title.trim()) {
     throw new HttpError(400, "title is required");
   }
 
-  const item = createLongform({
+  const item = await createLongform({
     title: title.trim(),
     description: typeof description === "string" ? description : "",
     videoUrl: optionalMediaUrl(videoUrl, "video") ?? "",
@@ -54,7 +54,7 @@ router.post("/", (req, res) => {
     gradient: typeof gradient === "string" ? gradient : undefined,
     authorId: user.id,
   });
-  createActivityNotification(user.id, {
+  await createActivityNotification(user.id, {
     category: "system",
     message: `롱폼 #${String(item.id).padStart(3, "0")} 이 등록되었습니다.`,
     href: `/longform/${item.id}`,

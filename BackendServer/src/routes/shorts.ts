@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../middleware/asyncRouter";
 import {
   createShort,
   findAuthor,
@@ -14,15 +14,15 @@ import { checkMediaUrl } from "../upload/files";
 const router = Router();
 
 /** GET /api/shorts?q= — 로그인한 경우 내가 차단한 유저의 영상은 제외된다 */
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
   const q = String(req.query.q ?? "").trim();
-  const viewer = getRequestPublicUser(req);
-  res.json({ success: true, data: listShorts(q, viewer?.id) });
+  const viewer = await getRequestPublicUser(req);
+  res.json({ success: true, data: await listShorts(q, viewer?.id) });
 });
 
 /** GET /api/shorts/:id */
-router.get("/:id", (req, res) => {
-  const item = getShort(req.params.id);
+router.get("/:id", async (req, res) => {
+  const item = await getShort(req.params.id);
   if (!item) throw new HttpError(404, "Short not found");
   res.json({ success: true, data: item });
 });
@@ -41,17 +41,17 @@ function optionalMediaUrl(value: unknown, kind: "image" | "video") {
 }
 
 /** POST /api/shorts  body: { title, description?, gradient?, videoUrl?, thumb? } */
-router.post("/", (req, res) => {
-  const user = requireRequestUser(req);
+router.post("/", async (req, res) => {
+  const user = await requireRequestUser(req);
   const { title, description, gradient, videoUrl, thumb } = req.body ?? {};
   if (!title || typeof title !== "string" || !title.trim()) {
     throw new HttpError(400, "title is required");
   }
-  if (!findAuthor(user.id)) {
+  if (!(await findAuthor(user.id))) {
     throw new HttpError(400, "작성자 계정이 없습니다.");
   }
 
-  const short = createShort({
+  const short = await createShort({
     title: title.trim(),
     description: typeof description === "string" ? description : "",
     gradient: typeof gradient === "string" ? gradient : undefined,
@@ -63,20 +63,20 @@ router.post("/", (req, res) => {
 });
 
 /** POST /api/shorts/:id/like */
-router.post("/:id/like", (req, res) => {
+router.post("/:id/like", async (req, res) => {
   const { action } = req.body ?? {};
-  const data = likeShort(req.params.id, action === "unlike");
+  const data = await likeShort(req.params.id, action === "unlike");
   if (!data) throw new HttpError(404, "Short not found");
   res.json({ success: true, data });
 });
 
-export function getShortsByAuthor(authorId: string) {
-  const author = findAuthor(authorId);
+export async function getShortsByAuthor(authorId: string) {
+  const author = await findAuthor(authorId);
   if (!author) return [];
   return listShortsByAuthor(author.id);
 }
 
-export function resolveAuthor(id: string) {
+export async function resolveAuthor(id: string) {
   return findAuthor(id);
 }
 

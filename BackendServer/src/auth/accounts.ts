@@ -54,20 +54,22 @@ export function normalizeHandle(raw: string) {
   return raw.replace(/^@/, "").trim().toLowerCase();
 }
 
-export function findAccount(handleOrId: string): AuthAccount | undefined {
+export async function findAccount(handleOrId: string): Promise<AuthAccount | undefined> {
   const key = handleOrId.replace(/^@/, "").trim();
-  const row = getDb()
-    .prepare(`${ACCOUNT_SELECT} WHERE id = ? OR lower(handle) = lower(?)`)
-    .get(key, key) as UserRow | undefined;
+  const row = await getDb().get<UserRow>(
+    `${ACCOUNT_SELECT} WHERE id = ? OR lower(handle) = lower(?)`,
+    key,
+    key
+  );
   return row ? toAccount(row) : undefined;
 }
 
-export function createAccount(input: {
+export async function createAccount(input: {
   handle: string;
   name: string;
   password: string;
   role?: UserRole;
-}): AuthAccount {
+}): Promise<AuthAccount> {
   const handle = normalizeHandle(input.handle);
   const account: AuthAccount = {
     id: `u-${randomUUID().slice(0, 8)}`,
@@ -79,27 +81,22 @@ export function createAccount(input: {
     passwordHash: bcrypt.hashSync(input.password, 10),
   };
 
-  getDb()
-    .prepare(
-      `INSERT INTO users (id, handle, name, bio, avatar, password_hash, role, created_at)
-       VALUES (?, ?, ?, '', NULL, ?, ?, ?)`
-    )
-    .run(
-      account.id,
-      account.handle,
-      account.name,
-      account.passwordHash,
-      account.role,
-      new Date().toISOString()
-    );
+  await getDb().run(
+    `INSERT INTO users (id, handle, name, bio, avatar, password_hash, role, created_at)
+     VALUES (?, ?, ?, '', NULL, ?, ?, ?)`,
+    account.id,
+    account.handle,
+    account.name,
+    account.passwordHash,
+    account.role,
+    new Date().toISOString()
+  );
 
   return account;
 }
 
 /** 관리자 승격/강등. CLI 스크립트에서 사용한다. */
-export function setAccountRole(userId: string, role: UserRole): boolean {
-  const info = getDb()
-    .prepare("UPDATE users SET role = ? WHERE id = ?")
-    .run(role, userId);
+export async function setAccountRole(userId: string, role: UserRole): Promise<boolean> {
+  const info = await getDb().run("UPDATE users SET role = ? WHERE id = ?", role, userId);
   return info.changes > 0;
 }

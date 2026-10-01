@@ -8,7 +8,13 @@ import {
   retrieveMemories,
   type MemoryHit,
 } from "./store";
-import { formatPlatformHits, retrievePlatformInfo, buildPlatformSnapshot, formatPlatformSnapshot } from "./platform";
+import {
+  buildPlatformSnapshot,
+  formatPlatformHits,
+  formatPlatformSnapshot,
+  retrievePlatformInfo,
+  type PlatformHit,
+} from "./platform";
 import type { CorpusDoc, ImageInput, PlatformDoc, Turn } from "./types";
 
 export function shapeSystemPrompt(
@@ -56,7 +62,7 @@ const ingest = task("shape-ingest", async (input: ShapeIn) => {
     role: t.role,
     content: t.content,
   }));
-  ingestCorpus(input.owner, [...input.corpus, ...fromTurns]);
+  await ingestCorpus(input.owner, [...input.corpus, ...fromTurns]);
   return true;
 });
 
@@ -86,7 +92,7 @@ const generate = task(
   async (
     input: ShapeIn & {
       hits: MemoryHit[];
-      platformHits: ReturnType<typeof retrievePlatformInfo>;
+      platformHits: PlatformHit[];
       imageDescriptions: string[];
     }
   ) => {
@@ -95,7 +101,7 @@ const generate = task(
     const recent = input.turns.slice(-spec.maxHistory);
     const memories = formatHits(input.hits);
     const platform = formatPlatformHits(input.platformHits);
-    const snapshotJson = formatPlatformSnapshot(buildPlatformSnapshot(input.platformDocs));
+    const snapshotJson = formatPlatformSnapshot(await buildPlatformSnapshot(input.platformDocs));
     const out = await withTimeout(
       llm.invoke(
         withSystem(

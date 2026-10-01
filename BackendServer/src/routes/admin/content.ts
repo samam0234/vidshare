@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../../middleware/asyncRouter";
 import {
   adminDeleteComment,
   adminDeleteCommunityPost,
@@ -22,38 +22,38 @@ function numericId(raw: string): number {
  */
 
 /** DELETE /api/admin/content/shorts/:id */
-router.delete("/shorts/:id", (req, res) => {
-  requireAdmin(req);
-  if (!adminDeleteShort(req.params.id)) {
+router.delete("/shorts/:id", async (req, res) => {
+  await requireAdmin(req);
+  if (!(await adminDeleteShort(req.params.id))) {
     throw new HttpError(404, "쇼츠를 찾을 수 없습니다.");
   }
   res.json({ success: true, data: { deleted: req.params.id } });
 });
 
 /** DELETE /api/admin/content/longform/:id */
-router.delete("/longform/:id", (req, res) => {
-  requireAdmin(req);
+router.delete("/longform/:id", async (req, res) => {
+  await requireAdmin(req);
   const id = numericId(req.params.id);
-  if (!adminDeleteLongform(id)) {
+  if (!(await adminDeleteLongform(id))) {
     throw new HttpError(404, "롱폼 영상을 찾을 수 없습니다.");
   }
   res.json({ success: true, data: { deleted: id } });
 });
 
 /** DELETE /api/admin/content/community/:id */
-router.delete("/community/:id", (req, res) => {
-  requireAdmin(req);
+router.delete("/community/:id", async (req, res) => {
+  await requireAdmin(req);
   const id = numericId(req.params.id);
-  if (!adminDeleteCommunityPost(id)) {
+  if (!(await adminDeleteCommunityPost(id))) {
     throw new HttpError(404, "게시글을 찾을 수 없습니다.");
   }
   res.json({ success: true, data: { deleted: id } });
 });
 
 /** DELETE /api/admin/content/comments/:id */
-router.delete("/comments/:id", (req, res) => {
-  requireAdmin(req);
-  if (!adminDeleteComment(req.params.id)) {
+router.delete("/comments/:id", async (req, res) => {
+  await requireAdmin(req);
+  if (!(await adminDeleteComment(req.params.id))) {
     throw new HttpError(404, "댓글을 찾을 수 없습니다.");
   }
   res.json({ success: true, data: { deleted: req.params.id } });

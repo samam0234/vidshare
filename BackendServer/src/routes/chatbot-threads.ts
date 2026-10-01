@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../middleware/asyncRouter";
 import {
   addChatbotThreadMessage,
   createChatbotThread,
@@ -18,33 +18,33 @@ const router = Router();
 const MODELS: ChatbotThreadModel[] = ["locals", "vide", "shape"];
 
 /** GET /api/chatbot/threads */
-router.get("/", (req, res) => {
-  const user = requireRequestUser(req);
-  res.json({ success: true, data: listChatbotThreads(user.id) });
+router.get("/", async (req, res) => {
+  const user = await requireRequestUser(req);
+  res.json({ success: true, data: await listChatbotThreads(user.id) });
 });
 
 /** GET /api/chatbot/threads/:id */
-router.get("/:id", (req, res) => {
-  const user = requireRequestUser(req);
+router.get("/:id", async (req, res) => {
+  const user = await requireRequestUser(req);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) throw new HttpError(400, "invalid id");
-  const thread = getChatbotThread(id, user.id);
+  const thread = await getChatbotThread(id, user.id);
   if (!thread) throw new HttpError(404, "Thread not found");
   res.json({
     success: true,
-    data: { thread, messages: listChatbotMessages(id) },
+    data: { thread, messages: await listChatbotMessages(id) },
   });
 });
 
 /** POST /api/chatbot/threads  body: { title?, model? } */
-router.post("/", (req, res) => {
-  const user = requireRequestUser(req);
+router.post("/", async (req, res) => {
+  const user = await requireRequestUser(req);
   const { title, model } = req.body ?? {};
   const chosenModel =
     typeof model === "string" && MODELS.includes(model as ChatbotThreadModel)
       ? (model as ChatbotThreadModel)
       : undefined;
-  const thread = createChatbotThread(user.id, {
+  const thread = await createChatbotThread(user.id, {
     title: typeof title === "string" ? title : undefined,
     model: chosenModel,
   });
@@ -52,37 +52,37 @@ router.post("/", (req, res) => {
 });
 
 /** PATCH /api/chatbot/threads/:id  body: { title?, model? } */
-router.patch("/:id", (req, res) => {
-  const user = requireRequestUser(req);
+router.patch("/:id", async (req, res) => {
+  const user = await requireRequestUser(req);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) throw new HttpError(400, "invalid id");
   const { title, model } = req.body ?? {};
 
-  let thread = getChatbotThread(id, user.id);
+  let thread = await getChatbotThread(id, user.id);
   if (!thread) throw new HttpError(404, "Thread not found");
 
   if (typeof title === "string" && title.trim()) {
-    thread = renameChatbotThread(id, user.id, title.trim().slice(0, 60));
+    thread = await renameChatbotThread(id, user.id, title.trim().slice(0, 60));
   }
   if (typeof model === "string" && MODELS.includes(model as ChatbotThreadModel)) {
-    thread = setChatbotThreadModel(id, user.id, model as ChatbotThreadModel);
+    thread = await setChatbotThreadModel(id, user.id, model as ChatbotThreadModel);
   }
   res.json({ success: true, data: thread });
 });
 
 /** DELETE /api/chatbot/threads/:id */
-router.delete("/:id", (req, res) => {
-  const user = requireRequestUser(req);
+router.delete("/:id", async (req, res) => {
+  const user = await requireRequestUser(req);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) throw new HttpError(400, "invalid id");
-  const removed = deleteChatbotThread(id, user.id);
+  const removed = await deleteChatbotThread(id, user.id);
   if (!removed) throw new HttpError(404, "Thread not found");
   res.json({ success: true, data: { id } });
 });
 
 /** POST /api/chatbot/threads/:id/messages  body: { role, content, attachments? } */
-router.post("/:id/messages", (req, res) => {
-  const user = requireRequestUser(req);
+router.post("/:id/messages", async (req, res) => {
+  const user = await requireRequestUser(req);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) throw new HttpError(400, "invalid id");
   const { role, content, attachments } = req.body ?? {};
@@ -93,7 +93,7 @@ router.post("/:id/messages", (req, res) => {
     throw new HttpError(400, "content is required");
   }
 
-  const message = addChatbotThreadMessage(id, user.id, {
+  const message = await addChatbotThreadMessage(id, user.id, {
     role,
     content,
     attachments: Array.isArray(attachments) ? attachments : undefined,

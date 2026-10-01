@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../middleware/asyncRouter";
 import {
   getChatUser,
   listChatUsers,
@@ -19,26 +19,26 @@ function nowTimeLabel(): string {
 }
 
 /** GET /api/messages/users */
-router.get("/users", (_req, res) => {
-  res.json({ success: true, data: listChatUsers() });
+router.get("/users", async (_req, res) => {
+  res.json({ success: true, data: await listChatUsers() });
 });
 
 /** GET /api/messages/:userId */
-router.get("/:userId", (req, res) => {
-  const user = getChatUser(req.params.userId);
+router.get("/:userId", async (req, res) => {
+  const user = await getChatUser(req.params.userId);
   if (!user) throw new HttpError(404, "Chat user not found");
-  const messages = listMessages(req.params.userId);
+  const messages = await listMessages(req.params.userId);
   res.json({ success: true, data: { user, messages } });
 });
 
 /** POST /api/messages/:userId  body: { content, isImage? } */
-router.post("/:userId", (req, res) => {
+router.post("/:userId", async (req, res) => {
   const { content, isImage } = req.body ?? {};
   if (!content || typeof content !== "string") {
     throw new HttpError(400, "content is required");
   }
 
-  const msg = sendMessage({
+  const msg = await sendMessage({
     peerId: req.params.userId,
     content,
     isImage: Boolean(isImage),

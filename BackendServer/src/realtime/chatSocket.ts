@@ -28,16 +28,22 @@ export function attachChatSocket(server: HttpServer) {
     const url = new URL(req.url ?? "", "http://localhost");
     if (url.pathname !== WS_PATH) return;
 
-    const userId = getSessionUserId(readSessionCookie(req.headers.cookie));
-    if (!userId) {
-      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
-      socket.destroy();
-      return;
-    }
-
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      wss.emit("connection", ws, req, userId);
-    });
+    getSessionUserId(readSessionCookie(req.headers.cookie))
+      .then((userId) => {
+        if (!userId) {
+          socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+          socket.destroy();
+          return;
+        }
+        wss.handleUpgrade(req, socket, head, (ws) => {
+          wss.emit("connection", ws, req, userId);
+        });
+      })
+      .catch((err) => {
+        console.error("WS 세션 확인 실패:", err);
+        socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+        socket.destroy();
+      });
   });
 
   wss.on("connection", (ws: WebSocket, _req: IncomingMessage, userId: string) => {
@@ -77,18 +83,26 @@ export function attachChatSocket(server: HttpServer) {
         return;
       }
 
-      const line = addChatLine(id, userId, {
+      addChatLine(id, userId, {
         type: "me",
         content,
         isImage: Boolean(isImage),
-      });
-      if (!line) {
-        ws.send(
-          JSON.stringify({ type: "error", message: "Conversation not found" })
-        );
-      }
-      // 성공 시 addChatLine 내부에서 chatBus.publish 를 호출하므로
-      // 이 소켓을 포함한 본인의 모든 연결에 chat_line 이벤트로 되돌아온다.
+      })
+        .then((line) => {
+          if (!line && ws.readyState === WebSocket.OPEN) {
+            ws.send(
+              JSON.stringify({ type: "error", message: "Conversation not found" })
+            );
+          }
+          // 성공 시 addChatLine 내부에서 chatBus.publish 를 호출하므로
+          // 이 소켓을 포함한 본인의 모든 연결에 chat_line 이벤트로 되돌아온다.
+        })
+        .catch((err) => {
+          console.error("WS 메시지 저장 실패:", err);
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "error", message: "save failed" }));
+          }
+        });
     });
 
     const keepAlive = setInterval(() => {

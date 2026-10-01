@@ -10,6 +10,7 @@
  * - 이미 있고 일반 유저면: `--promote` 가 있어야 승격 (비밀번호는 건드리지 않음)
  * - 이미 관리자면: 아무것도 바꾸지 않고 안내만 출력 (멱등)
  */
+import "dotenv/config";
 import { closeDb, initDb } from "../src/db/client";
 import {
   createAccount,
@@ -28,7 +29,7 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-function main() {
+async function main() {
   const argv = process.argv.slice(2);
   const promote = argv.includes("--promote");
   const positional = argv.filter((a) => !a.startsWith("--"));
@@ -49,12 +50,12 @@ function main() {
     fail(`비밀번호는 ${PASSWORD_MIN}~${PASSWORD_MAX}자여야 합니다.`);
   }
 
-  initDb();
+  await initDb();
   try {
-    const existing = findAccount(handle);
+    const existing = await findAccount(handle);
 
     if (!existing) {
-      const account = createAccount({
+      const account = await createAccount({
         handle,
         name: (nameRaw ?? handle).trim(),
         password,
@@ -77,14 +78,17 @@ function main() {
       );
     }
 
-    setAccountRole(existing.id, "admin");
+    await setAccountRole(existing.id, "admin");
     console.log(
       `✔ 관리자로 승격했습니다: @${existing.handle} (${existing.id})\n` +
         "  비밀번호는 기존 계정 것을 그대로 사용합니다."
     );
   } finally {
-    closeDb();
+    await closeDb();
   }
 }
 
-main();
+main().catch((err) => {
+  console.error(`✖ ${err instanceof Error ? err.message : err}`);
+  process.exit(1);
+});

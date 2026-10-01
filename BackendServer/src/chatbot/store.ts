@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { getDb } from "../db/client";
+import { getDb, withTx } from "../db/client";
 import type { CorpusDoc } from "./types";
 
 export type MemoryHit = {
@@ -20,27 +20,24 @@ function docId(owner: string, doc: CorpusDoc) {
 export function tokens(raw: string) {
   const s = raw.toLowerCase();
   const words = s.split(/[^a-z0-9가-힣]+/i).filter((w) => w.length >= 2);
-  const hangul = s.replace(/[^\uac00-\ud7a3]/g, "");
+  const hangul = s.replace(/[^가-힣]/g, "");
   const grams: string[] = [];
   for (let i = 0; i < hangul.length - 1; i++) grams.push(hangul.slice(i, i + 2));
   return [...words, ...grams];
 }
 
-export function ingestCorpus(owner: string, docs: CorpusDoc[]) {
+export async function ingestCorpus(owner: string, docs: CorpusDoc[]) {
   if (!owner || !docs.length) return 0;
-  const db = getDb();
-  const stmt = db.prepare(
-    `INSERT OR IGNORE INTO chatbot_docs
-     (id, owner, thread_key, title, role, content, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  );
   const now = new Date().toISOString();
   let n = 0;
-  const tx = db.transaction(() => {
+  await withTx(async (tx) => {
     for (const doc of docs) {
       const content = doc.content.trim();
       if (content.length < 2) continue;
-      const info = stmt.run(
+      const info = await tx.run(
+        `INSERT INTO chatbot_docs
+         (id, owner, thread_key, title, role, content, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING`,
         docId(owner, { ...doc, content }),
         owner,
         doc.threadKey,
@@ -52,34 +49,32 @@ export function ingestCorpus(owner: string, docs: CorpusDoc[]) {
       if (info.changes) n += 1;
     }
   });
-  tx();
   return n;
 }
 
-export function retrieveMemories(input: {
+export async function retrieveMemories(input: {
   owner: string;
   query: string;
   excludeThread?: string;
   limit: number;
-}): MemoryHit[] {
+}): Promise<MemoryHit[]> {
   const { owner, query, excludeThread, limit } = input;
   const q = new Set(tokens(query));
   if (!owner || q.size === 0) return [];
 
-  const rows = getDb()
-    .prepare(
-      `SELECT thread_key, title, role, content
-       FROM chatbot_docs
-       WHERE owner = ?
-       ORDER BY created_at DESC
-       LIMIT 2000`
-    )
-    .all(owner) as Array<{
+  const rows = await getDb().all<{
     thread_key: string;
     title: string;
     role: string;
     content: string;
-  }>;
+  }>(
+    `SELECT thread_key, title, role, content
+     FROM chatbot_docs
+     WHERE owner = ?
+     ORDER BY created_at DESC
+     LIMIT 2000`,
+    owner
+  );
 
   const scored: MemoryHit[] = [];
   for (const row of rows) {
@@ -119,24 +114,26 @@ export function formatHits(hits: MemoryHit[]) {
   });
 }
 
-export function loadSummary(owner: string, threadKey: string) {
-  const row = getDb()
-    .prepare(
-      `SELECT summary FROM chatbot_summaries
-       WHERE owner = ? AND thread_key = ?`
-    )
-    .get(owner, threadKey) as { summary: string } | undefined;
+export async function loadSummary(owner: string, threadKey: string) {
+  const row = await getDb().get<{ summary: string }>(
+    `SELECT summary FROM chatbot_summaries
+     WHERE owner = ? AND thread_key = ?`,
+    owner,
+    threadKey
+  );
   return row?.summary ?? "";
 }
 
-export function saveSummary(owner: string, threadKey: string, summary: string) {
-  getDb()
-    .prepare(
-      `INSERT INTO chatbot_summaries (owner, thread_key, summary, updated_at)
-       VALUES (?, ?, ?, ?)
-       ON CONFLICT(owner, thread_key) DO UPDATE SET
-         summary = excluded.summary,
-         updated_at = excluded.updated_at`
-    )
-    .run(owner, threadKey, summary.slice(0, 2500), new Date().toISOString());
+export async function saveSummary(owner: string, threadKey: string, summary: string) {
+  await getDb().run(
+    `INSERT INTO chatbot_summaries (owner, thread_key, summary, updated_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(owner, thread_key) DO UPDATE SET
+       summary = excluded.summary,
+       updated_at = excluded.updated_at`,
+    owner,
+    threadKey,
+    summary.slice(0, 2500),
+    new Date().toISOString()
+  );
 }

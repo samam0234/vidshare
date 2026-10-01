@@ -8,20 +8,20 @@ export function readSid(req: Request) {
   return typeof raw === "string" ? raw : null;
 }
 
-export function getRequestAccount(req: Request): AuthAccount | null {
-  const userId = getSessionUserId(readSid(req));
+export async function getRequestAccount(req: Request): Promise<AuthAccount | null> {
+  const userId = await getSessionUserId(readSid(req));
   if (!userId) return null;
-  return findAccount(userId) ?? null;
+  return (await findAccount(userId)) ?? null;
 }
 
-export function getRequestPublicUser(req: Request) {
-  const account = getRequestAccount(req);
+export async function getRequestPublicUser(req: Request) {
+  const account = await getRequestAccount(req);
   return account ? toPublicUser(account) : null;
 }
 
 /** 로그인이 필요한 라우트에서 사용. 없으면 401. */
-export function requireRequestUser(req: Request) {
-  const user = getRequestPublicUser(req);
+export async function requireRequestUser(req: Request) {
+  const user = await getRequestPublicUser(req);
   if (!user) throw new HttpError(401, "로그인이 필요합니다.");
   return user;
 }

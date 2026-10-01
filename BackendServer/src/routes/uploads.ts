@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../middleware/asyncRouter";
 import multer from "multer";
 import { requireRequestUser } from "../auth/requestUser";
 import { HttpError } from "../middleware/errorHandler";
@@ -61,8 +61,8 @@ function parseKind(raw: unknown): UploadKind {
 }
 
 /** POST /api/uploads?kind=image|video  field: file */
-router.post("/", (req, res, next) => {
-  requireRequestUser(req);
+router.post("/", async (req, res, next) => {
+  await requireRequestUser(req);
   const kind = parseKind(req.query.kind);
   const upload = makeMulter(kind).single("file");
   upload(req, res, (err: unknown) => {

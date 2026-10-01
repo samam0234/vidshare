@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../middleware/asyncRouter";
 import { createReport, isReportTargetType } from "../data/store";
 import { requireRequestUser } from "../auth/requestUser";
 import { HttpError } from "../middleware/errorHandler";
@@ -8,8 +8,8 @@ const router = Router();
 const REASON_MAX = 500;
 
 /** POST /api/reports  body: { targetType, targetId, reason } */
-router.post("/", (req, res) => {
-  const user = requireRequestUser(req);
+router.post("/", async (req, res) => {
+  const user = await requireRequestUser(req);
   const { targetType, targetId, reason } = req.body ?? {};
 
   if (!isReportTargetType(targetType)) {
@@ -28,7 +28,7 @@ router.post("/", (req, res) => {
     throw new HttpError(400, `사유는 ${REASON_MAX}자 이하여야 합니다.`);
   }
 
-  const report = createReport({
+  const report = await createReport({
     reporterId: user.id,
     targetType,
     targetId,

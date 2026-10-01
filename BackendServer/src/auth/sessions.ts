@@ -9,29 +9,33 @@ import {
 export const SESSION_COOKIE = "vidshare_sid";
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-export function createSession(userId: string) {
+export async function createSession(userId: string) {
   const id = randomUUID();
-  getDb()
-    .prepare("INSERT INTO sessions (id, user_id, created_at) VALUES (?, ?, ?)")
-    .run(id, userId, Date.now());
+  await getDb().run(
+    "INSERT INTO sessions (id, user_id, created_at) VALUES (?, ?, ?)",
+    id,
+    userId,
+    Date.now()
+  );
   return id;
 }
 
-export function getSessionUserId(sid?: string | null) {
+export async function getSessionUserId(sid?: string | null) {
   if (!sid) return null;
-  const row = getDb()
-    .prepare("SELECT user_id, created_at FROM sessions WHERE id = ?")
-    .get(sid) as { user_id: string; created_at: number } | undefined;
+  const row = await getDb().get<{ user_id: string; created_at: number }>(
+    "SELECT user_id, created_at FROM sessions WHERE id = ?",
+    sid
+  );
   if (!row) return null;
   if (Date.now() - row.created_at > MAX_AGE_MS) {
-    getDb().prepare("DELETE FROM sessions WHERE id = ?").run(sid);
+    await getDb().run("DELETE FROM sessions WHERE id = ?", sid);
     return null;
   }
   return row.user_id;
 }
 
-export function destroySession(sid?: string | null) {
-  if (sid) getDb().prepare("DELETE FROM sessions WHERE id = ?").run(sid);
+export async function destroySession(sid?: string | null) {
+  if (sid) await getDb().run("DELETE FROM sessions WHERE id = ?", sid);
 }
 
 export function setSessionCookie(res: Response, sid: string) {

@@ -58,6 +58,11 @@ export function isAllowedCorsOrigin(origin: string, extra: string[]) {
 export function createApp() {
   const app = express();
 
+  // Oracle VM 에서는 Caddy 가 HTTPS 를 끝내고 :4000 으로 넘긴다. 프록시를 믿어야
+  // req.secure / req.ip 가 원래 요청 기준이 된다. 값은 앞단 프록시 홉 수.
+  const trustProxy = Number(process.env.TRUST_PROXY ?? 0);
+  if (trustProxy > 0) app.set("trust proxy", trustProxy);
+
   const extraOrigins = (process.env.CORS_ORIGIN ?? "")
     .split(",")
     .map((s) => s.trim())
