@@ -8,6 +8,21 @@
 ## [Unreleased]
 
 ### Added
+- **PostgreSQL 16** (커밋 096): SQLite 를 대체. 버전 관리 마이그레이션(`src/db/migrations/`,
+  `schema_migrations`, advisory lock), `npm run db:migrate`.
+  **SQLite → Postgres 이관 스크립트** `npm run db:import-sqlite` — FK 순서·한 트랜잭션·
+  IDENTITY 시퀀스 보정·행 수 비교표. 로컬 실데이터 22개 테이블 151행으로 검증
+- `npm run db:doc` — `DataBaseColumn.md` 덤프를 수동 스크립트로 (자동 덤프 대체)
+- `/api/health` 가 DB(`SELECT 1`)까지 확인, 실패 시 503 `db: down`
+- `TRUST_PROXY` 환경 변수 — Caddy 뒤에서 `trust proxy`
+- **Oracle Cloud 배포 스크립트** (커밋 097): `deploy/oracle/` — `setup-vm.sh`(Node 24·Postgres 16·Caddy,
+  블록 볼륨 마운트, Postgres 데이터 이전, iptables), `deploy.sh`(백업→빌드→마이그레이션→재시작→health),
+  `backup.sh`(cron), `Caddyfile`, systemd 유닛
+- **D 드라이브 스크립트** (커밋 097): `deploy/windows/` — 기존 `D:\PostgreSQL\16` 클러스터에
+  `vidshare` 계정·DB 생성, `D:\vidshare-data` 폴더, 로컬 백업·운영 백업 가져오기(작업 스케줄러 등록)
+- **CI** (커밋 097): `.github/workflows/ci.yml` — 백엔드(Postgres 16 서비스 컨테이너)·프론트·콘솔
+- 운영 절차서 `docs/ops/` (커밋 098): Oracle 구축, D 드라이브 Postgres, 백업·복원
+- 백엔드 테스트 11건 추가 (마이그레이션 멱등성·`?`→`$n` 변환·SQLite 이관) — 총 148건
 - **포트폴리오 발표 슬라이드** (커밋 094): `portfolio/VidShare-포트폴리오.pptx`,
   python-pptx 로 생성하는 23장짜리 서비스 소개 덱. API·파일 구조 같은 구현
   디테일 대신 화면 스크린샷이 중심. 생성 스크립트(`build_pptx.py`)를
@@ -92,6 +107,15 @@
 - 챗봇 봇 답변 마크다운 렌더링 (굵게·이탤릭·취소선·목록)
 
 ### Changed
+- **백엔드 데이터 계층 전부 async** (커밋 096): `better-sqlite3`(동기) → `pg`(비동기).
+  store·auth·chatbot·라우트 25개. 라우터는 `middleware/asyncRouter.ts` 의 `Router()` 로 만들어
+  async 핸들러의 실패가 에러 핸들러로 가게 함(Express 4 는 rejected promise 를 놓침)
+- 1차 전환은 컬럼 타입 보존(날짜 TEXT, 불리언 0/1) — API 응답 모양 변화 없음.
+  SQLite `rowid` 정렬은 `seq` identity 컬럼으로, id·시각은 `COLLATE "C"` 로 바이트 정렬 유지
+- 테스트는 `DATABASE_URL_TEST` DB 안에 **파일마다 임시 스키마**를 만들어 병렬 실행
+- 백엔드 호스팅 계획: Cloudflare Tunnel(내 PC) → **Oracle Cloud VM** (plan.md v2)
+- `better-sqlite3` 는 이관 스크립트용 devDependency 로만 남김
+- 계획서 `plan.md` v2 — Oracle Cloud·PostgreSQL·D 드라이브, 파일 단위 폴더 구조, P1~P7 (커밋 095, 098 에서 구현 결과 반영)
 - 개인정보처리방침에 헌법 제10조·제17조 및 「개인정보 보호법」 관련 조문 반영 (커밋 091)
 - 정지된 계정(`users.suspended`)은 로그인 시 403, 정지 시점에 기존 세션이 전부 끊김
 - 공개 `Author` 응답에 `role` 이 포함됨 (`suspended` 는 관리자 응답에만)
@@ -111,6 +135,9 @@
 - 네비: 메시지/알림 텍스트 제거, 롱폼·커뮤니티·챗봇 추가, 좁은 화면 햄버거
 - 고객센터 FAQ를 유저가 직접 할 수 있는 짧은 안내로 변경
 ### Removed
+- `src/db/schema.ts`(→ `migrations/0001_init.ts`), `src/db/dumpDoc.ts`(→ `scripts/dump-db-doc.ts`) (커밋 096)
+- `cloudflare/config.template.yml` — Tunnel 대신 Oracle VM + Caddy (커밋 097)
+- `console/tsconfig.tsbuildinfo` 추적 해제 — 빌드 캐시 (`*.tsbuildinfo` ignore)
 - 레거시 `notifications` 테이블 (커밋 062). 알림은 `activity_notifications` 로 일원화
 - 죽은 코드: `store.ts` 의 `listNotifications`/`deleteNotification`/`patchNotification`, `seedNotifications`, `Notification` 타입
 
@@ -131,8 +158,8 @@
 
 ### 예정 (다음 작업자용, 상세는 features/roadmap.md)
 - **Phase A·B 전량 완료, Phase C 주요 항목 + 관리자 콘솔 완료 (2026-09-01)**
-- 실제 배포 (가이드는 [docs/deployment.md](../deployment.md), 아직 올리지 않음)
-- CI 파이프라인 (GitHub Actions)
+- Oracle VM 실제 구축·도메인 연결 (스크립트·가이드 준비됨, [docs/deployment.md](../deployment.md))
+- DB 타입 정교화 (`timestamptz`, `boolean`)
 - 관리자 조치 감사 로그, 관리자 목록 페이지네이션
 - `ShortsFeed` React Query 전환, 접근성·성능 점검
 

@@ -1,286 +1,242 @@
 # 배포 가이드
 
-**상태**: 가이드 문서 — Cloudflare Tunnel 경로로 코드 준비됨 (실제 터널 생성은 계정 작업)
-**최종 갱신**: 2026-09-02
-**대상**: VidShare를 처음 실제 서버에 올리려는 사람
+**상태**: 가이드 + 스크립트 준비됨 — 백엔드는 **Oracle Cloud VM**, DB 는 **PostgreSQL 16**, 로컬 데이터는 **D 드라이브**
+**최종 갱신**: 2026-10-02 (096~098)
+**대상**: VidShare 를 처음 실제 서버에 올리려는 사람
 
-이 문서는 **무엇을 골라야 하는지**와 **올리기 전에 반드시 고쳐야 하는 것**을
-정리합니다. 지금 코드는 전부 "내 PC + 같은 Wi-Fi" 를 전제로 되어 있어서,
-그대로 올리면 **로그인이 되지 않습니다**(3장 참고).
-
----
-
-## 1. 먼저 알아야 할 제약
-
-배포처를 고르기 전에, 이 프로젝트가 지금 어떤 모양인지부터 봅니다.
-
-| 요소 | 현재 | 배포에 주는 제약 |
-|------|------|------------------|
-| DB | `better-sqlite3` → `data/vidshare.sqlite` **파일 하나** | **서버리스 불가.** 항상 살아 있는 프로세스와 **영구 디스크**가 필요. 인스턴스를 2개로 늘리면 각자 다른 DB를 보게 됨 → **1대 고정** |
-| 업로드 | `uploads/` **로컬 디스크** (영상 100MB, 이미지 8MB) | 같은 영구 디스크에 저장. 컨테이너를 다시 만들면 볼륨이 없는 한 전부 사라짐 |
-| 실시간 | SSE(`/api/notifications/stream`) + WebSocket(`/ws/conversations`) | 요청 시간 제한이 있는 서버리스/일부 프록시에서 끊김. **WS를 지원하는 호스트** 필요 |
-| 네이티브 모듈 | `better-sqlite3` | 배포 환경에서 컴파일되거나 prebuilt가 맞아야 함. Node 버전을 로컬과 맞출 것 |
-| 앱 개수 | FrontServer(3000) / BackendServer(4000) / console(3200) | 배포 단위가 **셋**. 프론트 둘은 정적에 가깝고 백엔드만 상태를 가짐 |
-| 세션 | HttpOnly 쿠키 `vidshare_sid` / `vidshare_admin_sid` | **프론트와 백엔드 도메인이 다르면 지금 설정으로는 쿠키가 안 실림** (3장) |
-
-> 요약: **백엔드는 "디스크가 붙은 작은 서버 1대"**, **프론트 둘은 아무 데나.**
+결정의 이유는 [plan.md](../plan.md) 7~10장, 스크립트 목록은 [deploy/README.md](../deploy/README.md),
+손으로 따라 하는 절차서는 [ops/](./ops/) 에 있습니다.
 
 ---
 
-## 2. 추천 조합
-
-### 이 저장소의 권장안 — Cloudflare Tunnel + 상시 Node 3프로세스
-
-아티팩트(배포 가이드)의 제약 그대로다. **백엔드는 서버리스에 올리지 않는다.**
-SQLite 파일 + `uploads/` + WebSocket 이라 Workers/Pages Functions 로는 깨진다.
-
-| 대상 | 호스트 | 이유 |
-|------|--------|------|
-| BackendServer | **이 PC 또는 VPS에서 `npm start`** + Cloudflare Tunnel | 영구 디스크와 상시 프로세스. HTTPS·WS는 Cloudflare가 붙인다 |
-| FrontServer | **Cloudflare Workers** (`npm run deploy` in `FrontServer/`) | OpenNext 어댑터. 현재 `https://vidshare-front.limjinheng0120.workers.dev` |
-| console | **Cloudflare Workers** (`npm run deploy` in `console/`) | 동일. 현재 `https://vidshare-console.limjinheng0120.workers.dev` |
-
-도메인은 Cloudflare 존에 있어야 서브도메인 3개를 한 터널에 묶고 쿠키 `domain=.example.com` 이 된다.
-템플릿: [`cloudflare/config.template.yml`](../cloudflare/config.template.yml)
-
-### 대안 (아티팩트와 동일)
-
-| 대상 | 호스트 | 이유 |
-|------|--------|------|
-| BackendServer | Railway / Render / Fly.io | 영구 볼륨 + WS. Tunnel 대신 쓸 수 있음 |
-| FrontServer / console | Vercel 또는 Cloudflare Pages(정적/OpenNext) | 프론트만 |
-
-코드를 가장 적게 고치고 올리는 경로다. DB를 Postgres로 옮기거나 R2를 붙이지 않는다.
-
-| 방식 | 언제 | 대가 |
-|------|------|------|
-| **전부 한 VPS** + Nginx | 도메인 하나에 `/` 와 `/api` 를 같이 붙이고 싶을 때. **쿠키 문제가 통째로 사라지는** 방식 | Nginx·PM2·인증서(certbot)를 직접 관리 |
-| **Docker Compose** 로 3개 컨테이너 | 위 VPS의 정돈된 버전 | Dockerfile 3개를 새로 써야 함 |
-| **Workers/Pages에 백엔드까지** | — | **하지 않음.** SQLite·업로드·WS가 전부 깨짐 |
-
-### 도메인 배치 (권장)
+## 1. 구성
 
 ```
-app.example.com      → FrontServer   (localhost:3000, Tunnel)
-api.example.com      → BackendServer (localhost:4000, Tunnel)
-console.example.com  → console       (localhost:3200, Tunnel)
+app.example.com      → FrontServer   Cloudflare Workers (OpenNext)
+console.example.com  → console       Cloudflare Workers (OpenNext)
+api.example.com      → Oracle VM 공인 IP
+                         Caddy :443 ─┬─ /uploads/*  → /mnt/vidshare-data/uploads (디스크 직접)
+                                     └─ 그 외       → BackendServer 127.0.0.1:4000 (systemd)
+                                                         └─ PostgreSQL 16 127.0.0.1:5432
+                                                              data: /mnt/vidshare-data/pgdata
+내 PC                D:\PostgreSQL\16\data      ← 로컬 개발 DB
+                     D:\vidshare-data\uploads   ← 로컬 업로드
+                     D:\vidshare-data\backups   ← 로컬 백업 + 운영 백업 사본
 ```
 
-관리자 콘솔은 **검색에 잡히지 않게** 되어 있습니다(`robots: index:false`).
-가능하면 회사 VPN·IP 허용 목록 뒤에 두는 편이 좋습니다.
+| 요소 | 제약 | 그래서 |
+|------|------|--------|
+| DB | 상시 프로세스 + 영구 디스크 | VM 1대 + 블록 볼륨. Workers 불가 |
+| 업로드 | 영구 디스크 (영상 100MB, 이미지 8MB) | 같은 블록 볼륨. Caddy 가 직접 서빙 |
+| 실시간 | SSE + WebSocket, 단일 프로세스 `EventEmitter` | 인스턴스 **1개 고정** |
+| 세션 | HttpOnly 쿠키 `vidshare_sid` / `vidshare_admin_sid` | 세 호스트가 **같은 등록 도메인** 아래여야 함 (3장) |
+
+> 운영 DB 는 Oracle VM 에 있습니다. 내 PC 의 D 드라이브는 **로컬 개발 DB 와 운영 백업 사본**을 둡니다.
+> 운영 서버가 집 PC 의 DB 에 붙는 구성은 PC 상시 가동·포트 노출·지연 때문에 쓰지 않습니다(plan.md 9.1).
 
 ---
 
-## 3. 올리기 전에 반드시 고쳐야 할 것
+## 2. 로컬 준비 (내 PC, D 드라이브)
 
-> **이 절을 건너뛰면 배포 후 로그인이 되지 않습니다.** 지금 코드는 전부
-> "프론트와 백엔드가 같은 localhost" 를 전제로 합니다.
+PostgreSQL 16 이 `D:\PostgreSQL\16` 에 설치되어 있고 서비스 `postgresql-x64-16` 의 데이터
+디렉터리가 `D:\PostgreSQL\16\data` 입니다. 새 클러스터를 만들지 않고 계정·DB 만 추가합니다.
 
-### 3-1. 크로스 도메인 세션 쿠키 (가장 중요)
-
-`BackendServer/src/auth/sessions.ts` 와 `adminSession.ts` 는 지금 이렇습니다.
-
-```ts
-res.cookie(SESSION_COOKIE, sid, {
-  httpOnly: true,
-  sameSite: "lax",                                  // ← 문제
-  secure: process.env.NODE_ENV === "production",
-  path: "/",
-});
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\windows\setup-postgres-d.ps1
 ```
 
-`app.example.com` 의 자바스크립트가 `api.example.com` 으로 보내는 요청은
-**cross-site** 라서, `SameSite=Lax` 쿠키는 **브라우저가 붙여 주지 않습니다.**
-로그인은 200이 돌아오는데 다음 요청이 401이 되는 증상으로 나타납니다.
-
-해결은 둘 중 하나입니다.
-
-- **(A) 같은 사이트로 묶기 — 권장.** 프론트와 API를 같은 등록 도메인 아래
-  (`app.example.com` ↔ `api.example.com`)에 두고 쿠키에 `COOKIE_DOMAIN=.example.com`
-  을 주거나, 아예 한 호스트에서 `/api/*` 를 백엔드에 리버스 프록시.
-  **동일 사이트가 되면 `Lax` 그대로 동작하고, 이 항목은 신경 쓸 게 없어집니다.**
-- **(B) 진짜 크로스 사이트로 간다면** `COOKIE_SAMESITE=none` (코드가 프로덕션에서
-  `secure` 를 켠다). HTTPS 필수이고, CSRF 방어가 `Lax` 에 기대던 부분이 사라지니
-  그 대비도 함께 필요합니다.
-
-`sessions.ts` / `adminSession.ts` 는 `COOKIE_DOMAIN` · `COOKIE_SAMESITE` 환경 변수를 읽는다.
-
-### 3-2. CORS 화이트리스트
-
-`BackendServer/src/app.ts` 의 `isDevAllowedOrigin()` 은 **사설망 호스트를 전부
-허용**합니다. 개발 편의를 위한 것이고, 프로덕션에서는 `CORS_ORIGIN` 을 반드시
-명시해야 합니다.
-
-```env
-CORS_ORIGIN=https://app.example.com,https://console.example.com
-```
-
-`NODE_ENV=production` 이면 사설망 자동 허용은 꺼진다. `CORS_ORIGIN` 이 비면
-브라우저 Origin 이 있는 요청은 전부 막힌다.
-
-### 3-3. 관리자 계정 만들기
-
-관리자는 **시드에 없습니다**(비밀번호를 소스에 두지 않으려고). 배포한 서버에
-붙어서 직접 만들어야 합니다.
+스크립트가 하는 일: 서비스·데이터 위치 확인 → `D:\vidshare-data\{uploads,backups,logs}` 생성 →
+예전 `vidshare.sqlite` 를 `backups\sqlite-final` 에 보관 → `vidshare` 계정과 `vidshare` · `vidshare_test` DB 생성.
+끝나면 출력된 세 줄을 `BackendServer\.env` 에 넣습니다.
 
 ```bash
-# 백엔드가 돌아가는 서버/컨테이너 안에서
 cd BackendServer
-npm run create-admin -- <handle> <password> [name]
-
-# 이미 있는 일반 계정을 올리려면 (비밀번호는 그대로 유지됨)
-npm run create-admin -- <handle> <password> --promote
+npm install
+npm run db:import-sqlite   # 예전 SQLite 데이터 → Postgres (행 수 비교표 출력)
+npm test                   # 148건, Postgres 위에서
+npm run dev
 ```
 
-터널을 띄운 **그 기계**의 백엔드 폴더에서 실행한다.
-`SQLITE_PATH` 가 실제 남는 경로여야 한다 — 컨테이너 임시 디스크면 재시작 때 사라진다.
-
-### 3-4. 그 외 점검
-
-- [ ] `NODE_ENV=production` (쿠키 `secure`, morgan 포맷이 여기에 걸려 있음)
-- [ ] `GOOGLE_API_KEY` / `GROQ_API_KEY` — 챗봇을 쓸 거면 호스트의 시크릿으로.
-      **저장소에 넣지 말 것**
-- [ ] 업로드 볼륨 크기 — 영상 100MB × 개수. 최소 몇 GB는 잡을 것
-- [ ] 프록시(Nginx/Cloudflare)를 둔다면 업로드 상한(`client_max_body_size 100m`)
-      과 SSE·WS 버퍼링 해제(`proxy_buffering off`, `Upgrade` 헤더 전달)
-- [ ] `data/DataBaseColumn.md` 덤프는 쓰기마다 갱신됨 — 프로덕션에서 부담되면 끌 것
+자세한 설명·문제 해결: [ops/postgres-d-drive.md](./ops/postgres-d-drive.md)
 
 ---
 
-## 4. 단계별 절차 (Cloudflare Tunnel)
+## 3. 도메인과 쿠키 (가장 중요)
 
-에이전트가 대신 할 수 없는 계정 작업은 5장 끝에 적어 두었다.
+`app.example.com` 의 JS 가 `api.example.com` 으로 보내는 요청에 세션 쿠키가 실리려면
+**두 호스트가 같은 등록 도메인**(`example.com`)이어야 합니다. `*.workers.dev` 와 VM IP 처럼
+서로 다른 사이트면 `SameSite=Lax` 쿠키가 붙지 않아, 로그인은 200 인데 다음 요청이 401 이 됩니다.
 
-### 4-1. 앱을 프로덕션 설정으로 띄우기
+그래서 도메인을 하나 마련해 세 개로 나눕니다.
 
-백엔드 `BackendServer/.env`:
+| 호스트 | 대상 | 연결 |
+|--------|------|------|
+| `app.example.com` | FrontServer | Workers → Settings → Domains & Routes → Custom Domain |
+| `console.example.com` | console | 같음 |
+| `api.example.com` | Oracle VM | DNS **A 레코드** → 예약 공인 IP (Cloudflare 라면 **DNS only**, 주황 구름 끔) |
+
+백엔드 `/etc/vidshare/backend.env` (setup-vm.sh 가 `--domain` 에서 계산해 채움):
 
 ```env
-NODE_ENV=production
-PORT=4000
 CORS_ORIGIN=https://app.example.com,https://console.example.com
 COOKIE_DOMAIN=.example.com
 COOKIE_SAMESITE=lax
-GOOGLE_API_KEY=...
-GROQ_API_KEY=...
+TRUST_PROXY=1
 ```
 
-프론트 `FrontServer/.env.local` · `console/.env.local`:
+- `NODE_ENV=production` 이면 사설망 CORS 자동 허용이 꺼지고 쿠키에 `Secure` 가 붙습니다.
+- 진짜 다른 사이트끼리라면 `COOKIE_SAMESITE=none` 이 필요하고, CSRF 대비를 따로 해야 합니다. 권장하지 않습니다.
 
-```env
-NEXT_PUBLIC_API_URL=https://api.example.com
+---
+
+## 4. Oracle Cloud VM 구축 (최초 1회)
+
+요약입니다. 콘솔 화면 순서까지 적은 절차서는 [ops/oracle-setup.md](./ops/oracle-setup.md).
+
+1. **OCI 리소스**: Ubuntu 24.04 VM(Ampere A1 권장), 블록 볼륨 100GB 연결, 예약 공인 IP.
+2. **보안 목록**: Ingress TCP 80·443 전체, TCP 22 는 **내 IP/32 만**.
+3. **DNS**: `api.example.com` A → 예약 IP. 반영을 확인한 뒤 다음 단계(인증서 발급에 필요).
+4. **설정 스크립트** (VM 에서):
+
+   ```bash
+   lsblk                                   # 블록 볼륨 장치 이름 확인 (예: sdb)
+   git clone https://github.com/samam0234/vidshare.git ~/vidshare
+   sudo bash ~/vidshare/deploy/oracle/setup-vm.sh --domain api.example.com --device /dev/sdb --format
+   ```
+
+   패키지(Node 24 · Postgres 16 · Caddy) 설치, 볼륨 마운트, Postgres 데이터 이전,
+   `vidshare` 계정·DB, `/etc/vidshare/backend.env`, Caddy · systemd · 백업 cron, iptables 80/443 까지 처리합니다.
+   `--format` 은 **파일시스템이 없는 새 볼륨일 때만** 포맷합니다.
+
+5. **API 키**: `sudo nano /etc/vidshare/backend.env` 에 `GOOGLE_API_KEY` / `GROQ_API_KEY`.
+
+---
+
+## 5. 데이터 옮기기 (로컬 → VM)
+
+```powershell
+# 내 PC
+& "D:\PostgreSQL\16\bin\pg_dump.exe" -h localhost -U vidshare -d vidshare -Fc -f D:\vidshare-data\backups\local\to-oracle.dump
+scp D:\vidshare-data\backups\local\to-oracle.dump vidshare-vm:/tmp/
+scp -r D:\vidshare-data\uploads\. vidshare-vm:/tmp/uploads/
 ```
-
-백엔드:
 
 ```bash
-cd BackendServer && npm ci && npm run build && npm start
+# VM
+sudo -u postgres pg_restore -d vidshare --no-owner --role=vidshare /tmp/to-oracle.dump
+sudo cp -a /tmp/uploads/. /mnt/vidshare-data/uploads/ && sudo chown -R vidshare:vidshare /mnt/vidshare-data/uploads
+rm -rf /tmp/to-oracle.dump /tmp/uploads
 ```
 
-프론트·콘솔은 Cloudflare Workers 로 올린다 (OpenNext).
+> 처음부터 빈 DB 로 시작한다면 이 단계를 건너뜁니다. 서버가 처음 뜰 때 시드(데모 계정 포함)를 넣습니다.
+> **운영에서는 시드 계정 `demo` / `demo1234` 를 정지하거나 지우세요** — 비밀번호가 공개되어 있습니다.
+
+---
+
+## 6. 배포
+
+```bash
+sudo bash /opt/vidshare/deploy/oracle/deploy.sh            # master 최신
+sudo bash /opt/vidshare/deploy/oracle/deploy.sh <커밋|태그>  # 특정 버전 (롤백)
+```
+
+`deploy.sh` 순서: **백업** → `git pull` → `npm ci` → `npm run build` → `npm run db:migrate` → `systemctl restart` → `/api/health` 확인.
+마이그레이션은 되돌리기 어려워 매번 백업부터 합니다. 코드 롤백은 이전 커밋으로 다시 `deploy.sh`,
+스키마까지 되돌려야 하면 직전 덤프를 `pg_restore --clean` 합니다([ops/backup-restore.md](./ops/backup-restore.md)).
+
+### 관리자 계정
+
+관리자는 시드에 없습니다. VM 에서 한 번 만듭니다.
+
+```bash
+sudo -u vidshare bash -c 'set -a; . /etc/vidshare/backend.env; set +a; cd /opt/vidshare/BackendServer && npm run create-admin -- <handle> <password>'
+```
+
+### 프론트·콘솔
+
+```bash
+# FrontServer/.env.local · console/.env.local
+NEXT_PUBLIC_API_URL=https://api.example.com
+```
 
 ```bash
 cd FrontServer && npm run deploy
 cd console && npm run deploy
 ```
 
-로컬에서 Workers 런타임으로 미리 보려면 `npm run preview`.
+WebSocket 주소는 프론트가 `https → wss` 로 바꿔 씁니다(`lib/chat-socket.ts`). 따로 설정할 것은 없습니다.
 
-### 4-2. 터널
+---
 
-1. [Cloudflare Zero Trust](https://one.dash.cloudflare.com) → Networks → Tunnels → Create → Cloudflared
-2. 이름 `vidshare`, 설치 명령을 **앱이 도는 기계**에서 실행
-3. Public Hostname 세 개: HTTP → `localhost:3000` / `4000` / `3200`
-   또는 [`cloudflare/config.template.yml`](../cloudflare/config.template.yml) 을 채워
-   `cloudflared tunnel --config ... run`
-4. DNS: `app` / `api` / `console` CNAME → `<TUNNEL_ID>.cfargotunnel.com` (프록시 켜기)
-
-임시 확인만 하려면 `cloudflared tunnel --url http://localhost:4000` 으로
-`*.trycloudflare.com` 을 받을 수 있다. 주소가 매번 바뀌고 프론트와 쿠키 도메인을
-맞추기 어려우니 **고정 터널 + 존** 을 쓴다.
-
-### 4-3. 관리자
-
-백엔드가 뜬 그 기계에서:
-
-```bash
-cd BackendServer
-npm run create-admin -- <handle> <password>
-```
-
-### 4-4. 배포 후 확인 순서
+## 7. 배포 후 확인
 
 ```
-1. GET  https://api.example.com/api/health          → 200
-2. app.example.com 에서 회원가입·로그인             → 새로고침해도 유지되나
-   (여기서 401이 나면 3-1 쿠키 문제)
-3. 쇼츠 업로드                                       → 파일이 /uploads/... 로 열리나
-4. 두 브라우저로 메시지 주고받기                     → WS 실시간 반영되나
-5. console.example.com 로그인 → 대시보드 숫자 표시
-6. 앱에서 신고 접수 → 콘솔 /reports 에 보이나
-7. 재배포 한 번 → 위 데이터가 그대로 남아 있나 (볼륨 확인)
+1. curl https://api.example.com/api/health        → 200, "db":"ok"
+2. app.example.com 회원가입·로그인 → 새로고침해도 유지   (401 이면 3장 쿠키)
+3. 쇼츠 업로드 → https://api.example.com/uploads/... 재생   (Caddy 직접 서빙)
+4. 두 브라우저로 메시지 → 실시간 반영                     (WebSocket)
+5. 알림 팝업 실시간 수신                                   (SSE, Caddy flush_interval)
+6. console.example.com 로그인 → 대시보드 숫자
+7. sudo reboot → 다시 1~6                                 (볼륨 마운트·자동 시작)
+8. 외부에서 nmap -p 5432 <IP>                              → closed/filtered
 ```
 
-### 4-5. 직접 해야 하는 일 (에이전트/MCP가 못 함)
+---
+
+## 8. 백업
+
+| 대상 | 방법 | 주기 · 보관 |
+|------|------|-------------|
+| 운영 DB | `/usr/local/bin/vidshare-backup` (cron 03:00) → `/mnt/vidshare-data/backups` | 매일 · 14일 |
+| 운영 → 내 PC | `deploy\windows\backup-pull.ps1 -SshHost vidshare-vm` → `D:\vidshare-data\backups\prod` | 매일 04:30(`-Register`) · 30일 |
+| 로컬 DB | `deploy\windows\backup-local.ps1` → `D:\vidshare-data\backups\local` | 매일 03:30(`-Register`) · 14일 |
+| 복원 연습 | 빈 DB 에 `pg_restore` 후 행 수 비교 | 분기 1회 |
+
+절차: [ops/backup-restore.md](./ops/backup-restore.md)
+
+---
+
+## 9. CI
+
+`.github/workflows/ci.yml` — PR 과 master push 마다 세 앱을 검증합니다(배포는 하지 않음).
+
+| 잡 | 내용 |
+|----|------|
+| backend | Postgres 16 서비스 컨테이너 위에서 `typecheck` · `test`(148건) · `build` |
+| front | `lint` · `typecheck` · `test` |
+| console | `lint` · `typecheck` |
+
+E2E(Playwright)는 브라우저 설치가 필요해 CI 에 넣지 않았습니다. 로컬에서 `npm run test:e2e`.
+
+---
+
+## 10. 직접 해야 하는 일 (스크립트·에이전트가 못 함)
 
 | 항목 | 이유 |
 |------|------|
-| Cloudflare 계정 로그인 | 대시보드·`cloudflared` 인증 |
-| 존에 도메인 연결 (또는 이미 있는 존) | `app`/`api`/`console` 서브도메인 + `COOKIE_DOMAIN` |
-| 터널 만들기, 설치 명령 실행 | 자격 증명이 이 PC의 `%USERPROFILE%\.cloudflared\` 에 생김 |
-| `GOOGLE_API_KEY` / `GROQ_API_KEY` 를 `.env`에 넣기 | 채팅에 붙여 넣지 말 것 |
+| OCI 계정, VM·블록 볼륨·예약 IP·보안 목록 | 계정 인증 |
+| 도메인 구입, DNS A 레코드, Workers Custom Domain | 계정 인증 |
+| `setup-postgres-d.ps1` 실행 (postgres 비밀번호 입력) | 슈퍼유저 비밀번호는 본인만 앎 |
+| `/etc/vidshare/backend.env` 에 API 키 | 저장소·채팅에 남기지 않음 |
 | `npm run create-admin` | 관리자 비밀번호를 소스에 두지 않음 |
-| 세 서버를 켜 둔 채로 두기 | 터널은 로컬/VPS 프로세스가 살아 있어야 함 |
-
-`*.trycloudflare.com` 임시 URL은 터미널을 끄면 사라진다. 실서비스는 고정 터널을 쓴다.
+| SSH 하드닝(키 전용, 루트 로그인 끔) | [security-notes 5-3](./security/security-notes.md) |
 
 ---
 
-## 5. CI (선택)
-
-로드맵의 "배포 파이프라인" 항목입니다. 최소 형태는 GitHub Actions로
-**PR마다 검증만** 돌리는 것입니다 (배포는 Vercel/Railway가 자동으로 함).
-
-```yaml
-# .github/workflows/ci.yml (예시 — 아직 만들지 않음)
-on: [push, pull_request]
-jobs:
-  backend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm, cache-dependency-path: BackendServer/package-lock.json }
-      - run: npm ci
-        working-directory: BackendServer
-      - run: npm run typecheck && npm test    # 127건
-        working-directory: BackendServer
-  front:
-    # FrontServer: npx tsc --noEmit && npm run lint && npm test (29건)
-    # E2E(npm run test:e2e)는 브라우저 설치가 필요해 별도 잡으로 분리하는 편이 낫다
-  console:
-    # console: npm run typecheck && npm run lint && npm run build
-```
-
----
-
-## 6. 언제 구조를 바꿔야 하나
-
-지금 구조는 **1대 · 소규모** 전제입니다. 아래 중 하나라도 생기면 그때 손봅니다.
+## 11. 언제 구조를 바꿔야 하나
 
 | 신호 | 해야 할 일 |
 |------|-----------|
-| 서버를 2대 이상으로 늘리고 싶다 | SQLite → **Postgres**. `store.ts` 의 SQL이 대부분 표준이라 이관 자체는 크지 않지만 `better-sqlite3` 동기 API가 전부 async가 됨 |
-| 업로드가 디스크를 채운다 | **S3/R2** + presigned URL. 지금은 삭제 경로 자체가 없어서(082 참고) 파일이 쌓이기만 함 |
-| 인스턴스 간 실시간이 안 맞는다 | SSE/WS 브로드캐스트에 **Redis pub/sub** |
-| 관리자가 여럿이 된다 | 관리자 조치 **감사 로그** 테이블. 지금은 누가 지웠는지 남지 않음 |
-| 신고·유저가 수천 건이 된다 | 관리자 목록 API에 **페이지네이션** (현재 전량 조회) |
+| 업로드가 볼륨을 채운다 | Oracle Object Storage / R2 + 서명 URL. 지금은 삭제 경로가 없어(082) 쌓이기만 함 |
+| 서버를 2대 이상으로 | SSE/WS 브로드캐스트에 **Redis pub/sub**, 세션은 이미 DB 라 공유됨 |
+| 날짜·불리언으로 정렬·집계가 늘어난다 | `TEXT`→`timestamptz`, 0/1→`boolean` 마이그레이션 (096 은 타입 보존) |
+| 관리자가 여럿이 된다 | 관리자 조치 **감사 로그** |
+| 신고·유저가 수천 건 | 관리자 목록 API **페이지네이션** |
 
 ---
 
-## 7. 관련 문서
+## 12. 관련 문서
 
-- [아키텍처](./architecture/overview.md)
-- [보안 노트](./security/security-notes.md)
-- [로드맵](./features/roadmap.md)
-- [081 — 관리자 인증](./commits/081-admin-auth.md) · [082 — 관리자 API](./commits/082-admin-api.md)
+- [plan.md](../plan.md) · [deploy/README.md](../deploy/README.md)
+- [ops/oracle-setup.md](./ops/oracle-setup.md) · [ops/postgres-d-drive.md](./ops/postgres-d-drive.md) · [ops/backup-restore.md](./ops/backup-restore.md)
+- [아키텍처](./architecture/overview.md) · [보안 노트](./security/security-notes.md) · [로드맵](./features/roadmap.md)

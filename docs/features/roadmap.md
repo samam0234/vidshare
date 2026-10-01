@@ -26,7 +26,7 @@
 - [x] 댓글 대댓글·수정·삭제, 신고·차단
 
 ### 백엔드
-- [x] Express + TypeScript + better-sqlite3 (22개 테이블)
+- [x] Express + TypeScript + PostgreSQL 16 (22개 테이블, 버전 관리 마이그레이션 — 096)
 - [x] 인증 (bcrypt + HttpOnly 세션 쿠키)
 - [x] 쇼츠·댓글·유저·롱폼·커뮤니티·대화·알림·고객센터·챗봇 REST API
 - [x] `requireRequestUser()` 인증 미들웨어, `owner_id` 스코프 격리
@@ -44,7 +44,9 @@
 - [x] 로컬 디스크 파일 스토리지 (`POST /api/uploads`, `/uploads`)
 - [x] 알림 벌크 읽음/삭제 (`PATCH /read-all`, `DELETE /api/notifications`)
 - [x] 알림 팝업 바깥 클릭 닫기
-- [x] Front/console Cloudflare Workers (OpenNext, 086). 백엔드는 Tunnel
+- [x] Front/console Cloudflare Workers (OpenNext, 086)
+- [x] SQLite → PostgreSQL 전환 + 이관 스크립트 (096)
+- [x] Oracle Cloud VM · D 드라이브 배포/백업 스크립트, GitHub Actions CI (097)
 - [x] 포트폴리오 문서·소개 사이트 (093). 푸터 "프로젝트 소개" → `/portfolio/index.html`
 
 ---
@@ -63,8 +65,8 @@
 
 ### 다음에 착수할 것 (권장 순서)
 
-1. **백엔드 공개** — Cloudflare Tunnel + `NEXT_PUBLIC_API_URL` 넣고 프론트 재배포
-2. **CI** — PR마다 세 앱 검증
+1. **백엔드 공개** — Oracle VM 구축(`deploy/oracle/setup-vm.sh`) + 도메인 연결 + `NEXT_PUBLIC_API_URL` 넣고 프론트 재배포
+2. ~~**CI**~~ — **완료 (097)**
 3. 사업자등록 후 `/business` 표의 상호·번호 실값으로 교체
 
 ---
@@ -95,8 +97,8 @@
 3. ~~**관리자 콘솔**~~ — **완료 (081~084)**. `console/` 앱(3200) + `/api/admin/*`
 4. **백엔드 공개 + 프론트 재배포** — Front/console Workers 는 올라감.
    쿠키·CORS 는 env(`COOKIE_DOMAIN`, `CORS_ORIGIN`)로 맞춤 (085).
-   남은 것은 Tunnel 과 `NEXT_PUBLIC_API_URL` 빌드. [deployment.md](../deployment.md)
-5. **CI 파이프라인** — PR마다 3개 앱의 typecheck/lint/test
+   남은 것은 Oracle VM 구축·도메인 연결과 `NEXT_PUBLIC_API_URL` 빌드. [deployment.md](../deployment.md)
+5. ~~**CI 파이프라인**~~ — **완료 (097)**. PR마다 3개 앱 검증, 백엔드는 Postgres 서비스 컨테이너
 6. **접근성·성능** — 기능이 어느 정도 안정된 지금이 전면 점검하기 좋은 시점
 7. **사업자 실정보** — `/business` 표는 미등록. 등록 후 번호·대표를 기입
 
@@ -106,10 +108,12 @@
 
 | 기능 | 설명 | 우선순위 |
 |------|------|----------|
-| ~~백엔드 자동화 테스트~~ | **완료 (066, 071, 074~078, 081~082)** — `node:test` 127건 | — |
+| ~~백엔드 자동화 테스트~~ | **완료 (066, 071, 074~078, 081~082, 096)** — `node:test` 148건 (Postgres) | — |
 | 프론트 테스트 | **일부 완료 (070)** — 순수 함수 29건. 컴포넌트 렌더링은 미구현 | P1 |
 | ~~E2E 테스트~~ | Playwright, 8개 시나리오(게스트/로그인/커뮤니티/메시지 WS) | **완료 (079)** |
-| 배포 | Front/console Workers 배포됨. 백엔드 Tunnel·CI 는 미착수 | P1 |
+| 배포 | Front/console Workers 배포됨. 백엔드 Oracle VM 스크립트·CI 준비됨(097), 실제 구축 전 | P1 |
+| DB 타입 정교화 | 날짜 `TEXT`→`timestamptz`, 0/1→`boolean` (096 은 타입 보존) | P2 |
+| 관리자 감사 로그 | 누가 무엇을 지웠는지 기록 (`0002_audit_log` + 콘솔 화면) | P2 |
 | ~~서버 상태 캐싱~~ | React Query 도입, 목록 5곳 전환(롱폼/커뮤니티/팔로잉피드/프로필/메시지) | **완료 (080)** |
 | ~~관리자 콘솔~~ | `console/` 앱 + `/api/admin/*` (신고·유저·콘텐츠·고객센터·대시보드) | **완료 (081~084)** |
 | 접근성 | 키보드·ARIA 전면 점검 | P2 |
@@ -137,7 +141,7 @@
 ## 6. 작업 시 지켜야 할 규칙
 
 1. **레이어 순서 준수**
-   `db/schema.ts` → `data/store.ts` → `routes/*.ts` → `app.ts` 등록 → `lib/api.ts` → 컴포넌트
+   `db/migrations/NNNN_*.ts` → `data/store.ts` → `routes/*.ts` → `app.ts` 등록 → `lib/api.ts` → 컴포넌트
 2. **응답 형태 고정** — `{ success, data?, error? }`
 3. **인증 라우트는 `requireRequestUser(req)` 로 시작**
 4. **`useEffect` 안 `setState` 는 `queueMicrotask()` 로 감싼다** (린트 규칙)

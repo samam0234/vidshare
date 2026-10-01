@@ -13,7 +13,7 @@
 ```
 docs/
 ├── README.md                 ← 지금 이 파일 (docs 이용 가이드)
-├── deployment.md             ← 배포 가이드 (호스트 추천 + 올리기 전 필수 수정)
+├── deployment.md             ← 배포 가이드 (Oracle Cloud + PostgreSQL + D 드라이브)
 ├── architecture/             ← 아키텍처
 │   └── overview.md
 ├── features/                 ← 추가 기능·로드맵
@@ -22,6 +22,10 @@ docs/
 │   └── CHANGELOG.md
 ├── security/                 ← 보안 포인트
 │   └── security-notes.md
+├── ops/                      ← 운영 절차서
+│   ├── oracle-setup.md       ← Oracle Cloud VM 구축
+│   ├── postgres-d-drive.md   ← 내 PC(D 드라이브) Postgres
+│   └── backup-restore.md     ← 백업·복원 연습
 └── commits/                  ← 커밋 상세 기록
     ├── README.md             ← 커밋 문서 작성 가이드
     ├── TEMPLATE.md           ← 복사용 템플릿
@@ -40,7 +44,9 @@ docs/
 | 다음에 무엇을 만들지 정한다 | `features/roadmap.md` |
 | “언제 뭐가 바뀌었지?” | `changelog/CHANGELOG.md` |
 | 보안상 주의할 점 | `security/security-notes.md` |
-| 실제 서버에 올린다 | `deployment.md` (**3장을 먼저 읽을 것**) |
+| 실제 서버에 올린다 | `deployment.md` → `ops/oracle-setup.md` |
+| 로컬 DB 를 준비한다 | `ops/postgres-d-drive.md` |
+| 백업·복원 | `ops/backup-restore.md` |
 | 특정 커밋이 무엇을 했는지 (git 메시지보다 상세) | `commits/` |
 
 ---

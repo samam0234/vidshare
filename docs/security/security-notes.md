@@ -1,7 +1,7 @@
 # 보안 포인트
 
 **상태**: Front + Backend 데모 기준  
-**최종 갱신**: 2026-09-02
+**최종 갱신**: 2026-10-02
 
 이 문서는 **지금 당장 위험한 것**과 **백엔드 도입 시 반드시 지킬 것**을 구분합니다.
 
@@ -12,7 +12,7 @@
 | 항목 | 상태 | 설명 |
 |------|------|------|
 | 인증 | bcrypt + HttpOnly 세션 | 쓰기 API는 `requireRequestUser()` |
-| 데이터 영속 | SQLite | `BackendServer/data/vidshare.sqlite` |
+| 데이터 영속 | PostgreSQL 16 | 앱 전용 계정 `vidshare` (슈퍼유저 아님). 로컬 D 드라이브 · 운영 VM 블록 볼륨 |
 | 비밀키 | 환경 변수 | LLM 키는 `.env` (git 무시) |
 | XSS 표면 | 낮~중 | React 기본 이스케이프 의존, `dangerouslySetInnerHTML` 미사용 |
 | CSRF | 세션 쿠키 | 기본 `SameSite=Lax`. 배포 시 `COOKIE_SAMESITE` / `COOKIE_DOMAIN` |
@@ -128,6 +128,32 @@ npm audit
 - **CORS 가 사설망 호스트를 전부 허용**한다(`isDevAllowedOrigin`). 프로덕션에서는
   `CORS_ORIGIN` 을 반드시 명시할 것.
 - 업로드 파일에 **삭제 경로가 없다.** 관리자가 콘텐츠를 지워도 원본 파일은 남는다.
+
+---
+
+## 5-3. Oracle Cloud · PostgreSQL 운영 (097)
+
+**스크립트가 기본으로 적용하는 것**
+
+- Postgres 는 `listen_addresses = 'localhost'` — 5432 를 인터넷에 열지 않는다.
+  OCI 보안 목록도 80·443(+ 내 IP 의 22)만 연다.
+- 앱은 슈퍼유저가 아닌 `vidshare` 계정으로 접속한다. 비밀번호는 `/etc/vidshare/backend.env` (600) 에만.
+- Caddy 가 HTTPS 를 끝내고, Node 는 `127.0.0.1:4000` 에서만 받는다(`TRUST_PROXY=1`).
+- systemd 유닛은 `NoNewPrivileges`, `ProtectSystem=full`, 블록 볼륨 마운트를 요구(`RequiresMountsFor`).
+- 백업 파일은 `root:adm 640` — 웹 경로(`/uploads`)와 분리.
+
+**직접 해야 하는 것**
+
+- [ ] SSH 키 인증만, 비밀번호 로그인·루트 로그인 끄기 (`/etc/ssh/sshd_config`)
+- [ ] OCI 보안 목록에서 22 를 **내 IP 만** 허용
+- [ ] 운영 DB 에 시드 계정(`demo` / `demo1234`)이 생겼다면 정지하거나 삭제 — 비밀번호가 공개되어 있다
+- [ ] 외부에서 `nmap -p 5432 <IP>` 로 닫혀 있는지 확인
+- [ ] 백업 복원 연습 (분기 1회, [docs/ops/backup-restore.md](../ops/backup-restore.md))
+
+**내 PC(D 드라이브) 쪽 주의**
+
+- 설치된 Postgres 의 `listen_addresses = '*'` 이지만 `pg_hba.conf` 가 127.0.0.1/::1 만 허용한다.
+  공유기 포트포워딩을 열지 않는 한 외부 접속은 불가하다. 굳이 열어 둘 이유가 없다면 `localhost` 로 줄이는 편이 안전하다.
 
 ---
 

@@ -7,11 +7,12 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-better--sqlite3-003B57?logo=sqlite&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![LangChain](https://img.shields.io/badge/LangChain-LangGraph-1C3C3C?logo=langchain&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)
-![tests](https://img.shields.io/badge/backend_tests-137_passing-3FB950)
+![Oracle Cloud](https://img.shields.io/badge/Oracle_Cloud-VM-F80000?logo=oracle&logoColor=white)
+![tests](https://img.shields.io/badge/backend_tests-148_passing-3FB950)
 
 | | 링크 |
 |---|---|
@@ -81,11 +82,11 @@
 | 구분 | 사용 기술 |
 |------|-----------|
 | 프론트엔드 | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, TanStack Query |
-| 백엔드 | Node.js, Express 4, TypeScript, better-sqlite3, `ws`, bcrypt, multer |
+| 백엔드 | Node.js 24, Express 4, TypeScript, `pg`, `ws`, bcrypt, multer |
 | AI | LangChain, LangGraph, Google Gemini · Groq |
-| 데이터 | SQLite (22개 테이블), 로컬 디스크 파일 스토리지 |
-| 테스트 | `node --test` (백엔드 137건 · 프론트), Playwright E2E 8 시나리오 |
-| 배포 | Cloudflare Workers (OpenNext), Cloudflare Tunnel |
+| 데이터 | PostgreSQL 16 (22개 테이블, 버전 관리 마이그레이션), 디스크 파일 스토리지 |
+| 테스트 | `node --test` (백엔드 148건 · 프론트), Playwright E2E 8 시나리오, GitHub Actions CI |
+| 배포 | 프론트: Cloudflare Workers (OpenNext) · 백엔드: Oracle Cloud VM (Caddy + systemd) |
 
 ---
 
@@ -109,8 +110,8 @@
                 /ws/conversations (WebSocket) · /api/notifications/stream (SSE)
                         │
                         ▼
-             [SQLite]  data/vidshare.sqlite
-             [Files]   uploads/  (DB엔 /uploads/<uuid>.ext 경로만)
+             [PostgreSQL 16]  로컬: D:\PostgreSQL\16\data · 운영: VM 블록 볼륨
+             [Files]   UPLOADS_PATH  (DB엔 /uploads/<uuid>.ext 경로만)
 ```
 
 ```
@@ -118,6 +119,7 @@ vidshare/                     ← 이 프로젝트 루트
 ├── README.md                 ← 지금 이 파일
 ├── docs/                     ← 아키텍처, 커밋 기록, 배포 가이드, 보안
 ├── portfolio/                ← 포트폴리오 문서 + 소개 사이트
+├── deploy/                   ← Oracle VM · 내 PC(D 드라이브) 배포·백업 스크립트
 ├── FrontServer/              ← Next.js 프론트엔드 (사용자)  :3000
 ├── console/                  ← Next.js 프론트엔드 (관리자)  :3200
 └── BackendServer/            ← Express REST API             :4000
@@ -131,10 +133,18 @@ vidshare/                     ← 이 프로젝트 루트
 
 ### 1. 백엔드
 
+DB 는 **PostgreSQL 16** 입니다. 처음 한 번 계정·DB 를 만듭니다(데이터는 D 드라이브).
+
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\windows\setup-postgres-d.ps1
+# 안내대로 BackendServer\.env 에 DATABASE_URL / DATABASE_URL_TEST / UPLOADS_PATH 입력
+```
+
 ```bash
 cd BackendServer
 npm install
-npm run dev
+npm run db:import-sqlite   # 예전 SQLite 데이터가 있으면 (1회)
+npm run dev                # 시작할 때 마이그레이션 자동 적용
 ```
 
 - http://localhost:4000
@@ -195,6 +205,8 @@ npm run create-admin -- demo demo1234 --promote
 |------|------|-----------|
 | `FrontServer/.env.local` | `NEXT_PUBLIC_API_URL` | 비우면 `http://localhost:4000`. LAN IP로 프론트를 열면 그 IP:4000 |
 | `console/.env.local` | `NEXT_PUBLIC_API_URL` | 위와 같음 |
+| `BackendServer/.env` | `DATABASE_URL` / `DATABASE_URL_TEST` | **필수.** Postgres 접속 문자열 (앱 / 테스트) |
+| `BackendServer/.env` | `UPLOADS_PATH` | 권장 `D:\vidshare-data\uploads` |
 | `BackendServer/.env` | `CORS_ORIGIN` | 개발에서 비우면 사설망 허용. **프로덕션은 필수** |
 | `BackendServer/.env` | `COOKIE_DOMAIN` / `COOKIE_SAMESITE` | 로컬은 비움 / `lax`. 배포 시 [docs/deployment.md](./docs/deployment.md) |
 | `BackendServer/.env` | `GOOGLE_API_KEY` / `GROQ_API_KEY` | 챗봇 실호출에 필요 |
@@ -207,9 +219,16 @@ cd FrontServer && npm test && npm run lint
 cd console && npm run typecheck && npm run lint
 ```
 
-### Cloudflare에 프론트만 다시 올리기
+### 배포
 
-백엔드는 Workers에 올리지 않습니다. 프론트·콘솔:
+백엔드는 **Oracle Cloud VM** 에 올립니다(Workers 불가 — Postgres·업로드·WebSocket).
+절차는 [deploy/README.md](./deploy/README.md) 와 [docs/deployment.md](./docs/deployment.md).
+
+```bash
+sudo bash /opt/vidshare/deploy/oracle/deploy.sh   # VM 에서: 백업 → 빌드 → 마이그레이션 → 재시작
+```
+
+프론트·콘솔은 Cloudflare Workers:
 
 ```bash
 cd FrontServer && npm run deploy   # https://vidshare-front.limjinheng0120.workers.dev
@@ -227,7 +246,9 @@ API 공개 주소가 있으면 빌드 전에 `NEXT_PUBLIC_API_URL`을 넣습니�
 | [portfolio/](./portfolio/) | **포트폴리오** — 문서(Markdown·DOCX) + 소개 사이트 |
 | [plan.md](./plan.md) | 기획·계기·방식 비교 (계획서) |
 | [docs/architecture/overview.md](./docs/architecture/overview.md) | **현재 구조 전체** — 처음이면 여기부터 |
-| [docs/deployment.md](./docs/deployment.md) | **배포 가이드** (호스트 추천 + 올리기 전 필수 수정) |
+| [docs/deployment.md](./docs/deployment.md) | **배포 가이드** (Oracle Cloud + PostgreSQL + D 드라이브) |
+| [deploy/](./deploy/) | 배포·백업 스크립트 (VM · 내 PC) |
+| [docs/ops/](./docs/ops/) | 운영 절차서 (Oracle 구축 · D 드라이브 Postgres · 백업/복원) |
 | [docs/features/roadmap.md](./docs/features/roadmap.md) | 남은 과제 |
 | [docs/commits/](./docs/commits/) | 커밋별 상세 기록 |
 | [FrontServer/README.md](./FrontServer/README.md) | 프론트 기능·실행 가이드 |
@@ -241,12 +262,12 @@ API 공개 주소가 있으면 빌드 전에 `NEXT_PUBLIC_API_URL`을 넣습니�
 |------|------|
 | FrontServer | UI + API 연동. 법적 페이지 `/terms` `/privacy` `/business` |
 | console | 관리자 콘솔 — 신고·유저·콘텐츠·고객센터·대시보드 |
-| BackendServer | REST + SQLite, SSE·WebSocket |
+| BackendServer | REST + PostgreSQL 16, SSE·WebSocket |
 | 인증 | bcrypt + HttpOnly 세션, 사용자/관리자 쿠키 분리 |
 | 업로드 | `POST /api/uploads` (영상 100MB · 이미지 8MB) |
-| 테스트 | 백엔드 137건 통과 · 프론트 `npm test` · E2E `npm run test:e2e` |
-| 미완 | CI 파이프라인 없음, 백엔드 공개 배포 전, 관리자 감사 로그 없음 ([roadmap](./docs/features/roadmap.md)) |
-| 배포 | Front/console = Cloudflare Workers. 백엔드 = Tunnel. [docs/deployment.md](./docs/deployment.md) |
+| 테스트 | 백엔드 148건(Postgres) · 프론트 `npm test` · E2E `npm run test:e2e` · CI(GitHub Actions) |
+| 미완 | Oracle VM 실제 구축·도메인 연결 전, 관리자 감사 로그 없음 ([roadmap](./docs/features/roadmap.md)) |
+| 배포 | Front/console = Cloudflare Workers. 백엔드 = Oracle Cloud VM (스크립트 준비됨). [docs/deployment.md](./docs/deployment.md) |
 
 ---
 

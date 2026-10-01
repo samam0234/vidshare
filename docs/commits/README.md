@@ -171,6 +171,7 @@ NNN-짧은-영문-slug.md
 | 095 | [095-plan-v2-oracle-postgres.md](./095-plan-v2-oracle-postgres.md) | `df86a27` | 계획서 v2 — Oracle Cloud·Postgres·폴더 구조 | 2026-10-02 |
 | 096 | [096-postgres-migration.md](./096-postgres-migration.md) | `TBD` | SQLite → PostgreSQL 16 전환 | 2026-10-02 |
 | 097 | [097-oracle-deploy-scripts-ci.md](./097-oracle-deploy-scripts-ci.md) | `TBD` | Oracle Cloud·D 드라이브 배포/백업 스크립트 + CI | 2026-10-02 |
+| 098 | [098-docs-postgres-oracle.md](./098-docs-postgres-oracle.md) | `TBD` | 문서 갱신 — PostgreSQL·Oracle Cloud·운영 절차서 | 2026-10-02 |
 
 ---
 

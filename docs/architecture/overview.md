@@ -1,7 +1,7 @@
 # 아키텍처 개요
 
-**상태**: 구현됨 — FrontServer(Next.js) + BackendServer(Express + SQLite) + console(관리자) 연동 완료
-**최종 갱신**: 2026-09-02 (법적 페이지 087~089 + 실행 가이드)
+**상태**: 구현됨 — FrontServer(Next.js) + BackendServer(Express + PostgreSQL) + console(관리자) 연동 완료
+**최종 갱신**: 2026-10-02 (096~098 PostgreSQL 전환 · Oracle Cloud 배포 준비)
 **대상 독자**: 이 저장소를 처음 인수받는 개발자/에이전트
 
 ---
@@ -9,7 +9,7 @@
 ## 1. 한 줄 요약
 
 VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 앱에 담은 영상 공유 플랫폼이며,
-프론트(Next.js)와 백엔드(Express + SQLite)를 폴더로 분리한 모노레포다.
+프론트(Next.js)와 백엔드(Express + PostgreSQL)를 폴더로 분리한 모노레포다.
 
 ```
 [Browser — 사용자]              [Browser — 운영자]
@@ -25,18 +25,20 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
     │  /api/*        ← requireRequestUser
     │  /api/admin/*  ← requireAdmin
     ▼
-[SQLite]  BackendServer/data/vidshare.sqlite  (22개 테이블)
-[Files]   BackendServer/uploads/  ← 영상·썸네일. DB에는 /uploads/<uuid>.ext 만 저장
+[PostgreSQL 16]  22개 테이블 + schema_migrations
+                 로컬: D:\PostgreSQL\16\data · 운영: Oracle VM /mnt/vidshare-data/pgdata
+[Files]   UPLOADS_PATH  ← 영상·썸네일. DB에는 /uploads/<uuid>.ext 만 저장
 ```
 
 | 폴더 | 역할 | 포트 |
 |------|------|------|
 | `vidshare/FrontServer/` | Next.js UI (사용자) | 3000 · Workers `vidshare-front` |
 | `vidshare/console/` | Next.js UI (관리자, 081~084) | 3200 · Workers `vidshare-console` |
-| `vidshare/BackendServer/` | Express API + SQLite | 4000 · Tunnel (Workers 금지) |
+| `vidshare/BackendServer/` | Express API + PostgreSQL | 4000 · Oracle Cloud VM (Workers 금지) |
 | `vidshare/docs/` | 설계·이력·커밋 상세 | — |
 | `vidshare/portfolio/` | 포트폴리오 문서(md·docx) + 소개 사이트 | 4500 (`serve.py`, 선택) |
-| `vidshare/cloudflare/` | Tunnel ingress 템플릿 | — |
+| `vidshare/deploy/` | Oracle VM·내 PC 배포/백업 스크립트 (097) | — |
+| `vidshare/.github/workflows/` | CI — 세 앱 검증, 백엔드는 Postgres 서비스 컨테이너 (097) | — |
 
 공개 URL (이 계정):
 
@@ -57,7 +59,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 
 | 영역 | 상태 |
 |------|------|
-| 인증 | 회원가입·로그인·세션 (bcrypt + HttpOnly 쿠키 + SQLite) |
+| 인증 | 회원가입·로그인·세션 (bcrypt + HttpOnly 쿠키 + DB 세션 테이블) |
 | 쇼츠 | 목록·상세·생성·좋아요·댓글, 실파일 업로드 (API 연동) |
 | 롱폼 | 목록·작성·상세 (API 연동) |
 | 커뮤니티 | 목록·작성·상세 (API 연동) |
@@ -68,7 +70,8 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 | 게스트 정책 | 비회원 열람 전용 (작성·메시지·업로드는 로그인 필요). 약관·개인정보·사업자는 열람 자유 |
 | 법적 문서 | `/terms` 이용약관, `/privacy` 개인정보처리방침, `/business` 사업자 정보확인 (푸터, 087~089) |
 | 검색·소셜 | 통합 검색, 팔로우, 팔로잉 피드, 재생목록, 신고·차단 |
-| localStorage 탈피 | 콘텐츠 상태를 전부 SQLite로 이관 (커밋 038~052) |
+| localStorage 탈피 | 콘텐츠 상태를 전부 서버 DB로 이관 (커밋 038~052) |
+| PostgreSQL | SQLite → Postgres 16 전환, 버전 관리 마이그레이션, 이관 스크립트 (096) |
 
 ### ⚠️ 미완 / 알려진 한계
 
@@ -99,10 +102,10 @@ lib/api.ts  ─── fetch(credentials: "include")
 Express route  ── requireRequestUser(req) 로 인증 검사
     │
     ▼
-data/store.ts  ── better-sqlite3 prepared statement
+data/store.ts  ── await getDb().all/get/run(sql, ...params)  (`?` → `$n` 자동 변환)
     │
     ▼
-SQLite (vidshare.sqlite)
+PostgreSQL (pg Pool)
     │
     ▼
 { success, data?, error? }  ← 모든 응답의 고정 형태
@@ -117,6 +120,9 @@ SQLite (vidshare.sqlite)
 2. 인증이 필요한 라우트는 `requireRequestUser(req)` 로 시작 (없으면 401 throw)
 3. 소유자 스코프 테이블은 전부 `WHERE owner_id = ?` 로 격리
 4. 프론트는 **`lib/api.ts` 를 거치지 않고 fetch 하지 않는다**
+5. 라우터는 `express.Router()` 대신 **`middleware/asyncRouter.ts` 의 `Router()`** 를 쓴다.
+   Express 4 는 async 핸들러의 reject 를 잡지 못하므로, 이 래퍼가 `next(err)` 로 넘긴다
+6. 여러 문장을 묶어야 하면 `withTx(async (tx) => …)` — 풀에서 커넥션 하나를 잡아 BEGIN/COMMIT
 
 ---
 
@@ -198,10 +204,12 @@ src/
 │   ├── store.ts         ← ★ 모든 CRUD 함수 (~1500줄)
 │   └── seedData.ts
 ├── db/
-│   ├── client.ts        ← better-sqlite3 커넥션
-│   ├── schema.ts        ← CREATE TABLE 22개
+│   ├── client.ts        ← pg Pool + Db 래퍼(all/get/run/exec) + withTx
+│   ├── migrate.ts       ← schema_migrations 기반 러너 (advisory lock)
+│   ├── migrations/      ← 0001_init.ts (22개 테이블) …  TS 모듈 (tsc 가 .sql 을 복사하지 않음)
 │   └── seed.ts
 ├── middleware/errorHandler.ts   ← HttpError → JSON 변환
+├── middleware/asyncRouter.ts    ← async 핸들러 실패를 next(err) 로 (096)
 ├── realtime/
 │   ├── notificationBus.ts   ← 알림 SSE용 owner_id 채널 EventEmitter (077)
 │   ├── chatBus.ts           ← 메시지 WS용 owner_id 채널 EventEmitter (078)
@@ -214,6 +222,9 @@ src/
 │   ├── requestUser.ts   ← requireRequestUser
 │   └── requireAdmin.ts  ← requireAdmin (081)
 ├── scripts/create-admin.ts  ← 관리자 계정 생성·승격 CLI (081)
+├── scripts/db-migrate.ts    ← 마이그레이션만 적용 (096)
+├── scripts/migrate-sqlite-to-pg.ts ← SQLite → Postgres 1회 이관 + 행 수 검증 (096)
+├── scripts/dump-db-doc.ts  ← DataBaseColumn.md 덤프 (096)
 ├── upload/files.ts      ← 디스크 경로·MIME 화이트리스트
 └── types/index.ts
 ```
@@ -222,7 +233,7 @@ src/
 
 | 경로 | 파일 | 인증 |
 |------|------|------|
-| `/api/health` | `health.ts` | — |
+| `/api/health` | `health.ts` | — (DB `SELECT 1` 까지 확인, 실패 시 503) |
 | `/api/auth/*` | `auth.ts` | 일부 |
 | `/api/shorts`, `/api/shorts/:id` | `shorts.ts` | 생성 시 필요 |
 | `/api/shorts/:id/comments` | `comments.ts` | 작성 시 필요 |
@@ -245,7 +256,7 @@ src/
 | `/api/admin/support/inquiries` | `admin/support.ts` | 관리자 |
 | `/api/admin/dashboard/stats` | `admin/dashboard.ts` | 관리자 |
 
-### SQLite 테이블 (22개)
+### PostgreSQL 테이블 (22개 + `schema_migrations`)
 
 | 그룹 | 테이블 |
 |------|--------|
@@ -265,9 +276,11 @@ src/
 > `users.role` / `users.suspended`, `reports.status`,
 > `support_inquiries.admin_reply` / `replied_at`.
 
-> 알림은 `activity_notifications` **하나만** 쓴다.
-> 초기 목업용 `notifications` 테이블은 커밋 062에서 제거했고,
-> `initDb()` 의 `DROP TABLE IF EXISTS notifications` 가 기존 DB에서도 떨어뜨린다.
+> 알림은 `activity_notifications` **하나만** 쓴다(초기 목업 `notifications` 는 062에서 제거).
+
+> **1차 전환은 타입을 보존했다(096).** 날짜는 ISO 문자열 `TEXT`, 불리언은 0/1 `INTEGER`.
+> SQLite 의 `ORDER BY rowid` 를 쓰던 4개 테이블(`comments`, `chat_users`, `messages`, `faqs`)에는
+> 삽입 순서용 `seq` 컬럼을 두었고, id·시각 컬럼은 SQLite 와 같은 바이트 정렬을 위해 `COLLATE "C"`.
 
 ---
 
@@ -276,8 +289,8 @@ src/
 | 모델 | 접근 | LLM | 영속화 | RAG |
 |------|------|-----|--------|-----|
 | **Locals** | 무료·비회원 가능 | 단순 체인 | ❌ (게스트는 메모리만) | ❌ |
-| **Vide** | 회원 전용 | 요약 그래프 (LangGraph) | ✅ SQLite | 부분 |
-| **Shape** | 회원 전용 | 고급 체인 | ✅ SQLite | ✅ 저장 대화 + 플랫폼 코퍼스 |
+| **Vide** | 회원 전용 | 요약 그래프 (LangGraph) | ✅ DB | 부분 |
+| **Shape** | 회원 전용 | 고급 체인 | ✅ DB | ✅ 저장 대화 + 플랫폼 코퍼스 |
 
 - Shape 는 전송 전 프론트에서 `collectChatCorpus()` + `collectPlatformCorpus()` 로 컨텍스트를 모은다
 - 첨부: 이미지/PDF/DOCX → Locals·Vide 는 Gemini 비전 직봉, Shape 는 Gemini 설명 경유
@@ -298,10 +311,10 @@ src/
 ## 8. 로컬 실행
 
 ```powershell
-# 백엔드 (터미널 1)
+# 백엔드 (터미널 1) — 처음 한 번 deploy\windows\setup-postgres-d.ps1 로 DB 준비
 cd vidshare/BackendServer
 npm install
-npm run dev          # http://localhost:4000
+npm run dev          # http://localhost:4000  (시작 시 마이그레이션 자동 적용)
 
 # 프론트 (터미널 2)
 cd vidshare/FrontServer
@@ -326,16 +339,17 @@ npm run dev          # http://localhost:3200
 ## 9. 다음 작업자가 알아야 할 것
 
 1. **새 기능을 붙일 때 순서**
-   `db/schema.ts` → `data/store.ts` → `routes/*.ts` → `app.ts` 등록 → `lib/api.ts` → 컴포넌트
+   `db/migrations/NNNN_*.ts` (새 번호로 추가, 기존 파일 수정 금지) → `data/store.ts` → `routes/*.ts` → `app.ts` 등록 → `lib/api.ts` → 컴포넌트
 2. **커밋 규칙**: 기능 단위로 잘게 쪼개고, `docs/commits/NNN-*.md` 에 상세를 남긴 뒤
    `docs/commits/README.md` 인덱스에 한 줄 추가한다 (해시는 커밋 후 채움)
 3. **한글 파일 편집 주의**: PowerShell `Get-Content | Set-Content` 는 UTF-8 한글을 깨뜨린다.
    에디터 도구로 편집할 것
-4. SQLite 현재 내용은 `BackendServer/data/DataBaseColumn.md` 에 자동 덤프된다 (gitignore).
+4. DB 현재 내용은 `npm run db:doc` 으로 `BackendServer/data/DataBaseColumn.md` 에 덤프한다 (gitignore).
+   테스트는 `DATABASE_URL_TEST` DB 안에 **파일마다 임시 스키마**를 만들어 병렬 실행해도 섞이지 않는다.
 5. **관리자 라우트는 `requireAdmin(req)` 로 시작**한다 (`requireRequestUser` 가 아님).
    관리자 화면을 늘릴 때는 `console/` 쪽만 고치고 FrontServer는 건드리지 않는다
-6. 실제 배포 전에 반드시 [배포 가이드](../deployment.md) 3장(크로스 도메인 쿠키·CORS)을
-   먼저 읽을 것 — 지금 설정 그대로 올리면 로그인이 되지 않는다
+6. 실제 배포 전에 반드시 [배포 가이드](../deployment.md) 를 읽을 것 — 도메인 하나 아래에
+   app/console/api 를 두지 않으면 로그인 쿠키가 실리지 않는다
 7. 남은 과제 목록은 [features/roadmap.md](../features/roadmap.md) 참고
 
 ---
