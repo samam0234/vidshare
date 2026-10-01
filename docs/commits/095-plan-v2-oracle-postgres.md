@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `095` |
 | **파일명** | `095-plan-v2-oracle-postgres.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `df86a27` |
+| **Git 커밋 (full)** | `df86a2785822168722dab0e108a8e70fb1803f2d` |
 | **날짜** | `2026-10-02` |
 | **작성자** | `Claude` |
 | **브랜치** | `master` |

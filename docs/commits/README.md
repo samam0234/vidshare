@@ -37,7 +37,7 @@ NNN-짧은-영문-slug.md
 | Git 커밋 해시 | `git rev-parse --short HEAD` 등 실제 커밋 ID |
 | (선택) 전체 해시 | 감사·추적용 |
 
-해시가 아직 없으면 `TBD` 로 두고, **커밋 직후 갱신**합니다.
+해시가 아직 없으면 `df86a27` 로 두고, **커밋 직후 갱신**합니다.
 
 ---
 
@@ -168,7 +168,7 @@ NNN-짧은-영문-slug.md
 | 092 | [092-readme-project-intro.md](./092-readme-project-intro.md) | `c6798bf` | README 프로젝트 소개 재구성 + SQLite 테이블 개수 정정 | 2026-09-07 |
 | 093 | [093-portfolio.md](./093-portfolio.md) | `003cc9a` | 포트폴리오 문서·소개 사이트 + 푸터 "프로젝트 소개" 링크 | 2026-09-08 |
 | 094 | [094-portfolio-pptx.md](./094-portfolio-pptx.md) | `2fd8736` | 포트폴리오 발표 슬라이드(PPTX) 추가 | 2026-09-08 |
-| 095 | [095-plan-v2-oracle-postgres.md](./095-plan-v2-oracle-postgres.md) | `TBD` | 계획서 v2 — Oracle Cloud·Postgres·폴더 구조 | 2026-10-02 |
+| 095 | [095-plan-v2-oracle-postgres.md](./095-plan-v2-oracle-postgres.md) | `df86a27` | 계획서 v2 — Oracle Cloud·Postgres·폴더 구조 | 2026-10-02 |
 
 ---
 
