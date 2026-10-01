@@ -5,27 +5,32 @@ node_modules/
 .env
 .env.local
 .env.*.local
+# 운영 비밀값은 VM 의 /etc/vidshare/backend.env 에만 둔다
+backend.env
 
 # Next.js
 .next/
 .next-e2e/
 out/
 .open-next/
+*.tsbuildinfo
 
-# backend build / uploads / sqlite
+# backend build / uploads
 dist/
 uploads/*
 !uploads/README.md
 data/DataBaseColumn.md
+
+# DB 덤프·예전 SQLite (실데이터는 D:\vidshare-data 나 VM 블록 볼륨에 둔다)
+*.dump
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
 
-# Cloudflare tunnel credentials (never commit)
+# 예전 Cloudflare Tunnel 자격 증명 (Oracle 이전 후 쓰지 않지만 실수로 올리지 않게 유지)
 .cloudflared/
-cloudflare/*.json
-!cloudflare/config.template.yml
+cloudflare/
 
 # logs / OS
 *.log

@@ -1,0 +1,37 @@
+# /etc/caddy/Caddyfile  (setup-vm.sh 가 api.example.com 을 실제 도메인으로 바꿔 설치)
+# Caddy 가 Let's Encrypt 인증서를 자동으로 받고 갱신한다.
+
+api.example.com {
+	encode zstd gzip
+
+	# 영상 100MB + 여유
+	request_body {
+		max_size 110MB
+	}
+
+	# 업로드 파일은 Node 를 거치지 않고 디스크에서 바로 준다.
+	handle_path /uploads/* {
+		root * /mnt/vidshare-data/uploads
+		header {
+			X-Content-Type-Options nosniff
+			Content-Disposition inline
+			Cache-Control "public, max-age=604800, immutable"
+		}
+		file_server
+	}
+
+	# 나머지(API · SSE · WebSocket)는 BackendServer 로.
+	handle {
+		reverse_proxy 127.0.0.1:4000 {
+			# SSE(/api/notifications/stream)가 버퍼링되지 않도록 즉시 흘려보낸다.
+			flush_interval -1
+		}
+	}
+
+	log {
+		output file /var/log/caddy/vidshare-access.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+	}
+}

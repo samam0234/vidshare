@@ -1,0 +1,26 @@
+# /etc/systemd/system/vidshare-backend.service  (setup-vm.sh 가 설치)
+[Unit]
+Description=VidShare BackendServer (Express + PostgreSQL)
+After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=postgresql.service
+# 블록 볼륨이 붙지 않았으면 시작하지 않는다(업로드가 부트 볼륨에 쌓이는 것을 막는다).
+RequiresMountsFor=/mnt/vidshare-data
+
+[Service]
+Type=simple
+User=vidshare
+Group=vidshare
+WorkingDirectory=/opt/vidshare/BackendServer
+EnvironmentFile=/etc/vidshare/backend.env
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+RestartSec=3
+# SSE·WebSocket 연결을 정리할 시간을 준다(index.ts 의 SIGTERM 처리).
+TimeoutStopSec=10
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -170,6 +170,7 @@ NNN-짧은-영문-slug.md
 | 094 | [094-portfolio-pptx.md](./094-portfolio-pptx.md) | `2fd8736` | 포트폴리오 발표 슬라이드(PPTX) 추가 | 2026-09-08 |
 | 095 | [095-plan-v2-oracle-postgres.md](./095-plan-v2-oracle-postgres.md) | `df86a27` | 계획서 v2 — Oracle Cloud·Postgres·폴더 구조 | 2026-10-02 |
 | 096 | [096-postgres-migration.md](./096-postgres-migration.md) | `TBD` | SQLite → PostgreSQL 16 전환 | 2026-10-02 |
+| 097 | [097-oracle-deploy-scripts-ci.md](./097-oracle-deploy-scripts-ci.md) | `TBD` | Oracle Cloud·D 드라이브 배포/백업 스크립트 + CI | 2026-10-02 |
 
 ---
 
