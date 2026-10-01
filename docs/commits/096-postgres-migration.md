@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `096` |
 | **파일명** | `096-postgres-migration.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `1f6dbff` |
+| **Git 커밋 (full)** | `1f6dbffc817fcf600b931f53a3d350ddd03093c4` |
 | **날짜** | `2026-10-02` |
 | **작성자** | `Claude` |
 | **브랜치** | `master` |

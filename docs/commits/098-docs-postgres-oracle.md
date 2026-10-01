@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `098` |
 | **파일명** | `098-docs-postgres-oracle.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `de1e39e` |
+| **Git 커밋 (full)** | `de1e39e75b60cb679cde73e9ede3af632ce71118` |
 | **날짜** | `2026-10-02` |
 | **작성자** | `Claude` |
 | **브랜치** | `master` |

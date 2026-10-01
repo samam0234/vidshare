@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `097` |
 | **파일명** | `097-oracle-deploy-scripts-ci.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `22f4bf5` |
+| **Git 커밋 (full)** | `22f4bf5d86ac0b4a51698387479db68d89ebc0df` |
 | **날짜** | `2026-10-02` |
 | **작성자** | `Claude` |
 | **브랜치** | `master` |
