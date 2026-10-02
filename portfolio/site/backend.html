@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>백엔드 서버 — VidShare 포트폴리오</title>
-<meta name="description" content="Express + TypeScript + SQLite REST API. 82개 엔드포인트, SSE·WebSocket 실시간, LangChain/LangGraph 기반 AI 챗봇.">
+<meta name="description" content="Express + TypeScript + PostgreSQL REST API. 82개 엔드포인트, SSE·WebSocket 실시간, LangChain/LangGraph 기반 AI 챗봇.">
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -32,7 +32,8 @@
     <ul class="tags">
       <li class="tag">Express 4</li>
       <li class="tag">TypeScript</li>
-      <li class="tag">SQLite (better-sqlite3)</li>
+      <li class="tag">PostgreSQL 16 (pg)</li>
+      <li class="tag">Oracle Cloud VM</li>
       <li class="tag">ws · SSE</li>
       <li class="tag">LangChain · LangGraph</li>
       <li class="tag">bcrypt</li>
@@ -69,8 +70,8 @@
 
         <p class="reveal">
           Express 4 + TypeScript 기반 REST API 서버입니다.
-          데이터는 SQLite(<code>data/vidshare.sqlite</code>)에 저장되고, 업로드 파일은
-          <code>uploads/</code> 디스크에 UUID 이름으로 떨어집니다.
+          데이터는 PostgreSQL 16 에 저장되고, 업로드 파일은
+          디스크(<code>UPLOADS_PATH</code>)에 UUID 이름으로 떨어집니다.
           <b>DB에는 <code>/uploads/&lt;uuid&gt;.ext</code> 경로 문자열만</b> 들어가서,
           파일 위치를 바꿔도 스키마를 건드릴 필요가 없습니다.
         </p>
@@ -128,22 +129,37 @@
             <tbody>
               <tr><td><b>Express 4</b></td><td>HTTP 서버</td><td>라우트 파일이 곧 API 목록이 됩니다. NestJS의 모듈·DI는 이 규모에 설정 비용이 더 컸습니다.</td></tr>
               <tr><td><b>TypeScript</b> (<code>tsx</code>)</td><td>언어 · 개발 실행</td><td>응답 타입을 프론트와 공유합니다. 개발은 <code>tsx watch</code>, 배포는 <code>tsc</code> 빌드.</td></tr>
-              <tr><td><b>better-sqlite3</b></td><td>데이터베이스</td><td><b>동기 API</b>라 트랜잭션 코드가 콜백/await 없이 읽힙니다. 설치 없이 파일 하나로 영속화됩니다.</td></tr>
+              <tr><td><b>PostgreSQL 16</b> (<code>pg</code>)</td><td>데이터베이스</td><td>버전 관리 마이그레이션(<code>schema_migrations</code>)과 <code>pg_dump</code> 백업. 로컬은 내 PC 의 D 드라이브, 운영은 VM 블록 볼륨.</td></tr>
               <tr><td><b>bcrypt</b></td><td>비밀번호 해시</td><td>평문을 어디에도 남기지 않습니다.</td></tr>
               <tr><td><b>ws</b></td><td>WebSocket</td><td>같은 HTTP 서버에 업그레이드로 붙어 포트를 하나만 씁니다.</td></tr>
               <tr><td><b>multer</b></td><td>파일 업로드</td><td>multipart 파싱. MIME 화이트리스트와 용량 제한을 여기서 겁니다.</td></tr>
               <tr><td><b>LangChain · LangGraph</b></td><td>AI 파이프라인</td><td>모델 티어마다 <b>구조 자체를 다르게</b> 만들 수 있습니다 (단순 체인 / 상태 그래프).</td></tr>
-              <tr><td><b><code>node --test</code></b> + supertest</td><td>테스트</td><td>런타임 내장 러너. Jest/Vitest 설정 없이 137건이 돕니다.</td></tr>
+              <tr><td><b><code>node --test</code></b> + supertest</td><td>테스트</td><td>런타임 내장 러너. Jest/Vitest 설정 없이 148건이 돕니다. 테스트 파일마다 고유 스키마로 격리.</td></tr>
+              <tr><td><b>Caddy · systemd</b></td><td>운영 (Oracle VM)</td><td>Caddy 가 HTTPS 인증서를 자동으로 받고 <code>/uploads</code> 를 디스크에서 직접 줍니다. Node 는 systemd 가 관리합니다.</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="callout reveal">
-          <b>SQLite를 고른 것은 타협이자 의도입니다.</b>
-          동시 쓰기가 많아지면 단일 파일 쓰기 락이 병목이 됩니다.
-          다만 이 프로젝트에서 먼저 배워야 할 것은 스키마 설계와 쿼리 격리였고,
-          그건 SQLite로도 똑같이 배울 수 있습니다.
-          <b>Postgres 전환은 아래 로드맵에 순서를 매겨 두었습니다.</b>
+          <b>SQLite 로 시작해서 배포 전에 PostgreSQL 로 옮겼습니다.</b>
+          처음 배워야 할 것은 스키마 설계와 쿼리 격리였고, 그건 설치 없는 SQLite 로 충분했습니다.
+          상시 서버에 올리기로 하면서 마이그레이션 이력과 백업 도구가 필요해져 전환했습니다.
+          동기 API 를 비동기로 바꾸는 일이라 <code>store.ts</code> 와 라우트 25개가 전부 <code>await</code> 를 새로 배웠지만,
+          <b>SQL 문장과 컬럼 타입은 그대로</b> 두어 기존 테스트 137건이 수정 없이 통과하는 것을 합격 기준으로 삼았습니다.
+        </div>
+
+        <div class="table-wrap reveal">
+          <table>
+            <thead><tr><th>바뀐 것</th><th>SQLite 시절</th><th>지금</th></tr></thead>
+            <tbody>
+              <tr><td>호출</td><td><code>getDb().prepare(sql).get(a, b)</code></td><td><code>await getDb().get(sql, a, b)</code> — <code>?</code> 를 <code>$1</code> 로 자동 변환</td></tr>
+              <tr><td>새 행 id</td><td><code>lastInsertRowid</code></td><td><code>INSERT … RETURNING id</code></td></tr>
+              <tr><td>트랜잭션</td><td><code>db.transaction(fn)</code></td><td><code>withTx(async (tx) =&gt; …)</code> — 커넥션 하나를 잡아 BEGIN/COMMIT</td></tr>
+              <tr><td>스키마 변경</td><td><code>ensureColumn</code> 누적</td><td><code>migrations/0001_init.ts</code> + <code>schema_migrations</code></td></tr>
+              <tr><td>삽입 순서 정렬</td><td><code>ORDER BY rowid</code></td><td><code>seq</code> identity 컬럼 (이관 때 원래 rowid 를 넣음)</td></tr>
+              <tr><td>라우터</td><td><code>express.Router()</code></td><td><code>asyncRouter</code> — Express 4 가 놓치는 async 실패를 에러 핸들러로</td></tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -196,7 +212,7 @@
         <h3 class="reveal">인증 · 세션</h3>
         <ul class="reveal" style="color:var(--ink-2)">
           <li>비밀번호는 <b>bcrypt 해시</b>. 평문은 어디에도 남기지 않습니다.</li>
-          <li>세션은 SQLite <code>sessions</code> 테이블에 저장하고 쿠키는 <b><code>HttpOnly</code></b>.</li>
+          <li>세션은 DB <code>sessions</code> 테이블에 저장하고 쿠키는 <b><code>HttpOnly</code></b>.</li>
           <li>사용자/관리자 세션은 <b>쿠키 이름과 검증 함수 모두 분리</b>
               (<code>requireRequestUser</code> / <code>requireAdmin</code>).</li>
           <li>계정 정지 시 그 유저의 세션 행을 <b>즉시 삭제</b> → 이미 열린 창도 다음 요청에서 끊깁니다.</li>
@@ -326,23 +342,22 @@
           <div class="code"><span class="c">$</span> npm test
 
 ▶ 인증
-  <span class="s">✔</span> 데모 계정으로 로그인한다 (238.1788ms)
-  <span class="s">✔</span> 잘못된 비밀번호는 거부한다 (87.6873ms)
-  <span class="s">✔</span> 비로그인 /api/auth/me 는 401 (7.0813ms)
-  <span class="s">✔</span> 로그인 후 /api/auth/me 는 본인을 돌려준다 (68.7783ms)
-▶ 쇼츠
-  <span class="s">✔</span> 목록을 돌려준다 (4.7968ms)
-  <span class="s">✔</span> 없는 id 는 404 (4.0652ms)
-  <span class="s">✔</span> 비로그인 생성은 401 (4.3855ms)
-▶ 통합 검색
-  <span class="s">✔</span> 네 개 도메인 키를 항상 포함한다 (5.0295ms)
-  <span class="s">✔</span> 대소문자를 구분하지 않는다 (8.9588ms)
+  <span class="s">✔</span> 데모 계정으로 로그인한다 (163.3931ms)
+  <span class="s">✔</span> 잘못된 비밀번호는 거부한다 (55.0044ms)
+  <span class="s">✔</span> 비로그인 /api/auth/me 는 401 (8.5956ms)
+  <span class="s">✔</span> 로그인 후 /api/auth/me 는 본인을 돌려준다 (63.8901ms)
+▶ 마이그레이션
+  <span class="s">✔</span> 빈 스키마에 전부 적용하고 버전을 기록한다
+  <span class="s">✔</span> 두 번째 실행은 아무것도 적용하지 않는다(멱등)
+▶ SQLite → Postgres 이관
+  <span class="s">✔</span> 행 수가 원본과 같고 모르는 테이블은 건너뛴다
+  <span class="s">✔</span> IDENTITY 시퀀스를 기존 최대값 다음으로 맞춘다
 
-ℹ tests <span class="n">137</span>
-ℹ suites <span class="n">27</span>
-ℹ pass <span class="n">137</span>
+ℹ tests <span class="n">148</span>
+ℹ suites <span class="n">30</span>
+ℹ pass <span class="n">148</span>
 ℹ fail <span class="n">0</span>
-ℹ duration_ms 19770.6784</div>
+ℹ duration_ms 13804.5452</div>
         </div>
 
         <h4 class="reveal">관리자 계정 생성 CLI</h4>
@@ -350,7 +365,7 @@
           <div class="term-bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>BackendServer — create-admin</span></div>
           <div class="code"><span class="c">$</span> npm run create-admin -- portfolioadmin ********
 
-  SQLite: BackendServer/data/vidshare.sqlite
+  Postgres: vidshare
 <span class="s">✔</span> 관리자 계정을 만들었습니다: @portfolioadmin (u-2f054d3a)</div>
         </div>
       </section>
@@ -380,12 +395,12 @@
               <tr>
                 <td><b>Vide</b></td><td>회원 전용</td>
                 <td><code>gemini-3.6-flash</code><br><span style="color:var(--faint);font-size:12.5px">Google</span></td>
-                <td><b>LangGraph 요약 그래프</b></td><td>SQLite</td><td>부분</td>
+                <td><b>LangGraph 요약 그래프</b></td><td>DB</td><td>부분</td>
               </tr>
               <tr>
                 <td><b>Shape</b></td><td>회원 전용</td>
                 <td><code>openai/gpt-oss-120b</code><br><span style="color:var(--faint);font-size:12.5px">Groq</span></td>
-                <td>고급 체인</td><td>SQLite</td><td><b>저장 대화 + 플랫폼 코퍼스</b></td>
+                <td>고급 체인</td><td>DB</td><td><b>저장 대화 + 플랫폼 코퍼스</b></td>
               </tr>
             </tbody>
           </table>
@@ -464,10 +479,11 @@ routes/conversations.ts  ──▶  <span class="k">chatBus</span>.emit(ownerId,
               <tr><td><b>입력 검증 스키마 없음</b></td><td>라우트마다 수동 검사. 누락 여부를 눈으로 확인해야 함</td><td>zod 스키마 미들웨어 (의존성은 이미 설치되어 있으나 <b>미사용</b>)</td><td><span class="badge todo">최우선</span></td></tr>
               <tr><td><b>보안 헤더 없음</b></td><td>CSP · Referrer-Policy 미설정</td><td><code>helmet</code> 도입</td><td><span class="badge todo">높음</span></td></tr>
               <tr><td><b>업로드 파일이 공개</b></td><td><code>GET /uploads/:file</code> 은 인증 없이 재생됨. URL을 알면 누구나 받음</td><td>서명 URL + 비공개 영상 개념</td><td><span class="badge todo">높음</span></td></tr>
-              <tr><td><b>마이그레이션 체계 없음</b></td><td><code>initDb()</code> 에서 <code>ensureColumn</code> · <code>DROP TABLE</code> 로 개별 처리</td><td>버전 테이블 기반 마이그레이션</td><td><span class="badge plan">중간</span></td></tr>
+              <tr><td><b>마이그레이션 체계</b></td><td><code>schema_migrations</code> 기반 버전 관리로 전환</td><td>—</td><td><span class="badge done">해결</span></td></tr>
+              <tr><td><b>컬럼 타입</b></td><td>날짜 TEXT · 불리언 0/1 (전환 때 일부러 보존)</td><td><code>timestamptz</code> · <code>boolean</code> 마이그레이션</td><td><span class="badge plan">중간</span></td></tr>
               <tr><td><b>실시간이 단일 프로세스 전제</b></td><td><code>EventEmitter</code> 라 인스턴스를 늘리면 이벤트가 퍼지지 않음</td><td>Redis Pub/Sub 브로커</td><td><span class="badge plan">중간</span></td></tr>
-              <tr><td><b>검색 품질</b></td><td>관련도 정렬·페이지네이션 없음. <code>LIKE</code> 기반</td><td>SQLite FTS5 인덱스</td><td><span class="badge plan">중간</span></td></tr>
-              <tr><td><code>data/store.ts</code> 비대</td><td>약 1,500줄 단일 파일에 모든 CRUD</td><td>도메인별 분할</td><td><span class="badge plan">낮음</span></td></tr>
+              <tr><td><b>검색 품질</b></td><td>관련도 정렬·페이지네이션 없음. <code>LIKE</code> 기반</td><td><code>pg_trgm</code> · 전문 검색 인덱스</td><td><span class="badge plan">중간</span></td></tr>
+              <tr><td><code>data/store.ts</code> 비대</td><td>약 1,600줄 단일 파일에 모든 CRUD</td><td>도메인별 분할</td><td><span class="badge plan">낮음</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -504,8 +520,7 @@ routes/conversations.ts  ──▶  <span class="k">chatBus</span>.emit(ownerId,
               <tr><td><b>2</b></td><td><b>실시간 브로커 (Redis)</b></td><td>SSE/WS 이벤트를 인스턴스 간 전파</td><td>API를 2대 이상으로 늘리는 <b>순간</b></td></tr>
               <tr><td><b>3</b></td><td><b>AI 게이트웨이</b></td><td>LLM 호출 큐 · 재시도 · 비용 계측 분리</td><td>챗봇 호출이 API 응답 시간을 흔들 때</td></tr>
               <tr><td><b>4</b></td><td><b>오브젝트 스토리지 (S3 / R2)</b></td><td>업로드 원본 보관 + CDN</td><td>디스크 용량·다중 인스턴스 공유가 필요할 때</td></tr>
-              <tr><td><b>5</b></td><td><b>RDBMS 전환 (Postgres)</b></td><td>동시 쓰기 · 복제</td><td>SQLite 단일 파일 쓰기 락이 병목이 될 때</td></tr>
-              <tr><td><b>6</b></td><td><b>작업 스케줄러</b></td><td>파일 정리, 통계 집계, 정지 만료 처리</td><td>배치 작업이 3개를 넘을 때</td></tr>
+              <tr><td><b>5</b></td><td><b>작업 스케줄러</b></td><td>파일 정리, 통계 집계, 정지 만료 처리</td><td>배치 작업이 3개를 넘을 때</td></tr>
             </tbody>
           </table>
         </div>
@@ -559,7 +574,7 @@ routes/conversations.ts  ──▶  <span class="k">chatBus</span>.emit(ownerId,
   <div class="wrap foot-in">
     <div>
       <div style="color:#fff;font-weight:750;font-size:16px;margin-bottom:4px">VidShare 포트폴리오</div>
-      <small>BackendServer — Express 4 · TypeScript · SQLite · LangChain · 포트 4000</small>
+      <small>BackendServer — Express 4 · TypeScript · PostgreSQL 16 · LangChain · 포트 4000</small>
     </div>
     <nav class="foot-links">
       <a href="index.html">개요</a>

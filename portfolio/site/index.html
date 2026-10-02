@@ -38,11 +38,11 @@
 
     <div class="stats">
       <div class="stat"><b>3</b><span>독립 애플리케이션</span></div>
-      <div class="stat"><b>15,700</b><span>줄 TypeScript</span></div>
+      <div class="stat"><b>16,100</b><span>줄 TypeScript</span></div>
       <div class="stat"><b>82</b><span>REST 엔드포인트</span></div>
       <div class="stat"><b>22</b><span>DB 테이블</span></div>
-      <div class="stat"><b>177</b><span>자동화 테스트</span></div>
-      <div class="stat"><b>162</b><span>커밋</span></div>
+      <div class="stat"><b>188</b><span>자동화 테스트</span></div>
+      <div class="stat"><b>177</b><span>커밋</span></div>
     </div>
   </div>
 </section>
@@ -121,7 +121,7 @@
       </a>
       <a class="toc-item" href="#quality">
         <span class="toc-no">06</span>
-        <span><b>테스트 · 배포 · 회고</b><span>177건의 테스트, Cloudflare 배포, 다음 목표</span></span>
+        <span><b>테스트 · 배포 · 회고</b><span>188건의 테스트와 CI, Oracle Cloud 배포 준비, 다음 목표</span></span>
       </a>
     </div>
   </div>
@@ -165,8 +165,8 @@
                 <span class="p">/api/notifications/stream</span>  (SSE)
                         │
                         ▼
-             <span class="k">[SQLite]</span>  data/vidshare.sqlite  <span class="c">(22 tables)</span>
-             <span class="k">[Files]</span>   uploads/  <span class="c">(DB엔 경로 문자열만)</span></div>
+             <span class="k">[PostgreSQL 16]</span>  22 tables + schema_migrations
+             <span class="k">[Files]</span>   UPLOADS_PATH  <span class="c">(DB엔 경로 문자열만)</span></div>
 
     <h3 class="reveal">끝까지 지킨 설계 원칙 4가지</h3>
     <div class="grid grid-2">
@@ -209,11 +209,12 @@
           <tr><td>스타일</td><td>Tailwind CSS v4 + CSS 변수 토큰</td><td>다크/라이트를 변수 재정의 한 곳으로 처리</td></tr>
           <tr><td>서버 상태</td><td>TanStack Query</td><td>목록 화면의 중복 페치·캐시 무효화 정리</td></tr>
           <tr><td>백엔드</td><td>Node.js · Express 4 · TypeScript</td><td>라우트 파일이 곧 API 목록이 됨</td></tr>
-          <tr><td>데이터베이스</td><td>SQLite (better-sqlite3)</td><td>설치 없이 영속화. 동기 API라 트랜잭션이 단순</td></tr>
+          <tr><td>데이터베이스</td><td>PostgreSQL 16 (<code>pg</code>)</td><td>버전 관리 마이그레이션·<code>pg_dump</code> 백업. SQLite 로 시작해 배포 전에 전환</td></tr>
           <tr><td>실시간</td><td><code>ws</code> (WebSocket) · SSE</td><td>양방향/단방향을 목적에 맞게 분리</td></tr>
           <tr><td>인증</td><td>bcrypt + HttpOnly 세션 쿠키</td><td>JWT를 localStorage에 두는 XSS 노출을 피함</td></tr>
           <tr><td>AI</td><td>LangChain · LangGraph · Gemini · Groq</td><td>모델 티어별로 파이프라인 구조를 다르게 구성</td></tr>
-          <tr><td>배포</td><td>Cloudflare Workers (OpenNext) · Tunnel</td><td>프론트는 엣지, 백엔드는 로컬 노출</td></tr>
+          <tr><td>배포</td><td>Cloudflare Workers (OpenNext) · Oracle Cloud VM</td><td>프론트는 엣지, 백엔드는 디스크가 붙은 VM 1대 (Caddy + systemd)</td></tr>
+          <tr><td>CI</td><td>GitHub Actions</td><td>PR마다 세 앱 검증. 백엔드는 Postgres 16 서비스 컨테이너 위에서</td></tr>
         </tbody>
       </table>
     </div>
@@ -332,7 +333,7 @@
         <span class="card-num teal">03</span>
         <h3>백엔드 서버</h3>
         <p style="color:var(--muted)">REST API (:4000). 82개 엔드포인트, SSE·WebSocket, LangChain 챗봇, 추가할 서버 로드맵.</p>
-        <ul class="tags"><li class="tag teal">Express</li><li class="tag teal">SQLite</li><li class="tag teal">LangChain</li></ul>
+        <ul class="tags"><li class="tag teal">Express</li><li class="tag teal">PostgreSQL</li><li class="tag teal">LangChain</li></ul>
         <div class="go" style="color:var(--teal)">자세히 보기 →</div>
       </a>
     </div>
@@ -344,25 +345,26 @@
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="sec-tag">06 · 품질 · 배포 · 회고</span>
-      <h2>테스트 177건, 그리고 아직 못 한 것</h2>
+      <h2>테스트 188건, 그리고 아직 못 한 것</h2>
     </div>
 
     <div class="table-wrap reveal" style="margin-bottom:22px">
       <table>
         <thead><tr><th>계층</th><th>도구</th><th>건수</th><th>대상</th></tr></thead>
         <tbody>
-          <tr><td>백엔드 API</td><td><code>node --test</code> + supertest</td><td><b>137</b></td><td>인증·쇼츠·댓글·팔로우·재생목록·검색·관리자 API</td></tr>
+          <tr><td>백엔드 API</td><td><code>node --test</code> + supertest</td><td><b>148</b></td><td>인증·쇼츠·댓글·팔로우·재생목록·검색·관리자 API·마이그레이션·데이터 이관</td></tr>
           <tr><td>프론트 단위</td><td><code>node --test</code></td><td><b>32</b></td><td>비회원 경로 판정, 오픈 리다이렉트 방지 등 순수 함수</td></tr>
           <tr><td>E2E</td><td>Playwright</td><td><b>8</b></td><td>게스트 접근, 로그인/로그아웃, 커뮤니티 작성, 메시지 실시간(WS)</td></tr>
           <tr><td>정적 검사</td><td><code>tsc --noEmit</code> · ESLint</td><td>3개 앱</td><td>타입·린트</td></tr>
+          <tr><td>CI</td><td>GitHub Actions</td><td>PR · push</td><td>위 전부를 자동 실행 (E2E 제외)</td></tr>
         </tbody>
       </table>
     </div>
 
     <div class="callout ok reveal">
       <b>테스트는 개발 DB를 건드리지 않습니다.</b>
-      각 테스트가 임시 디렉터리에 새 SQLite 파일을 만들어 시드하므로 서로 독립적으로 돌고,
-      E2E는 격리된 포트(백엔드 4310 / 프론트 3310)로 서버를 직접 띄웁니다.
+      백엔드 테스트는 파일마다 테스트 DB 안에 <b>고유 스키마</b>를 만들고 지우므로 병렬로 돌아도 섞이지 않고,
+      E2E는 격리된 포트(백엔드 4310 / 프론트 3310)와 매번 초기화하는 <code>e2e</code> 스키마로 서버를 직접 띄웁니다.
     </div>
 
     <h3 class="reveal">배포</h3>
@@ -372,16 +374,45 @@
         <tbody>
           <tr><td>FrontServer</td><td>Cloudflare Workers (OpenNext)</td><td><span class="badge done">배포됨</span></td></tr>
           <tr><td>console</td><td>Cloudflare Workers (OpenNext)</td><td><span class="badge done">배포됨</span></td></tr>
-          <tr><td>BackendServer</td><td>Cloudflare Tunnel</td><td><span class="badge todo">미공개</span></td></tr>
+          <tr><td>BackendServer</td><td>Oracle Cloud VM — Caddy(HTTPS) · systemd · PostgreSQL 16</td><td><span class="badge plan">스크립트 준비됨</span></td></tr>
         </tbody>
       </table>
     </div>
 
+    <div class="code reveal"><span class="c">app.&lt;도메인&gt;      → Cloudflare Workers (FrontServer)
+console.&lt;도메인&gt;  → Cloudflare Workers (console)</span>
+<span class="k">api.&lt;도메인&gt;</span>      → Oracle VM · Caddy :443 (자동 HTTPS)
+                    ├─ <span class="p">/uploads/*</span>  → 디스크에서 직접
+                    └─ <span class="p">나머지</span>      → BackendServer :4000 → PostgreSQL 16
+<span class="c">블록 볼륨       /mnt/vidshare-data — pgdata · uploads · backups
+매일 백업       pg_dump → 내 PC D:&#92;vidshare-data&#92;backups 로 사본</span></div>
+
     <div class="callout warn reveal">
       <b>백엔드를 Workers에 올리지 않은 이유.</b>
-      <code>better-sqlite3</code> 는 네이티브 바인딩과 로컬 파일 시스템을 요구하고, 업로드 파일도 디스크에 씁니다.
-      Workers 런타임에는 둘 다 없습니다. 그래서 백엔드는 Tunnel로 노출하는 경로를 택했습니다.
-      현재 배포된 프론트는 공개 백엔드가 연결되기 전이라 <b>UI 확인용</b>입니다.
+      DB 와 업로드 파일은 영구 디스크가, SSE·WebSocket 은 상시 프로세스가 필요합니다. Workers 런타임에는 둘 다 없습니다.
+      처음엔 내 PC 를 Cloudflare Tunnel 로 노출하려 했지만 PC 가 꺼지면 서비스도 멈춰서, <b>블록 볼륨이 붙은 VM 1대</b>로 정했습니다.
+      최초 설정·반복 배포·백업 스크립트까지 준비했고 VM 구축과 도메인 연결이 남았습니다.
+      그 전까지 배포된 프론트는 <b>UI 확인용</b>입니다.
+    </div>
+
+    <h3 class="reveal">SQLite → PostgreSQL 전환</h3>
+    <div class="grid grid-2">
+      <div class="card reveal">
+        <h4>바꾸지 않을 것부터 정했다</h4>
+        <p style="color:var(--muted);margin-bottom:0">
+          동기 API(<code>better-sqlite3</code>)를 비동기(<code>pg</code>)로 바꾸며 <code>store.ts</code> 1,600줄과 라우트 25개가 전부 <code>await</code> 를 새로 배웠습니다.
+          SQL 문장과 <b>컬럼 타입은 그대로</b> 두었기에 "기존 테스트 137건이 한 줄도 안 바뀌고 통과"가 곧 합격 기준이 됐습니다.
+          실데이터 151행은 이관 스크립트로 옮기고 행 수를 대조했습니다.
+        </p>
+      </div>
+      <div class="card reveal">
+        <h4>타입체크가 못 잡는 것</h4>
+        <p style="color:var(--muted);margin-bottom:0">
+          Express 4 는 async 핸들러의 실패를 놓쳐 401 이 응답 없이 매달립니다 — 라우터를 감싸 해결했습니다.
+          <code>{ ...getPlaylistById(id) }</code> 처럼 Promise 를 spread 하면 TypeScript 가 경고 없이 <code>{}</code> 를 만듭니다.
+          await 없는 async 호출을 스크립트로 전수 검사했고, 뒤늦게 E2E 가 개발 DB 로 <b>조용히 성공</b>하던 것도 찾아 고쳤습니다.
+        </p>
+      </div>
     </div>
 
     <h3 class="reveal">회고</h3>
@@ -390,14 +421,14 @@
         <h4 style="color:var(--green)">잘한 결정</h4>
         <ol style="color:var(--muted);padding-left:20px;margin:0">
           <li><b>관리자 콘솔을 별도 앱으로 분리한 것.</b> 쿠키 이름을 나눈 사소한 결정 하나가 "두 세션이 공존해야 한다"는 요구를 드러냈습니다.</li>
-          <li><b><code>lib/api.ts</code> 단일 창구 규약.</b> localStorage → SQLite 이관도, 크로스 도메인 쿠키 대응도 고칠 지점이 한 곳이었습니다.</li>
+          <li><b><code>lib/api.ts</code> 단일 창구 규약.</b> localStorage → SQLite 이관도, 크로스 도메인 쿠키 대응도 고칠 지점이 한 곳이었습니다. DB 를 Postgres 로 바꿀 때 프론트는 한 줄도 바뀌지 않았습니다.</li>
           <li><b>한계를 문서에 적어 둔 것.</b> 모르는 것과 알고 미룬 것은 다릅니다.</li>
         </ol>
       </div>
       <div class="card reveal">
         <h4 style="color:var(--rose)">아쉬운 점</h4>
         <ol style="color:var(--muted);padding-left:20px;margin:0">
-          <li><b>CI를 마지막까지 미룬 것.</b> 테스트 177건을 만들어 놓고 자동 실행은 아직 수동입니다.</li>
+          <li><b>CI를 늦게 깐 것.</b> 테스트를 170건 넘게 만들고도 한동안 수동으로 돌렸습니다. 지금은 GitHub Actions 가 돌리지만 처음부터 깔았어야 했습니다.</li>
           <li><b><code>data/store.ts</code> 가 1,500줄이 되도록 방치한 것.</b> 초반에 도메인별로 나눴다면 지금 분할 비용이 없었습니다.</li>
           <li><b>성능·접근성을 측정한 적이 없는 것.</b> 기능이 안정된 지금이 기준선을 잡을 시점입니다.</li>
         </ol>
@@ -409,10 +440,10 @@
       <table>
         <thead><tr><th style="width:70px">순위</th><th>과제</th><th>이유</th></tr></thead>
         <tbody>
-          <tr><td><b>1</b></td><td>백엔드 공개 배포 → 프론트 재배포</td><td>링크 하나로 동작하는 라이브 데모가 완성됨</td></tr>
-          <tr><td><b>2</b></td><td>CI 파이프라인</td><td>PR마다 3개 앱 typecheck / lint / test 자동 검증</td></tr>
-          <tr><td><b>3</b></td><td>Rate limiting · 보안 헤더 · 입력 검증 스키마</td><td>공개 배포 직후 가장 먼저 노출되는 표면</td></tr>
-          <tr><td><b>4</b></td><td>관리자 조치 감사 로그</td><td>누가 무엇을 지웠는지 추적할 수 없는 상태를 해소</td></tr>
+          <tr><td><b>1</b></td><td>Oracle VM 구축 · 도메인 연결 → 프론트 재배포</td><td>링크 하나로 동작하는 라이브 데모가 완성됨 (스크립트 준비 완료)</td></tr>
+          <tr><td><b>2</b></td><td>Rate limiting · 보안 헤더 · 입력 검증 스키마</td><td>공개 배포 직후 가장 먼저 노출되는 표면</td></tr>
+          <tr><td><b>3</b></td><td>관리자 조치 감사 로그</td><td>누가 무엇을 지웠는지 추적할 수 없는 상태를 해소</td></tr>
+          <tr><td><b>4</b></td><td>DB 컬럼 타입 정교화 (<code>timestamptz</code> · <code>boolean</code>)</td><td>전환 때 일부러 미룬 것</td></tr>
           <tr><td><b>5</b></td><td>접근성·성능 기준선 측정</td><td>개선 전에 먼저 재야 함</td></tr>
         </tbody>
       </table>

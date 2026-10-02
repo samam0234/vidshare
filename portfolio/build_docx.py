@@ -79,7 +79,13 @@ def add_inline(par, text: str, *, bold=False, color=None, size=10.5):
         if not piece:
             continue
         if piece.startswith("**") and piece.endswith("**"):
-            add_run(par, piece[2:-2], bold=True, color=color, size=size)
+            # 굵게 안의 `인라인 코드` 도 코드 글꼴로 (백틱이 그대로 찍히지 않게)
+            for sub in re.split(r"(`[^`]+`)", piece[2:-2]):
+                if sub.startswith("`") and sub.endswith("`") and len(sub) > 1:
+                    run = add_run(par, sub[1:-1], code=True, size=size)
+                    run.bold = True
+                elif sub:
+                    add_run(par, sub, bold=True, color=color, size=size)
         elif piece.startswith("`") and piece.endswith("`"):
             add_run(par, piece[1:-1], code=True, size=size)
         else:

@@ -10,9 +10,9 @@
 |------|------|
 | 프로젝트명 | VidShare |
 | 유형 | 개인 프로젝트 (기획 · 설계 · 프론트엔드 · 백엔드 · 운영 도구 전담) |
-| 개발 기간 | 2026-08-14 ~ 2026-09-07 (약 3.5주) |
+| 개발 기간 | 2026-08-14 ~ 2026-10-02 (기능 3.5주 + PostgreSQL 전환·배포 준비) |
 | 구성 | 사용자 웹앱 · 관리자 콘솔 · REST API 서버 (3개 앱) |
-| 저장소 | `master` 브랜치, 커밋 162건 — 커밋마다 상세 기록 문서 동반 |
+| 저장소 | `master` 브랜치, 커밋 177건 — 커밋마다 상세 기록 문서 동반 · GitHub Actions CI |
 | 사용자 사이트 | https://vidshare-front.limjinheng0120.workers.dev |
 | 관리자 콘솔 | https://vidshare-console.limjinheng0120.workers.dev |
 
@@ -36,12 +36,12 @@
 
 | 지표 | 값 |
 |------|-----|
-| TypeScript / TSX | 163개 파일, 약 15,700줄 |
+| TypeScript / TSX | 169개 파일, 약 16,100줄 (테스트·스크립트 제외) |
 | 화면 (페이지) | 사용자 27개 + 관리자 6개 |
 | REST API | 82개 엔드포인트 (일반 67 · 관리자 15) + WebSocket 1 + SSE 1 |
-| DB 테이블 | 22개 |
-| 자동화 테스트 | 177건 (백엔드 137 · 프론트 32 · E2E 8 시나리오) |
-| 문서 | 아키텍처 · 배포 · 보안 · 로드맵 + 커밋 상세 92편 |
+| DB 테이블 | 22개 (PostgreSQL 16, 버전 관리 마이그레이션) |
+| 자동화 테스트 | 188건 (백엔드 148 · 프론트 32 · E2E 8 시나리오) — E2E 외 180건은 CI 에서 자동 실행 |
+| 문서 | 아키텍처 · 배포 · 운영 절차서 · 보안 · 로드맵 + 커밋 상세 100편 |
 
 ---
 
@@ -53,13 +53,13 @@
 | 스타일 | Tailwind CSS v4 + CSS 변수 토큰 | 다크/라이트를 변수 재정의 한 곳으로 처리 |
 | 서버 상태 | TanStack Query (React Query) | 목록 화면의 중복 페치·캐시 무효화 정리 |
 | 백엔드 | Node.js, Express 4, TypeScript | 라우트 파일이 곧 API 목록이 되어 설명·수정이 빠름 |
-| DB | SQLite (`better-sqlite3`) | 설치 없이 영속화. 동기 API라 트랜잭션 코드가 단순 |
+| DB | PostgreSQL 16 (`pg`) | 버전 관리 마이그레이션 · `pg_dump` 백업. SQLite 로 시작해 배포 전에 전환 (7.5) |
 | 실시간 | `ws` (WebSocket), SSE | 메시지는 양방향, 알림은 단방향 — 목적에 맞게 분리 |
 | 인증 | bcrypt + HttpOnly 세션 쿠키 | JWT를 localStorage에 두는 방식의 XSS 노출을 피함 |
 | AI | LangChain, LangGraph, Google Gemini, Groq | 모델 티어별로 체인/그래프 구조를 다르게 구성 |
 | 업로드 | multer + 로컬 디스크 | MIME 화이트리스트 · UUID 파일명 |
-| 테스트 | `node --test` + supertest, Playwright | 런타임 내장 러너로 의존성 최소화 |
-| 배포 | Cloudflare Workers (OpenNext), Cloudflare Tunnel | 프론트 2종은 엣지, 백엔드는 로컬 노출 |
+| 테스트 | `node --test` + supertest, Playwright, GitHub Actions | 런타임 내장 러너로 의존성 최소화. CI 는 Postgres 서비스 컨테이너 |
+| 배포 | Cloudflare Workers (OpenNext) · Oracle Cloud VM (Caddy + systemd) | 프론트 2종은 엣지, 백엔드는 디스크가 붙은 VM 1대 |
 
 ### 기술 선택에서 일부러 하지 않은 것
 
@@ -94,8 +94,8 @@
                 /api/notifications/stream (SSE)
                         │
                         ▼
-             [SQLite]  data/vidshare.sqlite  (22 tables)
-             [Files]   uploads/  (DB엔 /uploads/<uuid>.ext 경로만)
+             [PostgreSQL 16]  22 tables + schema_migrations
+             [Files]   UPLOADS_PATH  (DB엔 /uploads/<uuid>.ext 경로만)
 ```
 
 ### 설계 원칙 4가지
@@ -119,8 +119,8 @@
   → Client Component
   → lib/api.ts  (fetch, credentials: "include")
   → Express route  (requireRequestUser 로 인증 검사)
-  → data/store.ts  (better-sqlite3 prepared statement)
-  → SQLite
+  → data/store.ts  (await getDb().all/get/run — ? 를 $1, $2 … 로 변환)
+  → PostgreSQL (pg Pool)
   → { success, data?, error? }
   → 컴포넌트 상태 갱신 → 리렌더
 ```
@@ -318,8 +318,8 @@ console/
 
 ### 개요
 
-Express 4 + TypeScript 기반 REST API 서버. 데이터는 SQLite(`data/vidshare.sqlite`)에
-저장되고, 업로드 파일은 `uploads/` 디스크에 UUID 이름으로 떨어진다.
+Express 4 + TypeScript 기반 REST API 서버. 데이터는 PostgreSQL 16 에
+저장되고, 업로드 파일은 디스크(`UPLOADS_PATH`)에 UUID 이름으로 떨어진다.
 DB에는 `/uploads/<uuid>.ext` 경로 문자열만 들어간다.
 
 `GET /` 로 요청하면 **서버가 자기 엔드포인트 목록을 JSON으로 응답**한다.
@@ -348,16 +348,19 @@ src/
 │   ├── store.ts            ← 모든 CRUD 함수 (~1,500줄)
 │   └── seedData.ts
 ├── db/
-│   ├── client.ts           ← better-sqlite3 커넥션
-│   ├── schema.ts           ← CREATE TABLE 22개
+│   ├── client.ts           ← pg Pool + Db 래퍼(all/get/run) + withTx
+│   ├── migrate.ts          ← schema_migrations 러너 (advisory lock)
+│   ├── migrations/         ← 0001_init.ts (22개 테이블)
 │   └── seed.ts
-├── middleware/errorHandler.ts   ← HttpError → JSON 변환
+├── middleware/
+│   ├── errorHandler.ts     ← HttpError → JSON 변환
+│   └── asyncRouter.ts      ← async 핸들러 실패를 next(err) 로
 ├── realtime/
 │   ├── notificationBus.ts  ← 알림 SSE용 owner_id 채널 EventEmitter
 │   ├── chatBus.ts          ← 메시지 WS용 owner_id 채널 EventEmitter
 │   └── chatSocket.ts       ← /ws/conversations 업그레이드·인증·송수신
 ├── routes/                 ← 19개 라우터 + admin/ 6개
-├── scripts/create-admin.ts ← 관리자 계정 생성·승격 CLI
+├── scripts/               ← create-admin · db-migrate · migrate-sqlite-to-pg · reset-schema
 ├── upload/files.ts         ← 디스크 경로·MIME 화이트리스트
 └── types/index.ts
 ```
@@ -420,8 +423,8 @@ src/
 | 모델 | 접근 | 기본 모델 | 파이프라인 | 영속화 | RAG |
 |------|------|-----------|-----------|--------|-----|
 | **Locals** | 무료 · 비회원 가능 | `gemini-3.1-flash-lite` (Google) | LangChain 단순 체인 | 게스트는 메모리만 | 없음 |
-| **Vide** | 회원 전용 | `gemini-3.6-flash` (Google) | **LangGraph 요약 그래프** | SQLite | 부분 |
-| **Shape** | 회원 전용 | `openai/gpt-oss-120b` (Groq) | 고급 체인 | SQLite | 저장 대화 + 플랫폼 코퍼스 |
+| **Vide** | 회원 전용 | `gemini-3.6-flash` (Google) | **LangGraph 요약 그래프** | DB | 부분 |
+| **Shape** | 회원 전용 | `openai/gpt-oss-120b` (Groq) | 고급 체인 | DB | 저장 대화 + 플랫폼 코퍼스 |
 
 - **Shape의 RAG**: 전송 전에 프론트에서 `collectChatCorpus()`(과거 대화)와
   `collectPlatformCorpus()`(플랫폼 데이터 스냅샷)로 컨텍스트를 모은다.
@@ -451,7 +454,7 @@ WebSocket 업그레이드 시점에도 **세션 쿠키로 인증**한다.
 ### 고급 기술 3 — 인증·세션
 
 - 비밀번호는 bcrypt 해시. 평문은 어디에도 남기지 않는다.
-- 세션은 SQLite `sessions` 테이블에 저장하고, 쿠키는 `HttpOnly`.
+- 세션은 DB `sessions` 테이블에 저장하고, 쿠키는 `HttpOnly`.
 - 사용자/관리자 세션을 **쿠키 이름과 검증 함수 모두 분리**
   (`requireRequestUser` / `requireAdmin`).
 - 계정 정지 시 해당 유저의 세션 행을 즉시 삭제 → 이미 로그인한 창도 다음 요청에서 끊긴다.
@@ -467,12 +470,12 @@ WebSocket 업그레이드 시점에도 **세션 쿠키로 인증**한다.
 ### 테스트
 
 ```
-npm test        # 137건 통과 (임시 SQLite에 시드 후 supertest)
+npm test        # 148건 통과 (테스트 DB 의 임시 스키마에 마이그레이션·시드 후 supertest)
 npm run typecheck
 ```
 
-각 테스트는 임시 디렉터리에 새 SQLite 파일을 만들어 시드하므로,
-개발 DB를 오염시키지 않고 **서로 독립적으로** 돈다.
+`node --test` 는 파일을 병렬 프로세스로 돌린다. 테스트 파일마다 `vidshare_test` 안에
+**고유 스키마**를 만들고 끝나면 지우므로, 개발 DB 를 건드리지 않고 서로 섞이지도 않는다.
 
 ### 문제점 및 개선 사항
 
@@ -481,10 +484,11 @@ npm run typecheck
 | **Rate limiting 없음** | 로그인 무차별 대입을 막지 못함 | `express-rate-limit` — 최우선 |
 | **입력 검증 스키마 없음** | 라우트마다 수동 검사 | zod 스키마 미들웨어 (의존성은 이미 있음) |
 | **보안 헤더 없음** | CSP · Referrer-Policy 미설정 | `helmet` 도입 |
-| 마이그레이션 체계 없음 | `initDb()` 에서 `ensureColumn` 개별 처리 | 버전 테이블 기반 마이그레이션 |
+| 마이그레이션 체계 | **해결 (096)** — `schema_migrations` 기반 버전 관리 | — |
+| 컬럼 타입 | 날짜 TEXT · 불리언 0/1 그대로 (전환 시 보존) | `timestamptz` · `boolean` 마이그레이션 |
 | 실시간 단일 프로세스 전제 | `EventEmitter` 라 다중 인스턴스에서 안 퍼짐 | Redis Pub/Sub 브로커 |
 | 업로드 파일 공개 | `GET /uploads/:file` 은 인증 없이 재생 | 서명 URL + 비공개 영상 |
-| 검색 품질 | 관련도 정렬·페이지네이션 없음 | FTS5 인덱스 |
+| 검색 품질 | 관련도 정렬·페이지네이션 없음 | `pg_trgm` / 전문 검색 인덱스 |
 | `data/store.ts` 비대 | 약 1,500줄 단일 파일 | 도메인별 분할 |
 
 ### 추가할 백엔드 서버 (예정)
@@ -497,8 +501,7 @@ npm run typecheck
 | 2 | **실시간 브로커 (Redis)** | SSE/WS 이벤트를 인스턴스 간 전파 | API를 2대 이상으로 늘리는 순간 |
 | 3 | **AI 게이트웨이** | LLM 호출 큐·재시도·비용 계측 분리 | 챗봇 호출이 API 응답 시간을 흔들 때 |
 | 4 | **오브젝트 스토리지 (S3/R2)** | 업로드 원본 보관 + CDN | 디스크 용량·다중 인스턴스 공유가 필요할 때 |
-| 5 | **RDBMS 전환 (Postgres)** | 동시 쓰기·복제 | SQLite 단일 파일 쓰기 락이 병목이 될 때 |
-| 6 | **작업 스케줄러** | 파일 정리, 통계 집계, 정지 만료 처리 | 배치 작업이 3개를 넘을 때 |
+| 5 | **작업 스케줄러** | 파일 정리, 통계 집계, 정지 만료 처리 | 배치 작업이 3개를 넘을 때 |
 
 ### 미래 지향
 
@@ -569,7 +572,32 @@ PC를 바꾸면 사라지고, 두 사람이 같은 데이터를 볼 수 없었�
 먼저였다. `lib/api.ts` 단일 창구 규약이 없었다면 화면마다 흩어진 localStorage 접근을
 찾아다녀야 했을 것이다.
 
-### 7.5 `useEffect` 안 `setState` 린트 에러
+### 7.5 SQLite → PostgreSQL 전환 (동기 API 를 비동기로)
+
+**배경** — 백엔드를 상시 가동되는 서버(Oracle Cloud VM)에 올리기로 하면서, 파일 하나짜리
+SQLite 대신 마이그레이션 이력·`pg_dump` 백업이 있는 PostgreSQL 로 옮겼다.
+`better-sqlite3` 는 **동기** API 라 `store.ts` 1,600줄과 라우트 25개가 전부 `await` 를 몰랐다.
+
+**작업**
+- SQL 문장은 그대로 두고 호출 모양만 바꾸는 얇은 래퍼를 만들었다 — `?` 자리표시자를 `$1…` 로 바꿔 준다.
+  diff 가 "쿼리 재작성"이 아니라 "await 추가"로 읽히게 하려는 목적이었다.
+- **컬럼 타입은 일부러 보존했다.** 날짜를 `timestamptz` 로 바꾸면 API 응답 형식까지 흔들린다.
+  DB 엔진 교체와 타입 정교화를 한 번에 하지 않은 덕에 **기존 테스트 137건이 한 줄도 안 바뀌고 통과**했다.
+- 실데이터는 이관 스크립트로 옮겼다. FK 순서·한 트랜잭션·IDENTITY 시퀀스 보정 후 22개 테이블
+  행 수를 비교한다(로컬 데이터 151행 일치).
+
+**잡은 함정 두 가지**
+1. **Express 4 는 async 핸들러의 실패를 잡지 못한다.** `requireRequestUser` 의 401 이 응답 없이 매달린다.
+   라우터 생성 지점에서 감싸는 `asyncRouter` 를 만들어 25개 라우트에 한 번에 적용했다.
+2. **`{ ...getPlaylistById(id) }` — Promise 를 spread 하면 `{}` 가 되는데 TypeScript 가 경고하지 않는다.**
+   타입체크가 통과해도 안심할 수 없어서, await 없이 호출된 async 함수를 찾는 스크립트로 전수 검사했다.
+
+**배운 것** — 큰 전환은 "무엇을 바꾸지 않을지"를 먼저 정해야 검증이 가능하다.
+타입을 보존했기 때문에 "기존 테스트가 그대로 통과한다"가 곧 합격 기준이 되었다.
+그리고 전환 후에도 놓친 곳이 있었다 — E2E 설정이 옛 `SQLITE_PATH` 를 넘기고 있어 **개발 DB 로 조용히 성공**하고
+있었다(099 에서 수정). 실패하지 않는 버그가 가장 늦게 발견된다.
+
+### 7.6 `useEffect` 안 `setState` 린트 에러
 
 **증상** — React 19 / Next 16 환경에서 `react-hooks/set-state-in-effect` 가 에러로 뜬다.
 
@@ -583,19 +611,20 @@ PC를 바꾸면 사라지고, 두 사람이 같은 데이터를 볼 수 없었�
 
 | 계층 | 도구 | 건수 | 대상 |
 |------|------|------|------|
-| 백엔드 API | `node --test` + supertest | 137 | 인증·쇼츠·댓글·팔로우·재생목록·검색·관리자 API 등 |
+| 백엔드 API | `node --test` + supertest | 148 | 인증·쇼츠·댓글·팔로우·재생목록·검색·관리자 API·마이그레이션·데이터 이관 |
 | 프론트 단위 | `node --test` | 32 | 비회원 경로 판정, 오픈 리다이렉트 방지 등 순수 함수 |
 | E2E | Playwright | 8 시나리오 | 게스트 접근, 로그인/로그아웃, 커뮤니티 작성, 메시지 실시간(WS) |
 | 정적 검사 | `tsc --noEmit`, ESLint | 3개 앱 전부 | — |
+| CI | GitHub Actions | PR · master push | 백엔드(Postgres 16 서비스 컨테이너)·프론트·콘솔 |
 
-E2E는 격리된 포트(백엔드 4310 / 프론트 3310)와 임시 SQLite로 서버를 직접 띄운다.
-개발 중인 서버 상태에 영향을 받지 않는다.
+E2E는 격리된 포트(백엔드 4310 / 프론트 3310)와 테스트 DB 의 `e2e` 스키마(매번 초기화)로
+서버를 직접 띄운다. 개발 중인 서버·DB 상태에 영향을 받지 않는다.
 
 ### 커밋·문서 규약
 
 - 기능 단위로 커밋을 잘게 나눈다.
 - 커밋마다 `docs/commits/NNN-slug.md` 에 **배경 · 범위 · 트레이드오프 · 검증 방법 ·
-  알려진 리스크**를 남기고 인덱스에 한 줄 추가한다. 현재 92편.
+  알려진 리스크**를 남기고 인덱스에 한 줄 추가한다. 현재 100편.
 - 커밋 메시지는 짧게, 판단의 근거는 문서에. `git log` 로 훑는 용도와
   인수인계용 설명을 분리했다.
 
@@ -607,15 +636,32 @@ E2E는 격리된 포트(백엔드 4310 / 프론트 3310)와 임시 SQLite로 서
 |------|------|------|
 | FrontServer | Cloudflare Workers (OpenNext) | https://vidshare-front.limjinheng0120.workers.dev |
 | console | Cloudflare Workers (OpenNext) | https://vidshare-console.limjinheng0120.workers.dev |
-| BackendServer | Cloudflare Tunnel (Workers 부적합) | 미공개 |
+| BackendServer | Oracle Cloud VM — Caddy(HTTPS) + systemd + PostgreSQL 16 | 스크립트 준비됨 · 구축 전 |
 
-백엔드를 Workers에 올리지 않은 이유는 명확하다.
-`better-sqlite3` 는 **네이티브 바인딩 + 로컬 파일 시스템**을 요구하고,
-업로드 파일도 디스크에 쓴다. Workers 런타임에는 둘 다 없다.
-그래서 백엔드는 Tunnel로 노출하는 경로를 택했다.
+백엔드를 Workers에 올리지 않은 이유는 명확하다. DB 와 업로드 파일은 **영구 디스크**가,
+SSE·WebSocket 은 **상시 프로세스**가 필요하다. Workers 런타임에는 둘 다 없다.
+처음엔 내 PC 를 Cloudflare Tunnel 로 노출하려 했지만 PC 가 꺼지면 서비스도 멈춘다.
+그래서 **블록 볼륨이 붙은 VM 1대**로 정했다.
 
-**현재 상태**: 프론트 2종은 배포되어 있으나 공개 백엔드 주소가 연결되기 전이라
-**UI 확인용**이다. 전체 기능은 로컬 실행으로 확인할 수 있다.
+```
+app.<도메인>      → Cloudflare Workers (FrontServer)
+console.<도메인>  → Cloudflare Workers (console)
+api.<도메인>      → Oracle VM ─ Caddy :443 ─┬─ /uploads/*  디스크에서 직접
+                                           └─ 그 외       BackendServer :4000 → PostgreSQL :5432(localhost)
+                     블록 볼륨 /mnt/vidshare-data — pgdata · uploads · backups
+```
+
+| 준비한 것 | 내용 |
+|-----------|------|
+| `deploy/oracle/setup-vm.sh` | Node 24·Postgres 16·Caddy 설치, 볼륨 마운트, DB 이전, systemd, 방화벽 |
+| `deploy/oracle/deploy.sh` | 백업 → 빌드 → 마이그레이션 → 재시작 → health 확인 |
+| 백업 | VM 야간 `pg_dump` → 내 PC `D:\vidshare-data\backups` 로 매일 가져옴. 복원 연습까지 확인 |
+| 로컬 DB | 내 PC 의 PostgreSQL 16 (데이터 `D:\PostgreSQL\16\data`) |
+
+세 호스트를 **한 도메인 아래**에 두는 것이 핵심이다 — 그래야 `SameSite=Lax` 세션 쿠키가 API 요청에 실린다(7.3).
+
+**현재 상태**: 프론트 2종은 배포되어 있으나 공개 백엔드가 연결되기 전이라 **UI 확인용**이다.
+VM 구축과 도메인 연결만 남았고, 전체 기능은 로컬 실행으로 확인할 수 있다.
 
 ---
 
@@ -628,7 +674,7 @@ E2E는 격리된 포트(백엔드 4310 / 프론트 3310)와 임시 SQLite로 서
    쿠키 이름을 나눈 사소한 결정 하나가 "두 세션이 공존해야 한다"는 요구를 드러냈다.
 2. **`lib/api.ts` 단일 창구 규약.**
    localStorage → SQLite 이관, 크로스 도메인 쿠키 대응 모두 이 규약 덕분에
-   고칠 지점이 한 곳이었다.
+   고칠 지점이 한 곳이었다. 뒤에 DB 를 Postgres 로 바꿀 때 프론트는 한 줄도 바뀌지 않았다.
 3. **한계를 문서에 적어 둔 것.**
    Rate limit 없음, 감사 로그 없음, 실시간 단일 프로세스 전제 —
    모르는 것과 알고 미룬 것은 다르다. `docs/security/security-notes.md` 에
@@ -636,16 +682,16 @@ E2E는 격리된 포트(백엔드 4310 / 프론트 3310)와 임시 SQLite로 서
 
 ### 아쉬운 점
 
-1. **CI를 마지막까지 미룬 것.** 테스트는 177건을 만들어 놓고 자동 실행은 수동이다.
-   PR마다 세 앱을 검증하는 파이프라인을 먼저 깔았어야 했다.
+1. **CI를 늦게 깐 것.** 테스트를 170건 넘게 만들어 놓고도 한동안 수동으로 돌렸다.
+   지금은 GitHub Actions 가 PR마다 세 앱을 검증하지만, 처음부터 깔았어야 했다.
 2. **`data/store.ts` 가 1,500줄이 되도록 방치한 것.**
    초반에 도메인별로 나눴다면 지금 분할 비용이 없었다.
 3. **성능·접근성을 측정한 적이 없다.** 기능이 안정된 지금이 기준선을 잡을 시점이다.
 
 ### 다음 목표 (우선순위)
 
-1. 백엔드 공개 배포 → 프론트 재배포로 **동작하는 라이브 데모** 완성
-2. CI 파이프라인 (PR마다 3개 앱 typecheck / lint / test)
+1. Oracle VM 구축 · 도메인 연결 → 프론트 재배포로 **동작하는 라이브 데모** 완성
+2. CI 파이프라인 — **완료 (097)**
 3. Rate limiting + 보안 헤더 + 입력 검증 스키마
 4. 관리자 조치 감사 로그
 5. 접근성·성능 기준선 측정
@@ -655,7 +701,11 @@ E2E는 격리된 포트(백엔드 4310 / 프론트 3310)와 임시 SQLite로 서
 ## 부록 — 로컬 실행
 
 ```bash
-# 1. 백엔드
+# 0. DB (최초 1회) — 내 PC 의 PostgreSQL 16 에 vidshare 계정·DB
+powershell -ExecutionPolicy Bypass -File deploy\windows\setup-postgres-d.ps1
+#    출력된 DATABASE_URL / DATABASE_URL_TEST / UPLOADS_PATH 를 BackendServer/.env 에
+
+# 1. 백엔드 (시작 시 마이그레이션 자동 적용)
 cd BackendServer && npm install && npm run dev      # :4000
 
 # 2. 사용자 사이트

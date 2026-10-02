@@ -311,7 +311,7 @@ def build():
          anchor=MSO_ANCHOR.MIDDLE)
 
     text(s, Inches(0.9), Inches(2.55), Inches(9), Inches(0.5),
-         "풀스택 개인 프로젝트 · 2026.08 – 2026.09", size=14, color=BLUE, bold=True)
+         "풀스택 개인 프로젝트 · 2026.08 – 2026.10", size=14, color=BLUE, bold=True)
     text(s, Inches(0.85), Inches(3.05), Inches(11.6), Inches(2.0),
          "영상을 올리고, 함께 보고,\n운영까지 하는 플랫폼",
          size=46, color=WHITE, bold=True, line_spacing=1.12)
@@ -320,7 +320,7 @@ def build():
          "신고 처리와 계정 관리를 위한 관리자 콘솔까지 별도 앱으로 만들었습니다.",
          size=15.5, color=MUTED_ON_DARK, line_spacing=1.5)
 
-    stats = [("3", "애플리케이션"), ("82", "REST API"), ("22", "DB 테이블"), ("177", "테스트"), ("162+", "커밋")]
+    stats = [("3", "애플리케이션"), ("82", "REST API"), ("22", "DB 테이블"), ("188", "테스트"), ("177", "커밋")]
     cx = Inches(0.9)
     cw = Inches(2.25)
     for label_n, label_t in stats:
@@ -341,7 +341,7 @@ def build():
         ("03", "사용자 화면", "실제 서비스 화면 둘러보기"),
         ("04", "AI 챗봇", "3가지 모델, 대화 저장"),
         ("05", "관리자 콘솔", "신고·유저·콘텐츠 운영"),
-        ("06", "기술 스택 & 규모", "무엇으로, 얼마나 만들었나"),
+        ("06", "기술 스택 & 규모", "무엇으로, 얼마나, 어디에서 운영하나"),
         ("07", "회고 & 다음 계획", "잘한 점과 앞으로의 방향"),
     ]
     # 7행 * step 을 footer(7.0in 시작) 위에서 끝내야 한다: 1.95 + 6*0.68 + 0.6 = 6.63in
@@ -404,7 +404,7 @@ def build():
     boxes = [
         (Inches(0.9), "사용자 웹앱", "FrontServer", "3000", BRAND, "숏폼·롱폼·커뮤니티\n메시지·알림·챗봇"),
         (Inches(5.05), "관리자 콘솔", "Console", "3200", AMBER_INK, "신고·유저·콘텐츠\n고객센터·대시보드"),
-        (Inches(9.2), "API 서버", "BackendServer", "4000", TEAL, "REST API·SQLite\n실시간(SSE·WS)"),
+        (Inches(9.2), "API 서버", "BackendServer", "4000", TEAL, "REST API·PostgreSQL\n실시간(SSE·WS)"),
     ]
     bw = Inches(3.2)
     by = Inches(2.55)
@@ -583,9 +583,9 @@ def build():
 
     stack_groups = [
         ("프론트엔드", ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS v4", "TanStack Query"], BRAND),
-        ("백엔드", ["Node.js", "Express", "SQLite", "WebSocket", "SSE"], TEAL),
+        ("백엔드", ["Node.js", "Express", "PostgreSQL", "WebSocket", "SSE"], TEAL),
         ("AI", ["LangChain", "LangGraph", "Google Gemini", "Groq"], BRAND_2),
-        ("배포", ["Cloudflare Workers", "Cloudflare Tunnel", "GitHub"], AMBER_INK),
+        ("배포·운영", ["Cloudflare Workers", "Oracle Cloud", "GitHub Actions"], AMBER_INK),
     ]
     y = Inches(1.85)
     for label, tags, color in stack_groups:
@@ -597,8 +597,8 @@ def build():
         s, Inches(0.9), Inches(5.75), Inches(11.5), Inches(0.9),
         [("왜 이렇게 골랐나  ", BRAND, True),
          ("모두가 아는 인기 기술을 그대로 쓰기보다, 이 규모(개인 프로젝트, 3개 앱)에 "
-          "맞는 것을 택했습니다. 예를 들어 SQLite는 설치 없이 파일 하나로 영속화되고, "
-          "동기 API라 트랜잭션 코드가 단순합니다.", TEXT_2, False)],
+          "맞는 것을 택했습니다. 예를 들어 처음엔 설치가 필요 없는 SQLite 로 시작했고, "
+          "실제 서버에 올리기로 하면서 백업과 이력 관리가 되는 PostgreSQL 로 옮겼습니다.", TEXT_2, False)],
         size=13.5, line_spacing=1.55,
     )
     page_no(s, nn())
@@ -609,12 +609,12 @@ def build():
     text(s, Inches(0.9), Inches(0.85), Inches(11), Inches(0.7), "숫자로 보는 VidShare", size=26, color=WHITE, bold=True)
 
     big = [
-        ("15,700+", "줄의 TypeScript"),
+        ("16,100+", "줄의 TypeScript"),
         ("82", "REST API 엔드포인트"),
         ("22", "데이터베이스 테이블"),
         ("33", "화면 (사용자 27 · 관리자 6)"),
-        ("177", "자동화 테스트"),
-        ("162+", "커밋 (커밋마다 상세 기록)"),
+        ("188", "자동화 테스트"),
+        ("177", "커밋 (커밋마다 상세 기록)"),
     ]
     cols = 3
     gw, gh = Inches(3.75), Inches(2.05)
@@ -627,6 +627,54 @@ def build():
         text(s, x + Inches(0.3), y + Inches(0.32), gw - Inches(0.6), Inches(0.75), num, size=32, color=WHITE, bold=True)
         text(s, x + Inches(0.3), y + Inches(1.15), gw - Inches(0.6), Inches(0.55), label, size=12.5, color=MUTED_ON_DARK, line_spacing=1.3)
     page_no(s, nn(), dark=True)
+
+    # ---------------------------------------------------------- 14-1. 운영 준비
+    s = new_slide(prs, PAPER)
+    kicker(s, "06 · 운영 준비")
+    text(s, Inches(0.9), Inches(0.85), Inches(11.5), Inches(0.7), "켜 두면 계속 돌아가는 서비스로", size=26, color=TEXT, bold=True)
+    text(s, Inches(0.9), Inches(1.55), Inches(11.5), Inches(0.5),
+         "내 PC 에서만 돌던 서버를, 꺼지지 않는 클라우드 서버와 매일 백업되는 데이터베이스 위로 옮길 준비를 마쳤습니다.",
+         size=14, color=MUTED)
+
+    flow = [
+        ("화면", "Cloudflare", "사용자 사이트 · 관리자 콘솔\n전 세계 가까운 곳에서 응답", BRAND),
+        ("서버 · 데이터", "Oracle Cloud", "API 서버 + PostgreSQL\n24시간 가동, 자동 HTTPS", TEAL),
+        ("백업", "내 PC (D 드라이브)", "매일 새벽 데이터 사본을\n내려받아 보관 · 복원 확인", AMBER_INK),
+    ]
+    fw, fh, fy = Inches(3.55), Inches(2.25), Inches(2.45)
+    fx = Inches(0.9)
+    for i, (title, where, desc, color) in enumerate(flow):
+        rect(s, fx, fy, fw, fh, fill=PAPER_2, line=LINE, line_w=1, radius=0.08)
+        rect(s, fx, fy, fw, Inches(0.12), fill=color, radius=0)
+        text(s, fx + Inches(0.28), fy + Inches(0.32), fw - Inches(0.5), Inches(0.45), title, size=17, color=TEXT, bold=True)
+        text(s, fx + Inches(0.28), fy + Inches(0.78), fw - Inches(0.5), Inches(0.35), where, size=11.5, color=MUTED, bold=True)
+        text(s, fx + Inches(0.28), fy + Inches(1.25), fw - Inches(0.5), Inches(0.9), desc, size=12.5, color=TEXT_2, line_spacing=1.5)
+        if i < len(flow) - 1:
+            conn = s.shapes.add_connector(
+                MSO_CONNECTOR.STRAIGHT, fx + fw, fy + fh // 2, fx + fw + Inches(0.42), fy + fh // 2
+            )
+            conn.line.color.rgb = MUTED
+            conn.line.width = Pt(1.5)
+        fx += fw + Inches(0.42)
+
+    checks = [
+        ("180", "개의 자동 검사가 코드를 올릴 때마다 실행"),
+        ("151", "건의 기존 데이터를 새 데이터베이스로 빠짐없이 이전"),
+        ("1번", "명령으로 백업 → 업데이트 → 상태 확인까지"),
+    ]
+    cx = Inches(0.9)
+    for num, label in checks:
+        text(s, cx, Inches(5.0), Inches(0.9), Inches(0.6), num, size=24, color=BRAND, bold=True)
+        text(s, cx + Inches(0.85), Inches(5.08), Inches(3.0), Inches(0.75), label, size=12, color=TEXT_2, line_spacing=1.35)
+        cx += Inches(3.95)
+
+    rich(
+        s, Inches(0.9), Inches(6.05), Inches(11.5), Inches(0.6),
+        [("남은 일  ", BRAND, True),
+         ("클라우드 서버를 만들고 도메인을 연결하면, 링크 하나로 모든 기능이 동작하는 라이브 서비스가 됩니다.", TEXT_2, False)],
+        size=13.5,
+    )
+    page_no(s, nn())
 
     # ---------------------------------------------------------- 15. 회고
     s = new_slide(prs, PAPER)
@@ -647,7 +695,7 @@ def build():
 
     text(s, Inches(6.9), Inches(1.7), Inches(5.3), Inches(0.4), "아쉬운 점", size=15, color=RGBColor(0xB4, 0x23, 0x18), bold=True)
     bad = [
-        "CI를 마지막까지 미룸 — 테스트 177건을 만들고도 자동 실행은 수동",
+        "자동 검사를 늦게 깖 — 테스트를 170건 넘게 만들고도 한동안 손으로 실행",
         "일부 코드 파일이 비대해짐 — 초반에 나눴다면 지금 분할 비용이 없었을 것",
         "성능·접근성을 측정한 적이 없음 — 기능이 안정된 지금이 잴 시점",
     ]
@@ -664,11 +712,11 @@ def build():
     text(s, Inches(0.9), Inches(0.85), Inches(11), Inches(0.7), "앞으로의 방향", size=26, color=TEXT, bold=True)
 
     plans = [
-        ("1", "백엔드 공개 배포", "링크 하나로 전체 기능이 동작하는 라이브 데모 완성"),
-        ("2", "CI 파이프라인", "PR마다 세 앱의 타입체크·린트·테스트 자동 검증"),
-        ("3", "보안 강화", "Rate limiting, 보안 헤더, 입력 검증 스키마"),
-        ("4", "운영 감사 로그", "관리자가 무엇을 했는지 추적할 수 있게"),
-        ("5", "접근성 · 성능", "기능이 안정된 지금, 기준선을 측정하고 개선"),
+        ("1", "라이브 서비스 공개", "클라우드 서버·도메인 연결 — 배포 준비는 끝남"),
+        ("2", "보안 강화", "Rate limiting, 보안 헤더, 입력 검증 스키마"),
+        ("3", "운영 감사 로그", "관리자가 무엇을 했는지 추적할 수 있게"),
+        ("4", "접근성 · 성능", "기능이 안정된 지금, 기준선을 측정하고 개선"),
+        ("5", "영상 저장소 분리", "업로드가 늘면 전용 저장소로 옮겨 서버 부담을 덜기"),
     ]
     y = Inches(1.85)
     for no, title, desc in plans:

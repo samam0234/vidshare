@@ -107,6 +107,7 @@
 - 챗봇 봇 답변 마크다운 렌더링 (굵게·이탤릭·취소선·목록)
 
 ### Changed
+- 포트폴리오 문서·사이트·슬라이드를 PostgreSQL·Oracle Cloud 기준으로 갱신, 슬라이드 "운영 준비" 추가 (커밋 100)
 - **백엔드 데이터 계층 전부 async** (커밋 096): `better-sqlite3`(동기) → `pg`(비동기).
   store·auth·chatbot·라우트 25개. 라우터는 `middleware/asyncRouter.ts` 의 `Router()` 로 만들어
   async 핸들러의 실패가 에러 핸들러로 가게 함(Express 4 는 rejected promise 를 놓침)
@@ -142,6 +143,7 @@
 - 죽은 코드: `store.ts` 의 `listNotifications`/`deleteNotification`/`patchNotification`, `seedNotifications`, `Notification` 타입
 
 ### Fixed
+- 포트폴리오 사이트 코드 블록 18개가 줄바꿈 없이 뭉쳐 보이던 문제, docx 에 굵게 안 인라인 코드 백틱이 찍히던 문제 (커밋 100)
 - E2E(Playwright) 백엔드가 개발 DB(`.env` 의 `DATABASE_URL`)로 뜨던 문제 (커밋 099, 096 회귀).
   테스트 DB 의 `e2e` 스키마를 매 실행 초기화해 쓴다 (`scripts/reset-schema.ts`)
 - ESLint가 OpenNext 빌드 산출물(`.open-next/`)까지 검사하고 있던 문제 (커밋 093).

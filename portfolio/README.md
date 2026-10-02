@@ -6,7 +6,7 @@ VidShare 프로젝트를 **코드를 열지 않고도** 설명하기 위한 자�
 portfolio/
 ├── VidShare-포트폴리오.md      ← 문서 본문 (원본)
 ├── VidShare-포트폴리오.docx    ← 위 파일에서 생성 (제출용 문서)
-├── VidShare-포트폴리오.pptx    ← 발표용 슬라이드 (서비스 소개, 23장)
+├── VidShare-포트폴리오.pptx    ← 발표용 슬라이드 (서비스 소개, 24장)
 ├── build_docx.py               ← md → docx 변환기
 ├── build_pptx.py                ← 슬라이드 생성기 (내용은 이 파일 안 데이터)
 ├── serve.py                    ← 소개 사이트 로컬 서버
