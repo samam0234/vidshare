@@ -172,8 +172,8 @@ NNN-짧은-영문-slug.md
 | 096 | [096-postgres-migration.md](./096-postgres-migration.md) | `1f6dbff` | SQLite → PostgreSQL 16 전환 | 2026-10-02 |
 | 097 | [097-oracle-deploy-scripts-ci.md](./097-oracle-deploy-scripts-ci.md) | `22f4bf5` | Oracle Cloud·D 드라이브 배포/백업 스크립트 + CI | 2026-10-02 |
 | 098 | [098-docs-postgres-oracle.md](./098-docs-postgres-oracle.md) | `de1e39e` | 문서 갱신 — PostgreSQL·Oracle Cloud·운영 절차서 | 2026-10-02 |
-| 099 | [099-e2e-postgres.md](./099-e2e-postgres.md) | `TBD` | E2E 를 PostgreSQL 테스트 스키마로 | 2026-10-02 |
-| 100 | [100-portfolio-postgres-oracle.md](./100-portfolio-postgres-oracle.md) | `TBD` | 포트폴리오 갱신 — PostgreSQL·Oracle Cloud·운영 준비 | 2026-10-02 |
+| 099 | [099-e2e-postgres.md](./099-e2e-postgres.md) | `9f1359d` | E2E 를 PostgreSQL 테스트 스키마로 | 2026-10-02 |
+| 100 | [100-portfolio-postgres-oracle.md](./100-portfolio-postgres-oracle.md) | `497f4f8` | 포트폴리오 갱신 — PostgreSQL·Oracle Cloud·운영 준비 | 2026-10-02 |
 
 ---
 
