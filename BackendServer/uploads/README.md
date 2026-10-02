@@ -14,6 +14,6 @@
 | 환경 | 권장 `UPLOADS_PATH` |
 |------|---------------------|
 | 로컬 (내 PC) | `D:\vidshare-data\uploads` |
-| 운영 (Oracle VM) | `/mnt/vidshare-data/uploads` — Caddy 가 직접 서빙 |
+| 운영 (Oracle VM) | `/mnt/vidshare-data/uploads` (부트 디스크 위 폴더) — 백엔드가 서빙, 매일 D 드라이브로 사본 |
 
 이 폴더의 실제 미디어 파일은 Git에 올리지 않습니다.

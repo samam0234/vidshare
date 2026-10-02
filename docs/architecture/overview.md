@@ -1,7 +1,7 @@
 # 아키텍처 개요
 
 **상태**: 구현됨 — FrontServer(Next.js) + BackendServer(Express + PostgreSQL) + console(관리자) 연동 완료
-**최종 갱신**: 2026-10-02 (096~098 PostgreSQL 전환 · Oracle Cloud 배포 준비)
+**최종 갱신**: 2026-10-02 (096~105 PostgreSQL 전환 · Oracle Cloud 운영 배포 · 관리자 복구)
 **대상 독자**: 이 저장소를 처음 인수받는 개발자/에이전트
 
 ---
@@ -26,7 +26,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
     │  /api/admin/*  ← requireAdmin
     ▼
 [PostgreSQL 16]  22개 테이블 + schema_migrations
-                 로컬: D:\PostgreSQL\16\data · 운영: Oracle VM /mnt/vidshare-data/pgdata
+                 로컬: D:\PostgreSQL\16\data · 운영: Oracle VM /var/lib/postgresql/16/main
 [Files]   UPLOADS_PATH  ← 영상·썸네일. DB에는 /uploads/<uuid>.ext 만 저장
 ```
 
@@ -34,7 +34,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 |------|------|------|
 | `vidshare/FrontServer/` | Next.js UI (사용자) | 3000 · Workers `vidshare-front` |
 | `vidshare/console/` | Next.js UI (관리자, 081~084) | 3200 · Workers `vidshare-console` |
-| `vidshare/BackendServer/` | Express API + PostgreSQL | 4000 · Oracle Cloud VM (Workers 금지) |
+| `vidshare/BackendServer/` | Express API + PostgreSQL | 4000 · Oracle Cloud 전용 VM + Cloudflare Tunnel (Workers 금지) |
 | `vidshare/docs/` | 설계·이력·커밋 상세 | — |
 | `vidshare/portfolio/` | 포트폴리오 문서(md·docx) + 소개 사이트 | 4500 (`serve.py`, 선택) |
 | `vidshare/deploy/` | Oracle VM·내 PC 배포/백업 스크립트 (097) | — |
@@ -44,6 +44,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
 
 - Front: https://vidshare-front.limjinheng0120.workers.dev
 - Console: https://vidshare-console.limjinheng0120.workers.dev
+- API: `https://<무작위>.trycloudflare.com` — 터널 재시작 때 바뀌며, 이 PC 의 예약 작업이 매시간 프론트·콘솔을 재배포해 따라간다
 
 배포 절차·직접 할 일: [deployment.md](../deployment.md)
 
@@ -222,6 +223,8 @@ src/
 │   ├── requestUser.ts   ← requireRequestUser
 │   └── requireAdmin.ts  ← requireAdmin (081)
 ├── scripts/create-admin.ts  ← 관리자 계정 생성·승격 CLI (081)
+├── scripts/list-admins.ts   ← 관리자 핸들 목록 (104)
+├── scripts/reset-password.ts ← 비밀번호 재설정 + 세션 전부 종료 (104)
 ├── scripts/db-migrate.ts    ← 마이그레이션만 적용 (096)
 ├── scripts/migrate-sqlite-to-pg.ts ← SQLite → Postgres 1회 이관 + 행 수 검증 (096)
 ├── scripts/dump-db-doc.ts  ← DataBaseColumn.md 덤프 (096)
@@ -330,6 +333,8 @@ npm run dev          # http://localhost:3200
 - 데모 계정: `demo` / `demo1234`
 - 관리자 계정은 시드에 없다. 한 번만 만들면 된다:
   `cd vidshare/BackendServer && npm run create-admin -- <handle> <password>`
+- 핸들·비밀번호를 잊었다면 `npm run list-admins` / `npm run reset-password -- <handle> --generate`
+  (운영 서버는 이 PC 에서 `deploy\windows\admin-tools.ps1 -List` / `-Reset <handle>`)
 - LAN 접속 시 프론트는 `window.location.hostname:4000` 으로 API를 자동 지정한다
 - 검증 명령: `npx tsc --noEmit` + `npm run lint`
   (`app/layout.tsx` 의 `no-page-custom-font` 경고 1건은 기존 이슈로 무시)
@@ -348,8 +353,8 @@ npm run dev          # http://localhost:3200
    테스트는 `DATABASE_URL_TEST` DB 안에 **파일마다 임시 스키마**를 만들어 병렬 실행해도 섞이지 않는다.
 5. **관리자 라우트는 `requireAdmin(req)` 로 시작**한다 (`requireRequestUser` 가 아님).
    관리자 화면을 늘릴 때는 `console/` 쪽만 고치고 FrontServer는 건드리지 않는다
-6. 실제 배포 전에 반드시 [배포 가이드](../deployment.md) 를 읽을 것 — 도메인 하나 아래에
-   app/console/api 를 두지 않으면 로그인 쿠키가 실리지 않는다
+6. 배포를 건드리기 전에 반드시 [배포 가이드](../deployment.md) 를 읽을 것 — 지금은 프론트와 API 가
+   다른 사이트라 `SameSite=None` 쿠키로 운영 중이고, 도메인을 마련하면 `Lax` 로 되돌린다
 7. 남은 과제 목록은 [features/roadmap.md](../features/roadmap.md) 참고
 
 ---

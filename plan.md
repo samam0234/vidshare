@@ -2,10 +2,13 @@
 
 **최초 작성**: 2026-08-19
 **고도화 개정**: 2026-10-02 (v2 — Oracle Cloud 배포 · PostgreSQL 전환 · 전체 폴더 구조)
-**구현 반영**: 2026-10-02 (v2.1 — 커밋 096~098. 계획과 달라진 점은 각 장에 적음)
+**구현 반영**: 2026-10-02 (v2.2 — 커밋 096~105. 계획과 달라진 점은 각 장에 ▶ 로 적음)
 **성격**: 소규모 개인 프로젝트
 
-**현재 상태 (v2.1)**: 백엔드는 **PostgreSQL 16** 으로 전환 완료(테스트 148건 통과, 실데이터 이관 검증). Oracle VM·D 드라이브 배포/백업 스크립트와 CI 준비 완료. **남은 것은 계정이 필요한 작업**(OCI 구축, 도메인, 로컬 DB 계정 생성 실행) — 13장의 “직접” 항목.
+**현재 상태 (v2.2)**: **운영 중.** 백엔드는 PostgreSQL 16(테스트 151건)으로 전환했고, **Oracle Cloud 전용 VM**(ARM 2 OCPU / 11GB)에 올려
+**Cloudflare Tunnel** 로 공개했다(103). OCI 보안 목록에서 80·443 이 막혀 있어 계획한 Caddy + 도메인 대신 아웃바운드 터널을 썼고,
+그래서 API 주소가 임시(`*.trycloudflare.com`)이며 쿠키는 `SameSite=None` 이다. 관리자 계정 찾기·재설정 도구도 추가했다(104).
+**남은 것**: 도메인으로 주소 고정, 로컬 D 드라이브 DB 계정 생성 실행(P1), 감사 로그 — 13장.
 
 **v2 목표**: 백엔드를 **Oracle Cloud** 에 올리고, DB 를 **SQLite → PostgreSQL** 로 바꾸며, 데이터는 **D 드라이브** 에 저장·백업한다.
 
@@ -208,6 +211,22 @@
         내 PC  D:\vidshare-data\backups\prod\   ← 운영 데이터 사본
 ```
 
+> ▶ **실제 구성 (103)** — 위 그림은 계획이다. 실제로는 OCI 보안 목록이 22 만 허용해 Caddy(80·443)를 쓸 수 없었다.
+>
+> ```
+> vidshare-front.*.workers.dev / vidshare-console.*.workers.dev   (Cloudflare Workers)
+>        │ fetch(credentials: "include")
+>        ▼
+> <무작위>.trycloudflare.com  ══ 아웃바운드 터널 ══  Oracle VM (Ubuntu 22.04, ARM 2 OCPU / 11GB, 전용)
+>                                                    ├─ cloudflared          (systemd)
+>                                                    ├─ BackendServer :4000  (systemd) ─ /uploads/* 도 직접 서빙
+>                                                    └─ PostgreSQL 16 :5432  /var/lib/postgresql/16/main (부트 디스크)
+> 내 PC  ← 매일 04:30 운영 백업·업로드 사본 (D:\vidshare-data\backups\prod)
+>        → 매시간 터널 주소 확인, 바뀌면 프론트·콘솔 재배포 (sync-tunnel-url.ps1)
+> ```
+>
+> 블록 볼륨은 붙이지 않았다. 도메인을 마련하면 named tunnel(또는 80·443 개방 + Caddy)로 아래 7.1 의 원래 구성에 가까워진다.
+
 ### 7.1 도메인과 쿠키
 
 Workers 의 `*.workers.dev` 주소와 백엔드 주소가 **다른 등록 도메인**이면 브라우저가 세션 쿠키를 보내지 않는다 ([deployment.md](./docs/deployment.md) 3장). 그래서 **도메인을 하나 구입**해 세 개로 나눈다.
@@ -223,9 +242,13 @@ Workers 의 `*.workers.dev` 주소와 백엔드 주소가 **다른 등록 도메
 - 세션 쿠키 이름은 그대로 `vidshare_sid`(사용자) / `vidshare_admin_sid`(관리자).
 - Caddy 뒤에서 `Secure` 쿠키가 정상 발급되려면 `app.set("trust proxy", 1)` 이 필요하다 → P3 에서 반영.
 
-### 7.2 왜 Tunnel 을 버리는가
+### 7.2 왜 Tunnel 을 버리는가 → ▶ 결국 다시 썼다
 
 Oracle VM 은 공인 IP 가 있으므로 Cloudflare Tunnel 이 필요 없다. Caddy 가 직접 443 을 받는다. `cloudflare/config.template.yml` 은 097 에서 제거했다.
+
+> ▶ **103 에서 뒤집힘.** 버린 것은 "**내 PC** 를 터널로 노출"하는 안이었다(PC 가 꺼지면 서비스도 멈춤).
+> 실제 VM 은 보안 목록이 22 만 열려 있어 인바운드로 443 을 받을 수 없었고, **VM 에서** `cloudflared` 를 돌리는 아웃바운드 터널로 공개했다.
+> 서버는 여전히 꺼지지 않는 VM 이므로 원래 이유(상시 가동)는 지켜진다. 대가는 주소가 고정되지 않는 것과 `SameSite=None` 쿠키.
 
 ---
 
@@ -308,7 +331,7 @@ Oracle Cloud VM 은 원격 서버라 **내 PC 의 D 드라이브를 직접 쓸 �
 | 환경 | DB 가 사는 곳 | 파일(영상)이 사는 곳 | 용도 |
 |------|---------------|---------------------|------|
 | **로컬 (내 PC)** | **`D:\PostgreSQL\16\data`** (이미 설치된 Postgres 16 서비스) | **`D:\vidshare-data\uploads`** | 개발·테스트·이관 |
-| **운영 (Oracle VM)** | VM 의 **별도 블록 볼륨** `/mnt/vidshare-data/pgdata` | `/mnt/vidshare-data/uploads` | 실서비스 |
+| **운영 (Oracle VM)** | 계획: 블록 볼륨 `/mnt/vidshare-data/pgdata` → ▶ **실제: 부트 디스크 `/var/lib/postgresql/16/main`** | `/mnt/vidshare-data/uploads` (부트 디스크 위 폴더) | 실서비스 |
 | **운영 → D 드라이브 사본** | — | — | 야간 `pg_dump` + 업로드를 `D:\vidshare-data\backups\prod\` 로 |
 
 **확인한 사실 (2026-10-02)**: 이 PC 에는 PostgreSQL 16.15 가 `D:\PostgreSQL\16` 에 설치되어 있고, 서비스
@@ -368,7 +391,10 @@ powershell -ExecutionPolicy Bypass -File deploy\windows\setup-postgres-d.ps1
 
 ---
 
-## 10. Oracle Cloud 배포 (스크립트 ✅ 097 · 구축 ⏳)
+## 10. Oracle Cloud 배포 (스크립트 ✅ 097 · 구축 ✅ 103)
+
+> ▶ **실제 (103)**: 서울 리전 **ARM(A1) 2 OCPU / 11GB**, **Ubuntu 22.04**(Postgres 16 은 PGDG 저장소), 부트 50GB, **블록 볼륨·예약 IP·보안 목록 변경 없음**.
+> 설치는 `setup-vm-tunnel.sh` — 10.2~10.4 의 Caddy · iptables 80/443 · 볼륨 마운트 단계가 빠지고 `cloudflared` 서비스가 들어간다.
 
 ### 10.1 리소스
 
@@ -436,10 +462,10 @@ sudo bash /opt/vidshare/deploy/oracle/deploy.sh [커밋]
 | `DATABASE_URL_TEST` | `postgres://vidshare:…@localhost:5432/vidshare_test` | — | `npm test` 전용 |
 | `DB_POOL_MAX` | `10` | `10` | 커넥션 풀 크기 |
 | `UPLOADS_PATH` | `D:\vidshare-data\uploads` | `/mnt/vidshare-data/uploads` | |
-| `CORS_ORIGIN` | 비움(사설망 허용) | `https://app.<도메인>,https://console.<도메인>` | |
-| `COOKIE_DOMAIN` | 비움 | `.<도메인>` | |
-| `COOKIE_SAMESITE` | `lax` | `lax` | |
-| `TRUST_PROXY` | `0` | `1` | Caddy 한 단계 뒤 |
+| `CORS_ORIGIN` | 비움(사설망 허용) | `https://app.<도메인>,https://console.<도메인>` ▶ 지금은 두 `*.workers.dev` 주소 | |
+| `COOKIE_DOMAIN` | 비움 | `.<도메인>` ▶ 지금은 비움 | |
+| `COOKIE_SAMESITE` | `lax` | `lax` ▶ 지금은 `none` (프론트·API 가 다른 사이트) | |
+| `TRUST_PROXY` | `0` | `1` | Caddy 또는 Cloudflare Tunnel 한 단계 뒤 |
 | `GOOGLE_API_KEY` `GROQ_API_KEY` | 개인 키 | 서버 전용 키 | 챗봇 |
 | `CHAT_MODEL_*` `CHAT_TIMEOUT_MS` | 그대로 | 그대로 | |
 | `SQLITE_PATH` | (선택) | — | `db:import-sqlite` 원본만. 서버는 더 이상 읽지 않음 |
@@ -488,6 +514,8 @@ vidshare/
 │   │   └── README.md                           [변경] UPLOADS_PATH 권장값
 │   ├── scripts/
 │   │   ├── create-admin.ts                     [변경] async, dotenv
+│   │   ├── list-admins.ts                      [신규 104] 관리자 핸들 목록
+│   │   ├── reset-password.ts                   [신규 104] 비밀번호 재설정 + 세션 전부 종료 (--generate / --stdin)
 │   │   ├── db-migrate.ts                       [신규] 마이그레이션만 적용
 │   │   ├── migrate-sqlite-to-pg.ts             [신규] SQLite → Postgres 이관 + 행 수 검증 (importSqlite 함수 export)
 │   │   └── dump-db-doc.ts                      [신규] DataBaseColumn.md 덤프
@@ -577,7 +605,11 @@ vidshare/
 ├── deploy/                                     [신규] 배포·운영 스크립트
 │   ├── README.md                               [신규] 순서 요약
 │   ├── oracle/                                 VM(Ubuntu 24.04)에서 실행
-│   │   ├── setup-vm.sh                         [신규] 패키지·볼륨·Postgres 이전·계정·Caddy·systemd·cron·iptables
+│   │   ├── setup-vm.sh                         [신규] 패키지·볼륨·Postgres 이전·계정·Caddy·systemd·cron·iptables (도메인 경로)
+│   │   ├── setup-vm-tunnel.sh                  [신규 103] 현재 운영: Node·Postgres·cloudflared, systemd(백엔드·터널)·cron
+│   │   ├── get-tunnel-url.sh                   [신규 103] 현재 터널 주소 (/usr/local/bin/vidshare-tunnel-url)
+│   │   ├── setup-shared-nginx.sh               [신규 102] 공유 nginx VM 용 — 103 에서 사용 중단
+│   │   ├── nginx-vidshare.conf                 [신규 102] 위 스크립트용 사이트 설정
 │   │   ├── deploy.sh                           [신규] 백업 → pull → ci → build → db:migrate → restart → health
 │   │   ├── backup.sh                           [신규] pg_dump -Fc, root:adm 640, 14일
 │   │   ├── Caddyfile                           [신규] HTTPS + /uploads 직접 서빙 + reverse_proxy
@@ -587,7 +619,9 @@ vidshare/
 │   └── windows/                                내 PC 에서 실행 (PowerShell 5.1, UTF-8 BOM)
 │       ├── setup-postgres-d.ps1                [신규] 기존 D:\PostgreSQL\16 에 계정·DB, D:\vidshare-data
 │       ├── backup-local.ps1                    [신규] 로컬 pg_dump, -Register
-│       └── backup-pull.ps1                     [신규] 운영 백업·업로드 가져오기, -Register
+│       ├── backup-pull.ps1                     [신규] 운영 백업·업로드 가져오기, -Register
+│       ├── sync-tunnel-url.ps1                 [신규 103] 터널 주소 바뀌면 프론트·콘솔 재배포, -Register(매시간)
+│       └── admin-tools.ps1                     [신규 104] 운영 관리자 찾기(-List) · 비밀번호 재설정(-Reset)
 │
 ├── cloudflare/
 │   └── config.template.yml                     [삭제] Tunnel → Oracle VM + Caddy
@@ -624,6 +658,21 @@ D:\vidshare-data\                uploads\ · backups\{local, prod\db, prod\uploa
 ```
 
 ### 12.3 Oracle VM
+
+▶ **현재 운영 (터널 구성, 103)**
+
+```
+/var/lib/postgresql/16/main/     PostgreSQL 16 데이터 (부트 디스크)
+/mnt/vidshare-data/              부트 디스크 위 폴더 (블록 볼륨 없음)
+├── uploads/                     vidshare — 백엔드가 /uploads/* 로 서빙
+└── backups/                     cron 03:00 vidshare-YYYYMMDD-HHMM.dump (14일)
+/opt/vidshare/                   git clone
+/etc/vidshare/backend.env        비밀값 (600)
+/etc/systemd/system/vidshare-backend.service · vidshare-tunnel.service
+/usr/local/bin/vidshare-backup · vidshare-tunnel-url
+```
+
+계획했던 구성 (Caddy + 블록 볼륨, `setup-vm.sh`)
 
 ```
 /mnt/vidshare-data/              블록 볼륨 (fstab UUID, nofail; 서비스는 RequiresMountsFor)
@@ -664,7 +713,7 @@ D:\vidshare-data\                uploads\ · backups\{local, prod\db, prod\uploa
 ### P3. 코드 async 전환
 - [x] store · auth · chatbot · 라우트 25개 · chatSocket · index (096)
 - [x] `TRUST_PROXY`, health DB 확인
-- [x] 백엔드 테스트 Postgres 위에서 148건 통과
+- [x] 백엔드 테스트 Postgres 위에서 148건 통과 (이후 104 까지 151건)
 - [ ] `errorHandler` 에 pg 오류 코드(23505 → 409 등) 매핑 — 지금은 라우트가 사전 검사로 막고 있어 보류
 
 ### P4. 데이터 이관
@@ -683,16 +732,18 @@ D:\vidshare-data\                uploads\ · backups\{local, prod\db, prod\uploa
 - [x] **운영 배포 (2026-10-02, 103)** — 전용 VM `161.33.186.255`(ARM 11GB)에 `setup-vm-tunnel.sh` 로 설치, Cloudflare Tunnel 로 공개(80·443 막혀도 동작). 데이터 복원, 프론트·콘솔 재배포, 브라우저로 로그인·SSE·WebSocket 확인
 - [x] 102 에서 human-bug-tier VM 에 함께 올린 것 제거 (103)
 - [x] 터널 주소 변경 시 프론트·콘솔 자동 재배포 (`sync-tunnel-url.ps1`, 매시간)
-- [ ] 도메인, `api.` A 레코드, Workers Custom Domain (현재 sslip.io 임시 구성)
+- [ ] 도메인 + Cloudflare named tunnel(또는 80·443 개방 + Caddy), Workers Custom Domain — 현재 `*.trycloudflare.com` 임시 주소
 
 ### P7. 운영 안정화
 - [x] `backup.sh` + cron (setup-vm.sh 가 등록), `backup-pull.ps1`
 - [x] 복원 연습 1회 (로컬: 덤프 → 빈 DB 복원 → 행 수 일치)
 - [x] `.github/workflows/ci.yml` (097)
-- [ ] 운영 백업으로 복원 연습 (VM 구축 후)
+- [x] 운영 백업으로 복원 (103 — 운영 덤프를 새 전용 VM 에 `pg_restore --clean`, 행 수 확인)
+- [x] 관리자 계정 찾기 · 비밀번호 재설정 (104) — `list-admins` · `reset-password` · `admin-tools.ps1`, 운영에서 검증
 - [ ] 관리자 조치 감사 로그 (`0002_audit_log` + `console/app/audit`)
 - [ ] 사업자등록 후 `/business` 실정보
-- [ ] `portfolio/` 배포 구조 반영해 재생성
+- [x] `portfolio/` 배포 구조 반영해 재생성 (100, 105) · Notion 동기화
+- [ ] 블록 볼륨으로 DB·업로드 이전 — 지금은 한 디스크라 D 드라이브 사본이 유일한 외부 백업
 
 ### 그다음 (이번 범위 밖)
 - DB 타입 정교화 (`timestamptz`, `boolean`)
@@ -706,13 +757,18 @@ D:\vidshare-data\                uploads\ · backups\{local, prod\db, prod\uploa
 
 | 위험 | 가능성 | 영향 | 대응 |
 |------|--------|------|------|
-| `store.ts` async 전환 중 `await` 누락 → 조용한 버그 | 높음 | 높음 | `tsc` + 미-await 호출 전수 검사 스크립트 + 148건 테스트 (096 에서 `{ ...promise }` 2곳 발견·수정) |
+| `store.ts` async 전환 중 `await` 누락 → 조용한 버그 | 높음 | 높음 | `tsc` + 미-await 호출 전수 검사 스크립트 + 151건 테스트 (096 에서 `{ ...promise }` 2곳 발견·수정) |
 | SQLite 의 느슨한 타입 때문에 이관 시 변환 실패 (날짜·불리언) | 중 | 중 | 이관 스크립트에서 변환 함수 분리, 행 수·샘플 값 검증, 원본 보관 |
 | 시퀀스 미보정으로 신규 INSERT 시 PK 충돌 | 중 | 높음 | 이관 끝에 `setval` 을 항상 실행하고 테스트로 검증 |
 | Oracle ARM 인스턴스 “Out of capacity” | 중 | 중 | 시간대 바꿔 재시도, 리전 변경, 안 되면 AMD Micro 로 시작 후 이전 |
 | Always Free 유휴 인스턴스 회수 정책 | 낮음~중 | 높음 | 헬스체크로 주기 호출, 최신 정책 확인, 백업을 D 드라이브에 이중 보관 |
 | Ubuntu `iptables` 로 80·443 이 막혀 접속 불가 | 높음 (흔함) | 낮음 | `setup-vm.sh` 에서 규칙 추가·저장, 체크리스트에 명시 |
-| 크로스 도메인 쿠키 미전송 | 중 | 높음 | 같은 등록 도메인 + `COOKIE_DOMAIN`, `cors-cookies.test.ts` 로 회귀 방지 |
+| ▶ OCI 보안 목록이 80·443 을 막고 있음 (103 에서 실제 발생) | — | 높음 | 아웃바운드 Cloudflare Tunnel 로 우회 (`setup-vm-tunnel.sh`) |
+| ▶ 터널 주소가 바뀌어 프론트가 옛 API 를 봄 | 중 | 중 | `sync-tunnel-url.ps1` 매시간 자동 재배포. 근본 해결은 도메인 + named tunnel |
+| ▶ `SameSite=None` 쿠키 — Safari 로그인 불가 · CSRF 표면 증가 | 중 | 중 | CORS 화이트리스트 2개 오리진. 근본 해결은 같은 등록 도메인 + `Lax` |
+| ▶ 블록 볼륨 없음 — 디스크 장애 시 서버 쪽 백업도 함께 소실 | 낮음 | 높음 | 매일 D 드라이브로 사본. 블록 볼륨 추가 검토 |
+| ▶ 관리자 비밀번호 분실 | 중 | 중 | 해시라 복구 불가 → `reset-password` 재설정 (104) |
+| 크로스 도메인 쿠키 미전송 | 중 | 높음 | 같은 등록 도메인 + `COOKIE_DOMAIN`, `cors-cookies.test.ts` 로 회귀 방지 ▶ 지금은 `SameSite=None` 으로 대응 |
 | 블록 볼륨 미마운트 상태로 Postgres 시작 → 빈 DB 생성 | 낮음 | 높음 | fstab `nofail` + systemd `RequiresMountsFor=/mnt/vidshare-data` 를 Postgres·백엔드 유닛에 지정 (097 반영) |
 | 디스크 가득 참 (업로드 100MB 상한 × 다수) | 중 | 중 | 볼륨 사용량 80% 알림, 업로드 총량 점검 스크립트, 오브젝트 스토리지 이전 계획 |
 | 백업이 있어도 복원 불가 | 중 | 높음 | P7 복원 연습을 완료 기준에 포함 |
@@ -741,15 +797,15 @@ D:\vidshare-data\                uploads\ · backups\{local, prod\db, prod\uploa
 
 ## 16. 완료 기준
 
-v2 는 아래가 **모두** 참일 때 끝난 것으로 본다.
+v2 는 아래가 **모두** 참일 때 끝난 것으로 본다. ▶ 2026-10-02 기준 상태를 각 줄 끝에 적었다.
 
-1. `https://app.example.com` 에서 가입 → 로그인 → 영상 업로드 → 커뮤니티 공유 → 댓글·알림(SSE)·메시지(WebSocket)가 동작한다.
-2. `https://console.example.com` 에서 관리자 로그인과 신고·정지·삭제·문의 답변이 동작한다.
-3. 백엔드는 Oracle VM 에서 `systemd` 로 상시 실행되고, 재부팅 후 자동으로 올라온다.
-4. 운영 DB 는 PostgreSQL 이고 데이터 디렉터리가 블록 볼륨(`/mnt/vidshare-data/pgdata`)에 있다.
-5. 로컬 개발 DB 는 PostgreSQL 이고 데이터 디렉터리가 D 드라이브(`D:\PostgreSQL\16\data`)다.
-6. 코드에 SQLite 의존성(`better-sqlite3`)이 없다.
-7. 백엔드 테스트 148건, 프론트 29건, E2E 8건이 통과한다 (백엔드는 Postgres 위에서, CI 포함).
-8. 운영 백업이 매일 `D:\vidshare-data\backups\prod\` 에 쌓이고, **복원 연습을 1회 이상 성공**했다.
-9. 5432 가 외부에서 접근되지 않고(포트 스캔 확인), SSH 는 키 인증·내 IP 만 허용한다.
-10. `docs/deployment.md`, `docs/architecture/overview.md`, `docs/ops/*` 가 새 구조를 설명한다.
+1. `https://app.example.com` 에서 가입 → 로그인 → 영상 업로드 → 커뮤니티 공유 → 댓글·알림(SSE)·메시지(WebSocket)가 동작한다. ▶ **`workers.dev` 주소에서 충족**(Chrome·Edge), 도메인은 미정
+2. `https://console.example.com` 에서 관리자 로그인과 신고·정지·삭제·문의 답변이 동작한다. ▶ **`workers.dev` 주소에서 충족**
+3. 백엔드는 Oracle VM 에서 `systemd` 로 상시 실행되고, 재부팅 후 자동으로 올라온다. ▶ **충족**
+4. 운영 DB 는 PostgreSQL 이고 데이터 디렉터리가 블록 볼륨(`/mnt/vidshare-data/pgdata`)에 있다. ▶ **부분** — PostgreSQL 은 맞고, 위치는 부트 디스크
+5. 로컬 개발 DB 는 PostgreSQL 이고 데이터 디렉터리가 D 드라이브(`D:\PostgreSQL\16\data`)다. ▶ **미완** — 클러스터는 D 드라이브에 있으나 `setup-postgres-d.ps1` 실행·`.env` 작성 전
+6. 코드에 SQLite 의존성(`better-sqlite3`)이 없다. ▶ **충족** — 이관 스크립트용 devDependency 로만 남음
+7. 백엔드 테스트 148건, 프론트 29건, E2E 8건이 통과한다 (백엔드는 Postgres 위에서, CI 포함). ▶ **충족** — 현재 151 · 32 · 8
+8. 운영 백업이 매일 `D:\vidshare-data\backups\prod\` 에 쌓이고, **복원 연습을 1회 이상 성공**했다. ▶ **충족** — 04:30 작업 등록, 103 에서 운영 덤프로 복원
+9. 5432 가 외부에서 접근되지 않고(포트 스캔 확인), SSH 는 키 인증·내 IP 만 허용한다. ▶ **부분** — 인바운드는 22 만 열림. SSH 를 내 IP 로 좁히는 것은 OCI 콘솔 작업으로 남음
+10. `docs/deployment.md`, `docs/architecture/overview.md`, `docs/ops/*` 가 새 구조를 설명한다. ▶ **충족** (106)

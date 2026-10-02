@@ -14,7 +14,7 @@ DB 는 **PostgreSQL** 로 옮겼습니다(096). 이 폴더에는 더 이상 실�
 | 환경 | 위치 |
 |------|------|
 | 로컬 (내 PC) | Postgres 16 서비스 `postgresql-x64-16`, 데이터 디렉터리 `D:\PostgreSQL\16\data` |
-| 운영 (Oracle VM) | `/mnt/vidshare-data/pgdata` (블록 볼륨) |
+| 운영 (Oracle VM) | `/var/lib/postgresql/16/main` (부트 디스크 — 블록 볼륨 없음). 매일 `D:\vidshare-data\backups\prod` 로 사본 |
 
 접속 문자열은 `BackendServer/.env` 의 `DATABASE_URL` 입니다.
 

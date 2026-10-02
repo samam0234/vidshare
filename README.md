@@ -12,7 +12,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)
 ![Oracle Cloud](https://img.shields.io/badge/Oracle_Cloud-VM-F80000?logo=oracle&logoColor=white)
-![tests](https://img.shields.io/badge/backend_tests-148_passing-3FB950)
+![tests](https://img.shields.io/badge/backend_tests-151_passing-3FB950)
 
 | | 링크 |
 |---|---|
@@ -22,7 +22,7 @@
 | 구조 문서 | [docs/architecture/overview.md](./docs/architecture/overview.md) |
 
 > **라이브 서비스 운영 중 (2026-10-02~)** — 백엔드는 Oracle Cloud 전용 VM(ARM 11GB) + Cloudflare Tunnel. API 주소(`*.trycloudflare.com`)는 터널 재시작 때 바뀌며 자동으로 재연결된다.
-> 데모 계정 `demo` / `demo1234`. 도메인 없이 sslip.io 주소라 Safari 등 서드파티 쿠키를 막는 브라우저에서는 로그인이 안 될 수 있습니다(Chrome 권장).
+> 데모 계정 `demo` / `demo1234`. 프론트와 API 가 다른 사이트(`workers.dev` ↔ `trycloudflare.com`)라 Safari 등 서드파티 쿠키를 막는 브라우저에서는 로그인이 안 될 수 있습니다(Chrome·Edge 권장).
 > 전체 기능은 아래 [빠른 시작](#빠른-시작-실행-방법)으로 로컬에서 실행하세요.
 
 ---
@@ -86,8 +86,8 @@
 | 백엔드 | Node.js 24, Express 4, TypeScript, `pg`, `ws`, bcrypt, multer |
 | AI | LangChain, LangGraph, Google Gemini · Groq |
 | 데이터 | PostgreSQL 16 (22개 테이블, 버전 관리 마이그레이션), 디스크 파일 스토리지 |
-| 테스트 | `node --test` (백엔드 148건 · 프론트), Playwright E2E 8 시나리오, GitHub Actions CI |
-| 배포 | 프론트: Cloudflare Workers (OpenNext) · 백엔드: Oracle Cloud VM (Caddy + systemd) |
+| 테스트 | `node --test` (백엔드 151건 · 프론트 32건), Playwright E2E 8 시나리오, GitHub Actions CI |
+| 배포 | 프론트: Cloudflare Workers (OpenNext) · 백엔드: Oracle Cloud 전용 VM (systemd) + Cloudflare Tunnel |
 
 ---
 
@@ -111,7 +111,7 @@
                 /ws/conversations (WebSocket) · /api/notifications/stream (SSE)
                         │
                         ▼
-             [PostgreSQL 16]  로컬: D:\PostgreSQL\16\data · 운영: VM 블록 볼륨
+             [PostgreSQL 16]  로컬: D:\PostgreSQL\16\data · 운영: VM /var/lib/postgresql/16/main
              [Files]   UPLOADS_PATH  (DB엔 /uploads/<uuid>.ext 경로만)
 ```
 
@@ -266,7 +266,7 @@ API 공개 주소가 있으면 빌드 전에 `NEXT_PUBLIC_API_URL`을 넣습니�
 | BackendServer | REST + PostgreSQL 16, SSE·WebSocket |
 | 인증 | bcrypt + HttpOnly 세션, 사용자/관리자 쿠키 분리 |
 | 업로드 | `POST /api/uploads` (영상 100MB · 이미지 8MB) |
-| 테스트 | 백엔드 148건(Postgres) · 프론트 `npm test` · E2E `npm run test:e2e` · CI(GitHub Actions) |
+| 테스트 | 백엔드 151건(Postgres) · 프론트 32건 · E2E `npm run test:e2e` · CI(GitHub Actions) |
 | 미완 | 고정 도메인(현재 trycloudflare 임시 주소), 관리자 감사 로그 없음 ([roadmap](./docs/features/roadmap.md)) |
 | 배포 | Front/console = Cloudflare Workers. 백엔드 = Oracle Cloud 전용 VM + Cloudflare Tunnel (**운영 중**). [docs/deployment.md](./docs/deployment.md) |
 

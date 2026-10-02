@@ -49,7 +49,7 @@ npm run dev                # 시작 시 마이그레이션 → (비어 있으면
 | `DATABASE_URL_TEST` | (테스트 필수) | `…/vidshare_test` — 테스트 파일마다 임시 스키마를 만들고 지움 |
 | `DB_POOL_MAX` | `10` | 커넥션 풀 크기 |
 | `UPLOADS_PATH` | `uploads/` | 사용자 업로드 파일 경로 (권장 `D:\vidshare-data\uploads`) |
-| `TRUST_PROXY` | `0` | 앞단 프록시 홉 수 (Oracle VM 의 Caddy 뒤에서는 `1`) |
+| `TRUST_PROXY` | `0` | 앞단 프록시 홉 수 (운영의 Cloudflare Tunnel·Caddy 뒤에서는 `1`) |
 | `SQLITE_PATH` | `data/vidshare.sqlite` | `db:import-sqlite` 가 읽을 예전 SQLite (1회용) |
 | `NODE_ENV` | `development` | 환경 |
 | `CHAT_TIMEOUT_MS` | `45000` | 모델 호출 하나를 기다려 줄 상한 (아래 참고) |
@@ -78,7 +78,7 @@ npm run dev                # 시작 시 마이그레이션 → (비어 있으면
 npm run build      # dist/ 컴파일
 npm start          # 프로덕션 실행 (build 후)
 npm run typecheck  # 타입만 검사 (src + tests)
-npm test           # API 자동화 테스트 (DATABASE_URL_TEST 의 임시 스키마, 148건)
+npm test           # API 자동화 테스트 (DATABASE_URL_TEST 의 임시 스키마, 151건)
 npm run test:watch # 테스트 진행 상태 감지
 npm run db:migrate # 마이그레이션만 적용 (배포 스크립트가 사용)
 npm run db:import-sqlite [-- --from <경로>] [-- --replace]  # SQLite → Postgres 1회 이관
@@ -195,7 +195,7 @@ BackendServer/
 │   ├── routes/
 │   ├── upload/            # 디스크 저장·MIME 화이트리스트
 │   └── types/
-├── scripts/               # create-admin · db-migrate · migrate-sqlite-to-pg · dump-db-doc
+├── scripts/               # create-admin · list-admins · reset-password · db-migrate · migrate-sqlite-to-pg · dump-db-doc
 ├── tests/                 # node:test + supertest (Postgres)
 ├── uploads/               # 사용자 파일 (Git 무시, README만 추적)
 ├── .env.example
@@ -228,5 +228,6 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 - [x] 인증 (세션 쿠키)
 - [x] 파일 업로드 스토리지
 - [x] FrontServer mock → API fetch 전환
-- [x] Oracle Cloud 배포 스크립트 (`../deploy/oracle/`)
+- [x] Oracle Cloud 배포 — 전용 VM + Cloudflare Tunnel, **운영 중** (103)
+- [x] 관리자 계정 찾기 · 비밀번호 재설정 CLI (104)
 - [ ] 업로드 → 오브젝트 스토리지 (필요 시)

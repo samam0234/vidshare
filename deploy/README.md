@@ -6,15 +6,15 @@
 ```
 deploy/
 ├── oracle/                         VM(Ubuntu 24.04)에서 쓰는 파일
-│   ├── setup-vm.sh                 최초 1회 (전용 VM): 패키지·볼륨 마운트·Postgres 이전·Caddy·systemd·방화벽
-│   ├── setup-shared-nginx.sh       최초 1회 (nginx 가 이미 있는 VM 에 추가): Postgres·사이트 파일·systemd
+│   ├── setup-vm.sh                 최초 1회 (도메인 + 80·443 열린 VM): 볼륨 마운트·Postgres 이전·Caddy·systemd·방화벽
+│   ├── setup-shared-nginx.sh       (사용 안 함) nginx 가 이미 있는 VM 에 얹는 방식 — 102 에서 쓰고 103 에서 되돌림
 │   ├── nginx-vidshare.conf         위 스크립트가 설치하는 nginx 사이트 (certbot 이 HTTPS 덧붙임)
 │   ├── setup-vm-tunnel.sh          최초 1회 (전용 VM, 80·443 막힘): Cloudflare 터널로 공개 ← 현재 운영
 │   ├── get-tunnel-url.sh           현재 터널 URL 출력 (/usr/local/bin/vidshare-tunnel-url)
 │   ├── deploy.sh                   반복 배포: 백업 → pull → build → db:migrate → 재시작 → health
 │   ├── backup.sh                   pg_dump 야간 백업 (/usr/local/bin/vidshare-backup 으로 설치)
-│   ├── Caddyfile                   api 도메인 HTTPS + /uploads 직접 서빙 + reverse_proxy :4000
-│   ├── vidshare-backend.service    systemd 유닛 (블록 볼륨 마운트 필수)
+│   ├── Caddyfile                   (setup-vm.sh 용) api 도메인 HTTPS + /uploads 직접 서빙 + reverse_proxy :4000
+│   ├── vidshare-backend.service    systemd 유닛 (터널 구성에서는 볼륨 마운트 요구를 빼고 설치)
 │   ├── postgresql.vidshare.conf    conf.d 드롭인 (localhost 전용, 메모리 설정)
 │   └── backend.env.example         /etc/vidshare/backend.env 견본
 └── windows/                        내 PC 에서 쓰는 파일 (PowerShell 5.1)
@@ -39,7 +39,25 @@ npm test                        # Postgres 위에서 전체 테스트
 npm run dev
 ```
 
-### Oracle VM (최초 1회)
+### Oracle VM (최초 1회) — 현재 운영 방식: 터널
+
+```bash
+git clone https://github.com/samam0234/vidshare.git ~/vidshare
+sudo bash ~/vidshare/deploy/oracle/setup-vm-tunnel.sh \
+  --cors https://vidshare-front.limjinheng0120.workers.dev,https://vidshare-console.limjinheng0120.workers.dev
+sudo nano /etc/vidshare/backend.env          # API 키
+sudo bash /opt/vidshare/deploy/oracle/deploy.sh
+vidshare-tunnel-url                          # 공개 주소
+```
+
+이 PC 에서 터널 주소 자동 동기화·운영 백업 가져오기 작업을 등록한다:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\windows\sync-tunnel-url.ps1 -Register
+powershell -ExecutionPolicy Bypass -File deploy\windows\backup-pull.ps1 -SshHost vidshare-vm -Register
+```
+
+### Oracle VM (최초 1회) — 도메인 + 80·443 이 열린 경우: Caddy
 
 ```bash
 git clone https://github.com/samam0234/vidshare.git ~/vidshare
@@ -49,7 +67,7 @@ sudo nano /etc/vidshare/backend.env          # API 키
 sudo bash /opt/vidshare/deploy/oracle/deploy.sh
 ```
 
-도메인이 아직 없거나 블록 볼륨을 붙이지 않았다면:
+(참고) 80·443 은 열려 있지만 도메인·블록 볼륨이 없다면:
 
 ```bash
 # 도메인 없이 <공인IP>.sslip.io 로 HTTPS (프론트는 *.workers.dev 그대로)
@@ -65,4 +83,11 @@ sudo bash ~/vidshare/deploy/oracle/setup-vm.sh --no-volume \
 ```bash
 sudo bash /opt/vidshare/deploy/oracle/deploy.sh          # master 최신
 sudo bash /opt/vidshare/deploy/oracle/deploy.sh <커밋>    # 특정 버전(롤백)
+```
+
+### 관리자 계정 찾기 · 비밀번호 재설정 (이 PC 에서)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\windows\admin-tools.ps1 -List
+powershell -ExecutionPolicy Bypass -File deploy\windows\admin-tools.ps1 -Reset <handle>
 ```

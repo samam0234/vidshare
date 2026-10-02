@@ -73,6 +73,9 @@ curl -fsS http://127.0.0.1:4000/api/health
 
 ### VM 을 통째로 잃었을 때
 
-1. [oracle-setup.md](./oracle-setup.md) 로 새 VM (같은 예약 IP 를 붙이면 DNS 변경 불필요)
-2. 블록 볼륨이 살아 있으면 새 VM 에 붙이고 `setup-vm.sh` 를 **`--format` 없이** 실행
-3. 볼륨도 잃었다면 내 PC 의 `D:\vidshare-data\backups\prod\` 로 [deployment.md 5장](../deployment.md) 과 같은 방법으로 복원
+> **현재 운영(103)은 블록 볼륨이 없다.** DB(`/var/lib/postgresql/16/main`) · 업로드 · 서버 쪽 백업이 모두 부트 디스크에 있어,
+> VM 을 잃으면 서버 백업도 함께 잃는다. 이때는 **내 PC 의 `D:\vidshare-data\backups\prod\` 가 유일한 원본**이다.
+
+1. [oracle-setup.md](./oracle-setup.md) 0장(터널) 으로 새 VM — 터널 주소는 새로 받으며, `sync-tunnel-url.ps1` 이 프론트·콘솔을 따라 바꾼다
+2. (Caddy 구성이고) 블록 볼륨이 살아 있으면 새 VM 에 붙이고 `setup-vm.sh` 를 **`--format` 없이** 실행
+3. 그 밖의 경우 내 PC 의 `D:\vidshare-data\backups\prod\` 로 [deployment.md 5장](../deployment.md) 과 같은 방법으로 복원

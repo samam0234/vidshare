@@ -6,6 +6,34 @@
 
 > Always Free 한도·유휴 인스턴스 회수 정책은 바뀔 수 있습니다. 만들기 전에 OCI 문서에서 현재 조건을 확인하세요.
 
+## 0. 어느 경로로 갈까
+
+| 경로 | 필요한 것 | 스크립트 | 상태 |
+|------|-----------|----------|------|
+| **A. 터널** | VM + SSH(22) 하나. 도메인·80·443·블록 볼륨 없어도 됨 | `setup-vm-tunnel.sh` | **현재 운영 (103)** |
+| B. Caddy | 도메인 + 보안 목록 80·443 + (권장) 블록 볼륨 | `setup-vm.sh` | 이 문서 2장부터 |
+
+**A 경로 요약** — 지금 운영 서버가 이렇게 만들어졌다.
+
+1. 인스턴스 만들기(3장과 같음). 보안 목록은 **기본값 그대로(22 만)** 둔다.
+2. SSH 접속 확인: `ssh -i ~/.ssh/<키> ubuntu@<공인 IP>` → 이 PC `~/.ssh/config` 에 `vidshare-vm` 별칭 등록
+3. VM 에서:
+
+   ```bash
+   git clone https://github.com/samam0234/vidshare.git ~/vidshare
+   sudo bash ~/vidshare/deploy/oracle/setup-vm-tunnel.sh \
+     --cors https://vidshare-front.limjinheng0120.workers.dev,https://vidshare-console.limjinheng0120.workers.dev
+   sudo nano /etc/vidshare/backend.env      # GOOGLE_API_KEY / GROQ_API_KEY
+   sudo bash /opt/vidshare/deploy/oracle/deploy.sh
+   vidshare-tunnel-url                      # https://<무작위>.trycloudflare.com
+   ```
+
+4. 이 PC 에서 `sync-tunnel-url.ps1 -Register`(프론트·콘솔이 주소를 따라감), `backup-pull.ps1 -SshHost vidshare-vm -Register`
+5. 관리자: `admin-tools.ps1 -List` / `-Reset <handle>` 또는 서버에서 `npm run create-admin`
+
+> 터널 주소는 `cloudflared` 가 재시작될 때마다 바뀐다. 고정하려면 도메인을 마련해 Cloudflare **named tunnel** 로 바꾼다
+> ([deployment.md 3장](../deployment.md)). 아래 2장부터는 B 경로(Caddy)의 절차다.
+
 ---
 
 ## 1. 준비물

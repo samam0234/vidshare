@@ -12,10 +12,10 @@
 | 항목 | 상태 | 설명 |
 |------|------|------|
 | 인증 | bcrypt + HttpOnly 세션 | 쓰기 API는 `requireRequestUser()` |
-| 데이터 영속 | PostgreSQL 16 | 앱 전용 계정 `vidshare` (슈퍼유저 아님). 로컬 D 드라이브 · 운영 VM 블록 볼륨 |
+| 데이터 영속 | PostgreSQL 16 | 앱 전용 계정 `vidshare` (슈퍼유저 아님). 로컬 D 드라이브 · 운영 VM 부트 디스크(localhost 전용) |
 | 비밀키 | 환경 변수 | LLM 키는 `.env` (git 무시) |
 | XSS 표면 | 낮~중 | React 기본 이스케이프 의존, `dangerouslySetInnerHTML` 미사용 |
-| CSRF | 세션 쿠키 | 기본 `SameSite=Lax`. 배포 시 `COOKIE_SAMESITE` / `COOKIE_DOMAIN` |
+| CSRF | 세션 쿠키 | 기본 `SameSite=Lax`. **운영은 `SameSite=None`**(프론트·API 가 다른 사이트) — 5-2 참고 |
 | 업로드 | 로컬 디스크 | 로그인 필요, MIME 화이트리스트, 용량 제한, UUID 파일명 |
 
 **결론**: 데모 자체는 네트워크 공격 표면이 작지만, **프로덕션으로 오인하고 배포·실데이터 연동하면 위험**합니다.
@@ -105,6 +105,8 @@ npm audit
   관리자인가"를 떠보지 못하게.
 - 관리자 계정은 **시드에 없다.** `npm run create-admin` 으로 각 환경에서 직접 만든다
   (비밀번호가 소스·저장소에 남지 않음).
+- 비밀번호를 잊으면 `npm run reset-password -- <handle>` 로 **재설정만** 된다(해시는 되돌릴 수 없음).
+  재설정과 그 계정의 세션 삭제는 한 트랜잭션. 웹에는 재설정 경로가 없다 — 서버 SSH 키가 곧 본인 확인(104).
 - 관리자가 자기 자신이나 다른 관리자를 정지시키는 것은 400으로 차단 — 콘솔에
   아무도 못 들어가는 상태를 막는다.
 - 유저를 정지하면 그 유저의 `sessions` 행을 즉시 전부 삭제하고, 재로그인은 403.
@@ -121,10 +123,13 @@ npm audit
 
 ---
 
-## 5-2. 배포 시 반드시 확인 (미배포 상태)
+## 5-2. 현재 운영 구성의 쿠키 · CORS (103)
 
-- **세션 쿠키가 `sameSite: "lax"`** 다. 프론트와 API 도메인이 다르면 쿠키가
-  실리지 않는다. 자세한 선택지는 [배포 가이드 3-1](../deployment.md) 참고.
+- 프론트(`*.workers.dev`)와 API(`*.trycloudflare.com`)가 다른 사이트라 **운영 쿠키는 `SameSite=None; Secure`** 다.
+  다른 사이트에서 오는 요청에도 쿠키가 실리므로, 방어는 **CORS 화이트리스트**(`CORS_ORIGIN` 두 오리진만,
+  `credentials` 허용)와 JSON 요청 본문에 기댄다. 도메인을 마련해 `SameSite=Lax` 로 되돌리는 것이 정식 해법이다
+  ([배포 가이드 3장](../deployment.md)).
+- 서드파티 쿠키를 막는 브라우저(Safari 기본)에서는 로그인이 안 될 수 있다 — 보안 문제는 아니고 가용성 문제.
 - **CORS 가 사설망 호스트를 전부 허용**한다(`isDevAllowedOrigin`). 프로덕션에서는
   `CORS_ORIGIN` 을 반드시 명시할 것.
 - 업로드 파일에 **삭제 경로가 없다.** 관리자가 콘텐츠를 지워도 원본 파일은 남는다.
@@ -133,7 +138,13 @@ npm audit
 
 ## 5-3. Oracle Cloud · PostgreSQL 운영 (097)
 
-**스크립트가 기본으로 적용하는 것**
+**현재 운영(전용 VM + 터널, 103)에서 적용된 것**
+
+- 인바운드는 **22 만** 열려 있다(OCI 보안 목록 + iptables). 공개 트래픽은 `cloudflared` 가 바깥으로 연 터널로만 들어온다.
+- Node 는 `0.0.0.0:4000` 에 바인드하지만 4000 은 바깥에서 닿지 않는다. Postgres 는 localhost 전용.
+- 블록 볼륨이 없어 `RequiresMountsFor` 는 빼고 설치한다. 외부 백업은 이 PC 의 D 드라이브 사본뿐이다.
+
+**`setup-vm.sh`(Caddy 구성)가 기본으로 적용하는 것**
 
 - Postgres 는 `listen_addresses = 'localhost'` — 5432 를 인터넷에 열지 않는다.
   OCI 보안 목록도 80·443(+ 내 IP 의 22)만 연다.
@@ -147,7 +158,7 @@ npm audit
 - [ ] SSH 키 인증만, 비밀번호 로그인·루트 로그인 끄기 (`/etc/ssh/sshd_config`)
 - [ ] OCI 보안 목록에서 22 를 **내 IP 만** 허용
 - [ ] 운영 DB 에 시드 계정(`demo` / `demo1234`)이 생겼다면 정지하거나 삭제 — 비밀번호가 공개되어 있다
-- [ ] 외부에서 `nmap -p 5432 <IP>` 로 닫혀 있는지 확인
+- [ ] 외부에서 `nmap -p 4000,5432 <IP>` 로 닫혀 있는지 확인
 - [ ] 백업 복원 연습 (분기 1회, [docs/ops/backup-restore.md](../ops/backup-restore.md))
 
 **내 PC(D 드라이브) 쪽 주의**
