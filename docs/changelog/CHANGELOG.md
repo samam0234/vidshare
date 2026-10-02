@@ -107,6 +107,7 @@
 - 챗봇 봇 답변 마크다운 렌더링 (굵게·이탤릭·취소선·목록)
 
 ### Changed
+- `setup-vm.sh` 가 Ubuntu 22.04(PGDG 저장소), 도메인 없이 `<IP>.sslip.io`, 블록 볼륨 없이(`--no-volume`), 비대화형 실행(DB 비밀번호 서버 생성)을 지원 (커밋 101)
 - 포트폴리오 문서·사이트·슬라이드를 PostgreSQL·Oracle Cloud 기준으로 갱신, 슬라이드 "운영 준비" 추가 (커밋 100)
 - **백엔드 데이터 계층 전부 async** (커밋 096): `better-sqlite3`(동기) → `pg`(비동기).
   store·auth·chatbot·라우트 25개. 라우터는 `middleware/asyncRouter.ts` 의 `Router()` 로 만들어

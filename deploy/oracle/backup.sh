@@ -12,7 +12,10 @@ KEEP_DAYS=14
 STAMP=$(date +%Y%m%d-%H%M)
 OUT="$DIR/vidshare-$STAMP.dump"
 
-mountpoint -q /mnt/vidshare-data || { echo "블록 볼륨이 마운트되어 있지 않습니다." >&2; exit 1; }
+# 블록 볼륨을 쓰는 구성(fstab 에 등록)이면 마운트 안 된 상태로 부트 디스크에 쓰지 않는다.
+if grep -q '[[:space:]]/mnt/vidshare-data[[:space:]]' /etc/fstab; then
+  mountpoint -q /mnt/vidshare-data || { echo "블록 볼륨이 마운트되어 있지 않습니다." >&2; exit 1; }
+fi
 
 sudo -u postgres pg_dump -Fc vidshare > "$OUT.part"
 mv "$OUT.part" "$OUT"

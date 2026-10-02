@@ -43,6 +43,17 @@ sudo nano /etc/vidshare/backend.env          # API 키
 sudo bash /opt/vidshare/deploy/oracle/deploy.sh
 ```
 
+도메인이 아직 없거나 블록 볼륨을 붙이지 않았다면:
+
+```bash
+# 도메인 없이 <공인IP>.sslip.io 로 HTTPS (프론트는 *.workers.dev 그대로)
+sudo bash ~/vidshare/deploy/oracle/setup-vm.sh --no-volume \
+  --cors https://vidshare-front.limjinheng0120.workers.dev,https://vidshare-console.limjinheng0120.workers.dev
+```
+
+> sslip.io 모드는 프론트와 API 가 다른 사이트라 쿠키를 `SameSite=None` 으로 보낸다.
+> Chrome 에서는 로그인이 되지만, 서드파티 쿠키를 막는 Safari 등에서는 안 될 수 있다 — 도메인을 마련하면 `--domain` 으로 다시 실행.
+
 ### 이후 배포
 
 ```bash

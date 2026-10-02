@@ -30,7 +30,7 @@
 ## 3. 인스턴스
 
 1. **Compute → Instances → Create instance**
-2. Image: **Canonical Ubuntu 24.04** (aarch64 는 A1 용)
+2. Image: **Canonical Ubuntu 24.04** 또는 22.04 (22.04 면 스크립트가 PostgreSQL 공식 저장소를 붙인다)
 3. Shape: **VM.Standard.A1.Flex** — 1~2 OCPU, 6~12 GB
    - "Out of capacity" 가 나면 시간대를 바꿔 다시 시도하거나 다른 AD 를 고른다.
    - 끝내 안 되면 `VM.Standard.E2.1.Micro` (RAM 1GB) 로 시작할 수 있지만 Postgres + Node 에는 빠듯하다.
@@ -75,7 +75,19 @@ sudo bash ~/vidshare/deploy/oracle/setup-vm.sh --domain api.example.com --device
 sudo nano /etc/vidshare/backend.env     # GOOGLE_API_KEY / GROQ_API_KEY
 ```
 
-스크립트가 물어보는 것: `vidshare` DB 비밀번호 (영문·숫자·`_-` 12자 이상).
+도메인이 아직 없거나 블록 볼륨을 붙이지 않았다면:
+
+```bash
+# 도메인 없이 <공인IP>.sslip.io 로 HTTPS (프론트는 *.workers.dev 그대로)
+sudo bash ~/vidshare/deploy/oracle/setup-vm.sh --no-volume \
+  --cors https://vidshare-front.limjinheng0120.workers.dev,https://vidshare-console.limjinheng0120.workers.dev
+```
+
+> sslip.io 모드는 프론트와 API 가 다른 사이트라 쿠키를 `SameSite=None` 으로 보낸다.
+> Chrome 에서는 로그인이 되지만, 서드파티 쿠키를 막는 Safari 등에서는 안 될 수 있다 — 도메인을 마련하면 `--domain` 으로 다시 실행.
+
+
+스크립트가 물어보는 것: `vidshare` DB 비밀번호 (영문·숫자·`_-` 12자 이상). 터미널이 아닌 원격 자동 실행이면 서버에서 무작위로 만들어 `/etc/vidshare/backend.env` 에만 둔다.
 
 ## 8. 데이터 옮기기 → 배포
 
