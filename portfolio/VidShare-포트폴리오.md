@@ -10,11 +10,12 @@
 |------|------|
 | 프로젝트명 | VidShare |
 | 유형 | 개인 프로젝트 (기획 · 설계 · 프론트엔드 · 백엔드 · 운영 도구 전담) |
-| 개발 기간 | 2026-08-14 ~ 2026-10-02 (기능 3.5주 + PostgreSQL 전환·배포 준비) |
+| 개발 기간 | 2026-08-14 ~ 2026-10-02 (기능 3.5주 + PostgreSQL 전환 · Oracle Cloud 운영 배포) |
 | 구성 | 사용자 웹앱 · 관리자 콘솔 · REST API 서버 (3개 앱) |
-| 저장소 | `master` 브랜치, 커밋 177건 — 커밋마다 상세 기록 문서 동반 · GitHub Actions CI |
+| 저장소 | `master` 브랜치, 커밋 188건 — 커밋마다 상세 기록 문서 동반 · GitHub Actions CI |
 | 사용자 사이트 | https://vidshare-front.limjinheng0120.workers.dev |
 | 관리자 콘솔 | https://vidshare-console.limjinheng0120.workers.dev |
+| API 서버 | Oracle Cloud VM (ARM 2 OCPU / 11GB) — Cloudflare Tunnel 로 HTTPS 공개 · **운영 중** |
 
 ### 한 줄 정의
 
@@ -40,8 +41,8 @@
 | 화면 (페이지) | 사용자 27개 + 관리자 6개 |
 | REST API | 82개 엔드포인트 (일반 67 · 관리자 15) + WebSocket 1 + SSE 1 |
 | DB 테이블 | 22개 (PostgreSQL 16, 버전 관리 마이그레이션) |
-| 자동화 테스트 | 188건 (백엔드 148 · 프론트 32 · E2E 8 시나리오) — E2E 외 180건은 CI 에서 자동 실행 |
-| 문서 | 아키텍처 · 배포 · 운영 절차서 · 보안 · 로드맵 + 커밋 상세 100편 |
+| 자동화 테스트 | 191건 (백엔드 151 · 프론트 32 · E2E 8 시나리오) — E2E 외 183건은 CI 에서 자동 실행 |
+| 문서 | 아키텍처 · 배포 · 운영 절차서 · 보안 · 로드맵 + 커밋 상세 105편 |
 
 ---
 
@@ -59,7 +60,7 @@
 | AI | LangChain, LangGraph, Google Gemini, Groq | 모델 티어별로 체인/그래프 구조를 다르게 구성 |
 | 업로드 | multer + 로컬 디스크 | MIME 화이트리스트 · UUID 파일명 |
 | 테스트 | `node --test` + supertest, Playwright, GitHub Actions | 런타임 내장 러너로 의존성 최소화. CI 는 Postgres 서비스 컨테이너 |
-| 배포 | Cloudflare Workers (OpenNext) · Oracle Cloud VM (Caddy + systemd) | 프론트 2종은 엣지, 백엔드는 디스크가 붙은 VM 1대 |
+| 배포 | Cloudflare Workers (OpenNext) · Oracle Cloud VM (systemd) · Cloudflare Tunnel | 프론트 2종은 엣지, 백엔드는 상시 가동 VM 1대를 아웃바운드 터널로 공개 |
 
 ### 기술 선택에서 일부러 하지 않은 것
 
@@ -458,6 +459,10 @@ WebSocket 업그레이드 시점에도 **세션 쿠키로 인증**한다.
 - 사용자/관리자 세션을 **쿠키 이름과 검증 함수 모두 분리**
   (`requireRequestUser` / `requireAdmin`).
 - 계정 정지 시 해당 유저의 세션 행을 즉시 삭제 → 이미 로그인한 창도 다음 요청에서 끊긴다.
+- **관리자 계정 복구** — 해시는 되돌릴 수 없으므로 "찾기"는 핸들 목록(`npm run list-admins`),
+  "복구"는 재설정(`npm run reset-password -- <handle> --generate`)으로 만들었다. 재설정과 그 계정의
+  세션 삭제를 한 트랜잭션으로 묶는다. 이메일 같은 본인 확인 수단이 없어 웹에는 두지 않고,
+  **서버 SSH 키 보유 = 운영자**를 본인 확인으로 쓴다(내 PC 에서는 `admin-tools.ps1 -Reset <handle>`).
 
 ### 업로드
 
@@ -470,7 +475,7 @@ WebSocket 업그레이드 시점에도 **세션 쿠키로 인증**한다.
 ### 테스트
 
 ```
-npm test        # 148건 통과 (테스트 DB 의 임시 스키마에 마이그레이션·시드 후 supertest)
+npm test        # 151건 통과 (테스트 DB 의 임시 스키마에 마이그레이션·시드 후 supertest)
 npm run typecheck
 ```
 
@@ -597,7 +602,28 @@ SQLite 대신 마이그레이션 이력·`pg_dump` 백업이 있는 PostgreSQL �
 그리고 전환 후에도 놓친 곳이 있었다 — E2E 설정이 옛 `SQLITE_PATH` 를 넘기고 있어 **개발 DB 로 조용히 성공**하고
 있었다(099 에서 수정). 실패하지 않는 버그가 가장 늦게 발견된다.
 
-### 7.6 `useEffect` 안 `setState` 린트 에러
+### 7.6 80·443 이 막힌 VM 을 공개하기 — 아웃바운드 터널
+
+**증상** — 백엔드를 올린 Oracle VM 에서 서버는 잘 떠 있는데, 바깥에서 80·443 으로 접속이 안 됐다.
+VM 안의 방화벽(iptables)을 열어도 그대로였다.
+
+**원인** — OCI 는 VM 바깥의 **보안 목록**이 먼저 막는다. 22 번만 열려 있었고, 이건 VM 안에서 바꿀 수 없다.
+그래서 계획했던 Caddy + Let's Encrypt(80 번으로 인증) 구성이 성립하지 않았다.
+
+**해결** — 들어오는 포트가 필요 없는 구조로 바꿨다. `cloudflared` 가 VM 에서 **바깥으로** Cloudflare 에 연결하고,
+Cloudflare 가 `*.trycloudflare.com` HTTPS 주소로 받은 요청을 그 연결로 흘려 준다. 인증서도 Cloudflare 가 처리한다.
+남은 문제는 **이 주소가 재시작마다 바뀐다**는 것 — 내 PC 의 예약 작업(`sync-tunnel-url.ps1`, 매시간)이
+현재 주소를 서버에서 읽어 바뀌었으면 프론트·콘솔을 다시 빌드·배포한다.
+
+**잡은 함정** — 이 스크립트가 처음엔 재배포 중간에 멈췄다. PowerShell 5.1 은 npm 이 stderr 로 내는 경고를
+오류로 감싸 `ErrorActionPreference=Stop` 이 중단시킨다. 또 실패한 뒤 다음 실행이 "변경 없음"으로 판단했다 —
+비교 기준을 배포 **전에** 고치는 `.env.production` 으로 잡았기 때문이다. 기준을 "두 앱 배포가 모두 성공한 뒤에만
+쓰는 상태 파일"로 바꿨다.
+
+**배운 것** — 클라우드의 네트워크 경계는 서버 안이 아니라 **바깥에 한 겹 더** 있다. 그리고 자동화 스크립트의
+"이미 했음" 판단은 **성공한 결과**를 기준으로 해야 한다. 시도한 흔적을 기준으로 하면 실패가 성공으로 기록된다.
+
+### 7.7 `useEffect` 안 `setState` 린트 에러
 
 **증상** — React 19 / Next 16 환경에서 `react-hooks/set-state-in-effect` 가 에러로 뜬다.
 
@@ -611,7 +637,7 @@ SQLite 대신 마이그레이션 이력·`pg_dump` 백업이 있는 PostgreSQL �
 
 | 계층 | 도구 | 건수 | 대상 |
 |------|------|------|------|
-| 백엔드 API | `node --test` + supertest | 148 | 인증·쇼츠·댓글·팔로우·재생목록·검색·관리자 API·마이그레이션·데이터 이관 |
+| 백엔드 API | `node --test` + supertest | 151 | 인증·쇼츠·댓글·팔로우·재생목록·검색·관리자 API·비밀번호 재설정·마이그레이션·데이터 이관 |
 | 프론트 단위 | `node --test` | 32 | 비회원 경로 판정, 오픈 리다이렉트 방지 등 순수 함수 |
 | E2E | Playwright | 8 시나리오 | 게스트 접근, 로그인/로그아웃, 커뮤니티 작성, 메시지 실시간(WS) |
 | 정적 검사 | `tsc --noEmit`, ESLint | 3개 앱 전부 | — |
@@ -624,7 +650,7 @@ E2E는 격리된 포트(백엔드 4310 / 프론트 3310)와 테스트 DB 의 `e2
 
 - 기능 단위로 커밋을 잘게 나눈다.
 - 커밋마다 `docs/commits/NNN-slug.md` 에 **배경 · 범위 · 트레이드오프 · 검증 방법 ·
-  알려진 리스크**를 남기고 인덱스에 한 줄 추가한다. 현재 100편.
+  알려진 리스크**를 남기고 인덱스에 한 줄 추가한다. 현재 105편.
 - 커밋 메시지는 짧게, 판단의 근거는 문서에. `git log` 로 훑는 용도와
   인수인계용 설명을 분리했다.
 
@@ -636,32 +662,40 @@ E2E는 격리된 포트(백엔드 4310 / 프론트 3310)와 테스트 DB 의 `e2
 |------|------|------|
 | FrontServer | Cloudflare Workers (OpenNext) | https://vidshare-front.limjinheng0120.workers.dev |
 | console | Cloudflare Workers (OpenNext) | https://vidshare-console.limjinheng0120.workers.dev |
-| BackendServer | Oracle Cloud VM — Caddy(HTTPS) + systemd + PostgreSQL 16 | 스크립트 준비됨 · 구축 전 |
+| BackendServer | Oracle Cloud VM — systemd + PostgreSQL 16 + Cloudflare Tunnel | `*.trycloudflare.com` (자동 동기화) · **운영 중** |
 
 백엔드를 Workers에 올리지 않은 이유는 명확하다. DB 와 업로드 파일은 **영구 디스크**가,
 SSE·WebSocket 은 **상시 프로세스**가 필요하다. Workers 런타임에는 둘 다 없다.
-처음엔 내 PC 를 Cloudflare Tunnel 로 노출하려 했지만 PC 가 꺼지면 서비스도 멈춘다.
-그래서 **블록 볼륨이 붙은 VM 1대**로 정했다.
+내 PC 를 터널로 노출하는 안은 PC 가 꺼지면 서비스도 멈춰서 버렸고, **꺼지지 않는 VM 1대**로 정했다.
 
 ```
-app.<도메인>      → Cloudflare Workers (FrontServer)
-console.<도메인>  → Cloudflare Workers (console)
-api.<도메인>      → Oracle VM ─ Caddy :443 ─┬─ /uploads/*  디스크에서 직접
-                                           └─ 그 외       BackendServer :4000 → PostgreSQL :5432(localhost)
-                     블록 볼륨 /mnt/vidshare-data — pgdata · uploads · backups
+사용자 브라우저
+ ├─ vidshare-front.*.workers.dev    → Cloudflare Workers (FrontServer)
+ ├─ vidshare-console.*.workers.dev  → Cloudflare Workers (console)
+ └─ *.trycloudflare.com (HTTPS)     → Cloudflare ══ 아웃바운드 터널 ══ Oracle VM
+                                                                     ├─ cloudflared (systemd)
+                                                                     ├─ BackendServer :4000 (systemd)
+                                                                     └─ PostgreSQL 16 :5432 (localhost 전용)
+ 내 PC ── 매일 04:30 운영 백업·업로드 가져오기 → D:\vidshare-data\backups\prod
+       └─ 매시간 터널 주소 확인 → 바뀌면 프론트·콘솔 재배포
 ```
 
-| 준비한 것 | 내용 |
-|-----------|------|
-| `deploy/oracle/setup-vm.sh` | Node 24·Postgres 16·Caddy 설치, 볼륨 마운트, DB 이전, systemd, 방화벽 |
-| `deploy/oracle/deploy.sh` | 백업 → 빌드 → 마이그레이션 → 재시작 → health 확인 |
-| 백업 | VM 야간 `pg_dump` → 내 PC `D:\vidshare-data\backups` 로 매일 가져옴. 복원 연습까지 확인 |
+| 구성 | 내용 |
+|------|------|
+| 서버 | Ubuntu 22.04 · ARM(A1) 2 OCPU / 11GB RAM — **VidShare 전용** (다른 서비스와 섞지 않음) |
+| `deploy/oracle/setup-vm-tunnel.sh` | 최초 1회: Node 24·Postgres 16·cloudflared 설치, DB·계정·환경 파일, systemd(백엔드·터널)·야간 백업 |
+| `deploy/oracle/deploy.sh` | 반복 배포: 백업 → pull → 빌드 → 마이그레이션 → 재시작 → health(`"db":"ok"`) |
+| `deploy/windows/sync-tunnel-url.ps1` | 터널 주소가 바뀌면 프론트·콘솔 재배포 (작업 스케줄러, 매시간) |
+| `deploy/windows/backup-pull.ps1` | 서버 야간 `pg_dump` + 업로드 파일을 내 PC D 드라이브로 (매일) |
+| `deploy/windows/admin-tools.ps1` | 운영 관리자 찾기(`-List`) · 비밀번호 재설정(`-Reset`) |
 | 로컬 DB | 내 PC 의 PostgreSQL 16 (데이터 `D:\PostgreSQL\16\data`) |
 
-세 호스트를 **한 도메인 아래**에 두는 것이 핵심이다 — 그래야 `SameSite=Lax` 세션 쿠키가 API 요청에 실린다(7.3).
+프론트(`workers.dev`)와 API(`trycloudflare.com`)가 **서로 다른 사이트**라 세션 쿠키를 `SameSite=None; Secure` 로 보낸다(7.3).
+Chrome·Edge 에서는 로그인·실시간 메시지·알림까지 동작하는 것을 브라우저 자동화로 확인했다.
 
-**현재 상태**: 프론트 2종은 배포되어 있으나 공개 백엔드가 연결되기 전이라 **UI 확인용**이다.
-VM 구축과 도메인 연결만 남았고, 전체 기능은 로컬 실행으로 확인할 수 있다.
+**알려진 한계** — 터널 주소가 바뀌면 최대 1시간 동안 프론트가 옛 주소를 본다(내 PC 가 꺼져 있으면 더 길어진다).
+서드파티 쿠키를 막는 Safari 에서는 로그인이 안 될 수 있다. 둘 다 **도메인 + Cloudflare 고정 터널**로 해결되며,
+그러면 세 호스트가 한 도메인 아래로 들어와 쿠키도 `SameSite=Lax` 로 돌아갈 수 있다. 준비한 `setup-vm.sh`(Caddy 구성)도 그 경로다.
 
 ---
 
@@ -690,7 +724,7 @@ VM 구축과 도메인 연결만 남았고, 전체 기능은 로컬 실행으로
 
 ### 다음 목표 (우선순위)
 
-1. Oracle VM 구축 · 도메인 연결 → 프론트 재배포로 **동작하는 라이브 데모** 완성
+1. Oracle VM 운영 배포 — **완료 (103)**. 남은 것: 도메인 + 고정 터널로 주소 고정, Safari 대응
 2. CI 파이프라인 — **완료 (097)**
 3. Rate limiting + 보안 헤더 + 입력 검증 스키마
 4. 관리자 조치 감사 로그

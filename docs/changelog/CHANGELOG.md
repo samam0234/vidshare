@@ -111,6 +111,7 @@
 - 챗봇 봇 답변 마크다운 렌더링 (굵게·이탤릭·취소선·목록)
 
 ### Changed
+- **포트폴리오 운영 배포 반영** (커밋 105): 문서·docx·pptx·소개 사이트·Notion 을 운영 중 상태(전용 VM + Cloudflare Tunnel), 관리자 복구, 테스트 191건 기준으로 갱신
 - **운영 서버 이전** (커밋 103): human-bug-tier 공유 VM → 전용 VM `161.33.186.255`(ARM 11GB) + Cloudflare Tunnel. 공유 VM 에서는 VidShare 완전 제거
 - `setup-vm.sh` 가 Ubuntu 22.04(PGDG 저장소), 도메인 없이 `<IP>.sslip.io`, 블록 볼륨 없이(`--no-volume`), 비대화형 실행(DB 비밀번호 서버 생성)을 지원 (커밋 101)
 - 포트폴리오 문서·사이트·슬라이드를 PostgreSQL·Oracle Cloud 기준으로 갱신, 슬라이드 "운영 준비" 추가 (커밋 100)

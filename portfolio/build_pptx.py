@@ -320,7 +320,7 @@ def build():
          "신고 처리와 계정 관리를 위한 관리자 콘솔까지 별도 앱으로 만들었습니다.",
          size=15.5, color=MUTED_ON_DARK, line_spacing=1.5)
 
-    stats = [("3", "애플리케이션"), ("82", "REST API"), ("22", "DB 테이블"), ("188", "테스트"), ("177", "커밋")]
+    stats = [("3", "애플리케이션"), ("82", "REST API"), ("22", "DB 테이블"), ("191", "테스트"), ("188", "커밋")]
     cx = Inches(0.9)
     cw = Inches(2.25)
     for label_n, label_t in stats:
@@ -613,8 +613,8 @@ def build():
         ("82", "REST API 엔드포인트"),
         ("22", "데이터베이스 테이블"),
         ("33", "화면 (사용자 27 · 관리자 6)"),
-        ("188", "자동화 테스트"),
-        ("177", "커밋 (커밋마다 상세 기록)"),
+        ("191", "자동화 테스트"),
+        ("188", "커밋 (커밋마다 상세 기록)"),
     ]
     cols = 3
     gw, gh = Inches(3.75), Inches(2.05)
@@ -628,17 +628,17 @@ def build():
         text(s, x + Inches(0.3), y + Inches(1.15), gw - Inches(0.6), Inches(0.55), label, size=12.5, color=MUTED_ON_DARK, line_spacing=1.3)
     page_no(s, nn(), dark=True)
 
-    # ---------------------------------------------------------- 14-1. 운영 준비
+    # ---------------------------------------------------------- 14-1. 운영
     s = new_slide(prs, PAPER)
-    kicker(s, "06 · 운영 준비")
-    text(s, Inches(0.9), Inches(0.85), Inches(11.5), Inches(0.7), "켜 두면 계속 돌아가는 서비스로", size=26, color=TEXT, bold=True)
+    kicker(s, "06 · 운영")
+    text(s, Inches(0.9), Inches(0.85), Inches(11.5), Inches(0.7), "켜 두면 계속 돌아가는 서비스", size=26, color=TEXT, bold=True)
     text(s, Inches(0.9), Inches(1.55), Inches(11.5), Inches(0.5),
-         "내 PC 에서만 돌던 서버를, 꺼지지 않는 클라우드 서버와 매일 백업되는 데이터베이스 위로 옮길 준비를 마쳤습니다.",
+         "내 PC 에서만 돌던 서버를 꺼지지 않는 클라우드 서버로 옮겼고, 지금 실제로 운영 중입니다.",
          size=14, color=MUTED)
 
     flow = [
         ("화면", "Cloudflare", "사용자 사이트 · 관리자 콘솔\n전 세계 가까운 곳에서 응답", BRAND),
-        ("서버 · 데이터", "Oracle Cloud", "API 서버 + PostgreSQL\n24시간 가동, 자동 HTTPS", TEAL),
+        ("서버 · 데이터", "Oracle Cloud", "API 서버 + PostgreSQL 전용 서버\n24시간 가동, 터널로 HTTPS", TEAL),
         ("백업", "내 PC (D 드라이브)", "매일 새벽 데이터 사본을\n내려받아 보관 · 복원 확인", AMBER_INK),
     ]
     fw, fh, fy = Inches(3.55), Inches(2.25), Inches(2.45)
@@ -658,7 +658,7 @@ def build():
         fx += fw + Inches(0.42)
 
     checks = [
-        ("180", "개의 자동 검사가 코드를 올릴 때마다 실행"),
+        ("183", "개의 자동 검사가 코드를 올릴 때마다 실행"),
         ("151", "건의 기존 데이터를 새 데이터베이스로 빠짐없이 이전"),
         ("1번", "명령으로 백업 → 업데이트 → 상태 확인까지"),
     ]
@@ -670,8 +670,8 @@ def build():
 
     rich(
         s, Inches(0.9), Inches(6.05), Inches(11.5), Inches(0.6),
-        [("남은 일  ", BRAND, True),
-         ("클라우드 서버를 만들고 도메인을 연결하면, 링크 하나로 모든 기능이 동작하는 라이브 서비스가 됩니다.", TEXT_2, False)],
+        [("운영 중  ", BRAND, True),
+         ("링크 하나로 로그인 · 실시간 메시지 · 알림까지 동작합니다. 서버 주소가 바뀌면 매시간 자동으로 다시 배포합니다.", TEXT_2, False)],
         size=13.5,
     )
     page_no(s, nn())
@@ -712,7 +712,7 @@ def build():
     text(s, Inches(0.9), Inches(0.85), Inches(11), Inches(0.7), "앞으로의 방향", size=26, color=TEXT, bold=True)
 
     plans = [
-        ("1", "라이브 서비스 공개", "클라우드 서버·도메인 연결 — 배포 준비는 끝남"),
+        ("1", "주소 고정", "도메인 연결 — 지금은 임시 주소를 매시간 자동으로 맞추는 중"),
         ("2", "보안 강화", "Rate limiting, 보안 헤더, 입력 검증 스키마"),
         ("3", "운영 감사 로그", "관리자가 무엇을 했는지 추적할 수 있게"),
         ("4", "접근성 · 성능", "기능이 안정된 지금, 기준선을 측정하고 개선"),

@@ -41,8 +41,8 @@
       <div class="stat"><b>16,100</b><span>줄 TypeScript</span></div>
       <div class="stat"><b>82</b><span>REST 엔드포인트</span></div>
       <div class="stat"><b>22</b><span>DB 테이블</span></div>
-      <div class="stat"><b>188</b><span>자동화 테스트</span></div>
-      <div class="stat"><b>177</b><span>커밋</span></div>
+      <div class="stat"><b>191</b><span>자동화 테스트</span></div>
+      <div class="stat"><b>188</b><span>커밋</span></div>
     </div>
   </div>
 </section>
@@ -121,7 +121,7 @@
       </a>
       <a class="toc-item" href="#quality">
         <span class="toc-no">06</span>
-        <span><b>테스트 · 배포 · 회고</b><span>188건의 테스트와 CI, Oracle Cloud 배포 준비, 다음 목표</span></span>
+        <span><b>테스트 · 배포 · 회고</b><span>191건의 테스트와 CI, Oracle Cloud 운영 배포, 다음 목표</span></span>
       </a>
     </div>
   </div>
@@ -345,14 +345,14 @@
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="sec-tag">06 · 품질 · 배포 · 회고</span>
-      <h2>테스트 188건, 그리고 아직 못 한 것</h2>
+      <h2>테스트 191건, 운영 배포, 그리고 아직 못 한 것</h2>
     </div>
 
     <div class="table-wrap reveal" style="margin-bottom:22px">
       <table>
         <thead><tr><th>계층</th><th>도구</th><th>건수</th><th>대상</th></tr></thead>
         <tbody>
-          <tr><td>백엔드 API</td><td><code>node --test</code> + supertest</td><td><b>148</b></td><td>인증·쇼츠·댓글·팔로우·재생목록·검색·관리자 API·마이그레이션·데이터 이관</td></tr>
+          <tr><td>백엔드 API</td><td><code>node --test</code> + supertest</td><td><b>151</b></td><td>인증·쇼츠·댓글·팔로우·재생목록·검색·관리자 API·비밀번호 재설정·마이그레이션·데이터 이관</td></tr>
           <tr><td>프론트 단위</td><td><code>node --test</code></td><td><b>32</b></td><td>비회원 경로 판정, 오픈 리다이렉트 방지 등 순수 함수</td></tr>
           <tr><td>E2E</td><td>Playwright</td><td><b>8</b></td><td>게스트 접근, 로그인/로그아웃, 커뮤니티 작성, 메시지 실시간(WS)</td></tr>
           <tr><td>정적 검사</td><td><code>tsc --noEmit</code> · ESLint</td><td>3개 앱</td><td>타입·린트</td></tr>
@@ -374,25 +374,51 @@
         <tbody>
           <tr><td>FrontServer</td><td>Cloudflare Workers (OpenNext)</td><td><span class="badge done">배포됨</span></td></tr>
           <tr><td>console</td><td>Cloudflare Workers (OpenNext)</td><td><span class="badge done">배포됨</span></td></tr>
-          <tr><td>BackendServer</td><td>Oracle Cloud VM — Caddy(HTTPS) · systemd · PostgreSQL 16</td><td><span class="badge plan">스크립트 준비됨</span></td></tr>
+          <tr><td>BackendServer</td><td>Oracle Cloud VM (ARM 2 OCPU / 11GB, 전용) — systemd · PostgreSQL 16 · Cloudflare Tunnel</td><td><span class="badge done">운영 중</span></td></tr>
         </tbody>
       </table>
     </div>
 
-    <div class="code reveal"><span class="c">app.&lt;도메인&gt;      → Cloudflare Workers (FrontServer)
-console.&lt;도메인&gt;  → Cloudflare Workers (console)</span>
-<span class="k">api.&lt;도메인&gt;</span>      → Oracle VM · Caddy :443 (자동 HTTPS)
-                    ├─ <span class="p">/uploads/*</span>  → 디스크에서 직접
-                    └─ <span class="p">나머지</span>      → BackendServer :4000 → PostgreSQL 16
-<span class="c">블록 볼륨       /mnt/vidshare-data — pgdata · uploads · backups
-매일 백업       pg_dump → 내 PC D:&#92;vidshare-data&#92;backups 로 사본</span></div>
+    <div class="code reveal"><span class="c">vidshare-front.*.workers.dev    → Cloudflare Workers (FrontServer)
+vidshare-console.*.workers.dev  → Cloudflare Workers (console)</span>
+<span class="k">*.trycloudflare.com</span> (HTTPS)     → Cloudflare ══ <span class="p">아웃바운드 터널</span> ══ Oracle VM
+                                   ├─ cloudflared        (systemd)
+                                   ├─ BackendServer :4000 (systemd)
+                                   └─ PostgreSQL 16 :5432 (localhost 전용)
+<span class="c">매일 04:30   운영 백업·업로드 → 내 PC D:&#92;vidshare-data&#92;backups&#92;prod
+매시간       터널 주소가 바뀌면 프론트·콘솔 자동 재배포</span></div>
 
     <div class="callout warn reveal">
       <b>백엔드를 Workers에 올리지 않은 이유.</b>
       DB 와 업로드 파일은 영구 디스크가, SSE·WebSocket 은 상시 프로세스가 필요합니다. Workers 런타임에는 둘 다 없습니다.
-      처음엔 내 PC 를 Cloudflare Tunnel 로 노출하려 했지만 PC 가 꺼지면 서비스도 멈춰서, <b>블록 볼륨이 붙은 VM 1대</b>로 정했습니다.
-      최초 설정·반복 배포·백업 스크립트까지 준비했고 VM 구축과 도메인 연결이 남았습니다.
-      그 전까지 배포된 프론트는 <b>UI 확인용</b>입니다.
+      내 PC 를 노출하는 안은 PC 가 꺼지면 서비스도 멈춰서 버렸고, <b>꺼지지 않는 VM 1대</b>로 정했습니다.
+    </div>
+
+    <h3 class="reveal">해결한 문제 — 80·443 이 막힌 서버를 공개하기</h3>
+    <div class="grid grid-2">
+      <div class="card reveal">
+        <h4>들어오는 문이 없으면, 나가는 문으로</h4>
+        <p style="color:var(--muted);margin-bottom:0">
+          서버는 떠 있는데 바깥에서 접속이 안 됐습니다. OCI 는 VM <b>바깥의 보안 목록</b>이 먼저 막고(22 번만 열림), 이건 VM 안에서 바꿀 수 없습니다.
+          그래서 <code>cloudflared</code> 가 VM 에서 <b>바깥으로</b> Cloudflare 에 연결하고, Cloudflare 가 HTTPS 주소로 받은 요청을 그 연결로 흘려 주게 했습니다.
+          인바운드 포트도, 인증서 발급도 필요 없습니다.
+        </p>
+      </div>
+      <div class="card reveal">
+        <h4>바뀌는 주소를 자동으로 따라가기</h4>
+        <p style="color:var(--muted);margin-bottom:0">
+          임시 터널 주소는 재시작마다 바뀝니다. 내 PC 의 예약 작업이 매시간 서버에서 주소를 읽어, 바뀌었으면 프론트·콘솔을 다시 빌드·배포합니다.
+          처음엔 실패한 뒤에도 "변경 없음"으로 판단했는데, 비교 기준이 배포 <b>전에</b> 고치는 파일이었기 때문입니다.
+          기준을 "<b>두 앱 배포가 모두 성공한 뒤에만</b> 쓰는 상태 파일"로 바꿨습니다.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout warn reveal">
+      <b>알려진 한계.</b>
+      프론트(<code>workers.dev</code>)와 API(<code>trycloudflare.com</code>)가 다른 사이트라 쿠키를 <code>SameSite=None</code> 으로 보냅니다.
+      Chrome·Edge 에서는 로그인·실시간 메시지·알림까지 확인했지만, 서드파티 쿠키를 막는 Safari 에서는 로그인이 안 될 수 있습니다.
+      주소가 바뀐 뒤 재배포까지 최대 1시간이 걸립니다. 둘 다 <b>도메인 + 고정 터널</b>로 해결됩니다.
     </div>
 
     <h3 class="reveal">SQLite → PostgreSQL 전환</h3>
@@ -440,7 +466,7 @@ console.&lt;도메인&gt;  → Cloudflare Workers (console)</span>
       <table>
         <thead><tr><th style="width:70px">순위</th><th>과제</th><th>이유</th></tr></thead>
         <tbody>
-          <tr><td><b>1</b></td><td>Oracle VM 구축 · 도메인 연결 → 프론트 재배포</td><td>링크 하나로 동작하는 라이브 데모가 완성됨 (스크립트 준비 완료)</td></tr>
+          <tr><td><b>1</b></td><td>도메인 연결 · 고정 터널</td><td>운영 배포는 완료. 주소를 고정하면 자동 재배포 공백과 Safari 쿠키 문제가 함께 사라짐</td></tr>
           <tr><td><b>2</b></td><td>Rate limiting · 보안 헤더 · 입력 검증 스키마</td><td>공개 배포 직후 가장 먼저 노출되는 표면</td></tr>
           <tr><td><b>3</b></td><td>관리자 조치 감사 로그</td><td>누가 무엇을 지웠는지 추적할 수 없는 상태를 해소</td></tr>
           <tr><td><b>4</b></td><td>DB 컬럼 타입 정교화 (<code>timestamptz</code> · <code>boolean</code>)</td><td>전환 때 일부러 미룬 것</td></tr>

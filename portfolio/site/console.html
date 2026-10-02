@@ -301,6 +301,7 @@
               <code>npm run create-admin</code> CLI로 각 환경에서 직접 만듭니다.
               비밀번호가 소스나 저장소에 남지 않습니다. 같은 핸들에 다시 실행하면
               아무것도 바꾸지 않는 <b>멱등</b> 동작입니다.
+              비밀번호를 잊으면 <code>npm run reset-password</code> 로 재설정하고, 그 계정의 세션은 모두 끊깁니다.
             </p>
           </div>
           <div class="card reveal">
@@ -317,7 +318,11 @@
 npm run create-admin -- myadmin mypassword123
 
 <span class="c"># 기존 일반 계정을 승격 (비밀번호는 그대로 유지 — 아래 주의 참고)</span>
-npm run create-admin -- demo demo1234 <span class="n">--promote</span></div>
+npm run create-admin -- demo demo1234 <span class="n">--promote</span>
+
+<span class="c"># 핸들을 잊었을 때 / 비밀번호를 잊었을 때 (해시라 찾을 수 없고 재설정만 된다)</span>
+npm run list-admins
+npm run reset-password -- myadmin <span class="n">--generate</span></div>
 
         <div class="callout warn reveal">
           <b>남아 있는 위험을 그대로 적습니다.</b>

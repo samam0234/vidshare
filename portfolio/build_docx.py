@@ -197,9 +197,10 @@ def cover(doc) -> None:
 
     for label, value in [
         ("구성", "사용자 웹앱 · 관리자 콘솔 · REST API 서버"),
-        ("기술", "Next.js 16 · React 19 · TypeScript · Express · SQLite · LangChain"),
-        ("기간", "2026-08-14 ~ 2026-09-07"),
-        ("규모", "약 15,700줄 · API 82개 · 테이블 22개 · 테스트 177건"),
+        ("기술", "Next.js 16 · React 19 · TypeScript · Express · PostgreSQL · LangChain"),
+        ("기간", "2026-08-14 ~ 2026-10-02"),
+        ("규모", "약 16,100줄 · API 82개 · 테이블 22개 · 테스트 191건"),
+        ("운영", "Cloudflare Workers + Oracle Cloud VM (운영 중)"),
     ]:
         par = doc.add_paragraph()
         par.alignment = WD_ALIGN_PARAGRAPH.CENTER
