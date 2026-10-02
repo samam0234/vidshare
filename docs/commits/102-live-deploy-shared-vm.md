@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `102` |
 | **파일명** | `102-live-deploy-shared-vm.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `8adaa48` |
+| **Git 커밋 (full)** | `8adaa48660b8ed5c01de53e0d4f6bdb6ebf6c617` |
 | **날짜** | `2026-10-02` |
 | **작성자** | `Claude` |
 | **브랜치** | `master` |
