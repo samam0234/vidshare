@@ -6,7 +6,9 @@
 ```
 deploy/
 ├── oracle/                         VM(Ubuntu 24.04)에서 쓰는 파일
-│   ├── setup-vm.sh                 최초 1회: 패키지·볼륨 마운트·Postgres 이전·Caddy·systemd·방화벽
+│   ├── setup-vm.sh                 최초 1회 (전용 VM): 패키지·볼륨 마운트·Postgres 이전·Caddy·systemd·방화벽
+│   ├── setup-shared-nginx.sh       최초 1회 (nginx 가 이미 있는 VM 에 추가): Postgres·사이트 파일·systemd
+│   ├── nginx-vidshare.conf         위 스크립트가 설치하는 nginx 사이트 (certbot 이 HTTPS 덧붙임)
 │   ├── deploy.sh                   반복 배포: 백업 → pull → build → db:migrate → 재시작 → health
 │   ├── backup.sh                   pg_dump 야간 백업 (/usr/local/bin/vidshare-backup 으로 설치)
 │   ├── Caddyfile                   api 도메인 HTTPS + /uploads 직접 서빙 + reverse_proxy :4000

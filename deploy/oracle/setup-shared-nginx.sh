@@ -58,7 +58,8 @@ if [[ -z "$PG_CANDIDATE" || "$PG_CANDIDATE" == "(none)" ]]; then
     > /etc/apt/sources.list.d/pgdg.list
   apt-get update -y
 fi
-apt-get install -y "postgresql-$PG_VER" git openssl
+# better-sqlite3(SQLite 이관용 dev 의존성)가 Node 버전에 따라 소스 빌드를 하므로 컴파일러가 필요하다.
+apt-get install -y "postgresql-$PG_VER" git openssl build-essential python3
 cat > "/etc/postgresql/$PG_VER/main/conf.d/vidshare.conf" <<'CONF'
 # VidShare — 다른 서비스와 1GB RAM 을 나눠 쓰는 VM 용 저메모리 설정
 listen_addresses = 'localhost'

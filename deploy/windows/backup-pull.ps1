@@ -40,7 +40,9 @@ $dbDir = Join-Path $DataRoot "backups\prod\db"
 $upDir = Join-Path $DataRoot "backups\prod\uploads"
 New-Item -ItemType Directory -Force -Path $dbDir, $upDir | Out-Null
 
-$latest = (ssh $SshHost "ls -1t $RemoteRoot/backups/*.dump 2>/dev/null | head -n 1").Trim()
+$listing = ssh -o BatchMode=yes $SshHost "ls -1t $RemoteRoot/backups/*.dump 2>/dev/null | head -n 1"
+if ($LASTEXITCODE -ne 0) { throw "ssh $SshHost 접속 실패 (종료 코드 $LASTEXITCODE). ~/.ssh/config 와 키 권한을 확인하세요." }
+$latest = "$listing".Trim()
 if (-not $latest) { throw "VM 에 백업 파일이 없습니다: $RemoteRoot/backups" }
 $name = Split-Path $latest -Leaf
 $local = Join-Path $dbDir $name

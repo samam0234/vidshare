@@ -8,6 +8,8 @@
 ## [Unreleased]
 
 ### Added
+- **운영 배포** (커밋 102): 백엔드 `https://161-33-190-199.sslip.io` (Oracle VM, human-bug-tier 와 공유). 데이터 151행 이관, 프론트·콘솔 재배포, 운영 백업을 D 드라이브로 매일 가져오기
+- `deploy/oracle/setup-shared-nginx.sh`, `nginx-vidshare.conf` — nginx 가 이미 있는 VM 에 추가 설치 (커밋 de353af)
 - **PostgreSQL 16** (커밋 096): SQLite 를 대체. 버전 관리 마이그레이션(`src/db/migrations/`,
   `schema_migrations`, advisory lock), `npm run db:migrate`.
   **SQLite → Postgres 이관 스크립트** `npm run db:import-sqlite` — FK 순서·한 트랜잭션·
@@ -144,6 +146,7 @@
 - 죽은 코드: `store.ts` 의 `listNotifications`/`deleteNotification`/`patchNotification`, `seedNotifications`, `Notification` 타입
 
 ### Fixed
+- `setup-shared-nginx.sh` 에 빌드 도구 누락(`better-sqlite3` 소스 빌드 실패), `backup-pull.ps1` 이 ssh 실패 시 null 오류로 죽던 문제 (커밋 102)
 - 포트폴리오 사이트 코드 블록 18개가 줄바꿈 없이 뭉쳐 보이던 문제, docx 에 굵게 안 인라인 코드 백틱이 찍히던 문제 (커밋 100)
 - E2E(Playwright) 백엔드가 개발 DB(`.env` 의 `DATABASE_URL`)로 뜨던 문제 (커밋 099, 096 회귀).
   테스트 DB 의 `e2e` 스키마를 매 실행 초기화해 쓴다 (`scripts/reset-schema.ts`)

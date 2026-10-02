@@ -21,7 +21,8 @@
 | 포트폴리오 | [portfolio/](./portfolio/) — 문서(Markdown·DOCX) + 소개 사이트 |
 | 구조 문서 | [docs/architecture/overview.md](./docs/architecture/overview.md) |
 
-> 배포된 프론트는 공개 백엔드 주소가 연결되기 전까지 **UI 확인용**입니다.
+> **라이브 서비스 운영 중 (2026-10-02~)** — 백엔드 API `https://161-33-190-199.sslip.io` (Oracle Cloud VM).
+> 데모 계정 `demo` / `demo1234`. 도메인 없이 sslip.io 주소라 Safari 등 서드파티 쿠키를 막는 브라우저에서는 로그인이 안 될 수 있습니다(Chrome 권장).
 > 전체 기능은 아래 [빠른 시작](#빠른-시작-실행-방법)으로 로컬에서 실행하세요.
 
 ---
@@ -266,8 +267,8 @@ API 공개 주소가 있으면 빌드 전에 `NEXT_PUBLIC_API_URL`을 넣습니�
 | 인증 | bcrypt + HttpOnly 세션, 사용자/관리자 쿠키 분리 |
 | 업로드 | `POST /api/uploads` (영상 100MB · 이미지 8MB) |
 | 테스트 | 백엔드 148건(Postgres) · 프론트 `npm test` · E2E `npm run test:e2e` · CI(GitHub Actions) |
-| 미완 | Oracle VM 실제 구축·도메인 연결 전, 관리자 감사 로그 없음 ([roadmap](./docs/features/roadmap.md)) |
-| 배포 | Front/console = Cloudflare Workers. 백엔드 = Oracle Cloud VM (스크립트 준비됨). [docs/deployment.md](./docs/deployment.md) |
+| 미완 | 도메인 연결(현재 sslip.io), 관리자 감사 로그 없음 ([roadmap](./docs/features/roadmap.md)) |
+| 배포 | Front/console = Cloudflare Workers. 백엔드 = Oracle Cloud VM `https://161-33-190-199.sslip.io` (**운영 중**). [docs/deployment.md](./docs/deployment.md) |
 
 ---
 
