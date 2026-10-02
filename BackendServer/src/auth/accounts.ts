@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { randomUUID } from "crypto";
-import { getDb } from "../db/client";
+import { getDb, withTx } from "../db/client";
 import type { Author, UserRole } from "../types";
 
 /**
@@ -99,4 +99,51 @@ export async function createAccount(input: {
 export async function setAccountRole(userId: string, role: UserRole): Promise<boolean> {
   const info = await getDb().run("UPDATE users SET role = ? WHERE id = ?", role, userId);
   return info.changes > 0;
+}
+
+/**
+ * 비밀번호 재설정. 같은 트랜잭션에서 그 계정의 세션을 전부 지워
+ * 이미 로그인해 있던 브라우저(옛 비밀번호로 들어온 쪽 포함)를 즉시 끊는다.
+ * 지운 세션 수를 돌려준다. 계정이 없으면 null.
+ * bcrypt 해시는 단방향이라 원래 비밀번호를 "찾는" 방법은 없다 — 재설정만 가능하다.
+ */
+export async function setAccountPassword(
+  userId: string,
+  password: string
+): Promise<{ revokedSessions: number } | null> {
+  const hash = bcrypt.hashSync(password, 10);
+  return withTx(async (tx) => {
+    const info = await tx.run("UPDATE users SET password_hash = ? WHERE id = ?", hash, userId);
+    if (info.changes === 0) return null;
+    const revoked = await tx.run("DELETE FROM sessions WHERE user_id = ?", userId);
+    return { revokedSessions: revoked.changes };
+  });
+}
+
+export type AdminSummary = {
+  id: string;
+  handle: string;
+  name: string;
+  suspended: boolean;
+  createdAt: string;
+};
+
+/** 관리자 계정 목록. 콘솔에 로그인할 계정을 잊었을 때 서버에서 확인하는 용도. */
+export async function listAdminAccounts(): Promise<AdminSummary[]> {
+  const rows = await getDb().all<{
+    id: string;
+    handle: string;
+    name: string;
+    suspended: number;
+    created_at: string;
+  }>(
+    "SELECT id, handle, name, suspended, created_at FROM users WHERE role = 'admin' ORDER BY created_at, handle"
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    handle: r.handle,
+    name: r.name,
+    suspended: Boolean(r.suspended),
+    createdAt: r.created_at,
+  }));
 }

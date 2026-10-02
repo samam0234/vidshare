@@ -9,6 +9,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "create-admin": "tsx scripts/create-admin.ts",
+    "list-admins": "tsx scripts/list-admins.ts",
+    "reset-password": "tsx scripts/reset-password.ts",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:import-sqlite": "tsx scripts/migrate-sqlite-to-pg.ts",
     "db:doc": "tsx scripts/dump-db-doc.ts",

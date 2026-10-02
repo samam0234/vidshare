@@ -85,6 +85,19 @@ export default function LoginClient() {
           <br />
           로 만들어 주세요.
         </p>
+
+        <details className="mt-4 text-center text-xs leading-relaxed text-[var(--text-muted)]">
+          <summary className="cursor-pointer text-[var(--text)]">핸들·비밀번호를 잊었다면</summary>
+          <p className="mt-2">
+            비밀번호는 암호화되어 있어 찾을 수 없고 <b>재설정</b>만 됩니다.
+            <br />
+            서버 SSH 권한이 있는 운영자가 실행합니다.
+          </p>
+          <code className="mt-2 block text-[var(--text)]">npm run list-admins</code>
+          <code className="mt-1 block text-[var(--text)]">
+            npm run reset-password -- &lt;handle&gt; --generate
+          </code>
+        </details>
       </div>
     </main>
   );
