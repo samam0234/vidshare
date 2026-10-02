@@ -680,8 +680,9 @@ D:\vidshare-data\                uploads\ · backups\{local, prod\db, prod\uploa
 ### P6. Oracle Cloud 구축·배포
 - [x] `deploy/oracle/*` 7개 파일 (097) — `bash -n` 문법 검사 통과
 - [x] `cloudflare/config.template.yml` 삭제, `docs/deployment.md` 재작성, `docs/ops/oracle-setup.md`
-- [x] **운영 배포 (2026-10-02, 102)** — 새 인스턴스 SSH 키 문제로 기존 human-bug-tier VM 에 함께 설치(`setup-shared-nginx.sh`). API `https://161-33-190-199.sslip.io`, 데이터 151행 이관, 프론트·콘솔 재배포, 브라우저로 로그인·SSE·WebSocket 확인
-- [ ] 전용 VM(`168.110.23.222`) 으로 이전 — SSH 키 등록 후
+- [x] **운영 배포 (2026-10-02, 103)** — 전용 VM `161.33.186.255`(ARM 11GB)에 `setup-vm-tunnel.sh` 로 설치, Cloudflare Tunnel 로 공개(80·443 막혀도 동작). 데이터 복원, 프론트·콘솔 재배포, 브라우저로 로그인·SSE·WebSocket 확인
+- [x] 102 에서 human-bug-tier VM 에 함께 올린 것 제거 (103)
+- [x] 터널 주소 변경 시 프론트·콘솔 자동 재배포 (`sync-tunnel-url.ps1`, 매시간)
 - [ ] 도메인, `api.` A 레코드, Workers Custom Domain (현재 sslip.io 임시 구성)
 
 ### P7. 운영 안정화

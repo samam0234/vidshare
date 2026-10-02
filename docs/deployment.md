@@ -2,20 +2,22 @@
 
 **상태**: **운영 중 (2026-10-02~)** — 백엔드는 **Oracle Cloud VM**, DB 는 **PostgreSQL 16**, 운영 백업 사본은 **D 드라이브**
 
-> ### 현재 운영 구성 (2026-10-02)
+> ### 현재 운영 구성 (2026-10-02, 커밋 103)
 >
 > | 항목 | 값 |
 > |------|----|
-> | API | `https://161-33-190-199.sslip.io` — Let's Encrypt 인증서(certbot 자동 갱신), HTTP→HTTPS 리다이렉트 |
-> | 서버 | 기존 human-bug-tier VM `161.33.190.199` (Ubuntu 24.04 · E2.1.Micro 1GB + 스왑 2GB)에 **함께** 설치 |
-> | 설치 방식 | `deploy/oracle/setup-shared-nginx.sh` — 기존 nginx 에 사이트 파일만 추가, 시스템 Node 22·기존 사이트·방화벽 미변경 |
-> | 데이터 | Postgres 16 기본 데이터 디렉터리(부트 디스크), 업로드 `/mnt/vidshare-data/uploads` |
-> | 쿠키 | sslip.io 라 프론트(`*.workers.dev`)와 다른 사이트 → `SameSite=None; Secure`. **Safari 등에서는 로그인 불가할 수 있음** |
-> | 백업 | 서버 cron 03:00 → 내 PC 작업 스케줄러 04:30 이 `D:\vidshare-data\backups\prod` 로 가져옴 |
-> | SSH | 이 PC `~/.ssh/config` 의 `vidshare-vm` |
+> | 서버 | **전용 VM** `161.33.186.255` — Ubuntu 22.04 · **ARM(A1) 2 OCPU / 11GB RAM** · 부트 디스크 50GB (블록 볼륨 없음) |
+> | 설치 | `deploy/oracle/setup-vm-tunnel.sh` → `deploy.sh` |
+> | 공개 방식 | **Cloudflare 빠른 터널**(`cloudflared`, 아웃바운드). OCI 보안 목록에서 80·443 이 막혀 있어도 HTTPS 로 서비스된다 |
+> | API 주소 | `https://<무작위>.trycloudflare.com` — **터널이 재시작되면 바뀐다.** 현재 주소는 서버에서 `vidshare-tunnel-url` |
+> | 주소 변경 대응 | 이 PC 작업 스케줄러 **"VidShare 터널 주소 동기화"(매시간)** 가 `sync-tunnel-url.ps1` 로 바뀐 주소를 감지해 프론트·콘솔을 자동 재배포 |
+> | 쿠키 | 프론트(`*.workers.dev`)와 API 가 다른 사이트 → `SameSite=None; Secure`. **Safari 등에서는 로그인 불가할 수 있음** |
+> | 백업 | 서버 cron 03:00 → 이 PC 작업 스케줄러 04:30 이 `D:\vidshare-data\backups\prod` 로 가져옴 |
+> | SSH | 이 PC `~/.ssh/config` 의 `vidshare-vm` (human-bug-tier 서버는 `hbt-vm`) |
 >
-> 새로 만든 인스턴스 `168.110.23.222` 는 SSH 키가 등록되지 않아 쓰지 못했다(`vidshare-vm-new`). 전용 VM 으로 옮길 때는
-> 아래 4장(setup-vm.sh) → 5장(데이터 이전) 순서로 하고, 프론트 `.env.production` 의 API 주소만 바꿔 재배포한다.
+> **이력**: 102 에서 human-bug-tier VM 에 함께 올렸던 VidShare 는 103 에서 **완전히 제거**했다(서비스·nginx 사이트·인증서·DB·Postgres·파일·계정).
+> 주소를 고정하려면 도메인을 마련해 Cloudflare **named tunnel**(계정 로그인 필요)로 바꾸면 된다.
+
 **최종 갱신**: 2026-10-02 (096~098)
 **대상**: VidShare 를 처음 실제 서버에 올리려는 사람
 

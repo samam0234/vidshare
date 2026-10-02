@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- `setup-vm-tunnel.sh`·`get-tunnel-url.sh`(80·443 막힌 VM 을 터널로 공개), `sync-tunnel-url.ps1`(터널 주소 변경 시 프론트·콘솔 자동 재배포, 매시간) (커밋 103)
 - **운영 배포** (커밋 102): 백엔드 `https://161-33-190-199.sslip.io` (Oracle VM, human-bug-tier 와 공유). 데이터 151행 이관, 프론트·콘솔 재배포, 운영 백업을 D 드라이브로 매일 가져오기
 - `deploy/oracle/setup-shared-nginx.sh`, `nginx-vidshare.conf` — nginx 가 이미 있는 VM 에 추가 설치 (커밋 de353af)
 - **PostgreSQL 16** (커밋 096): SQLite 를 대체. 버전 관리 마이그레이션(`src/db/migrations/`,
@@ -109,6 +110,7 @@
 - 챗봇 봇 답변 마크다운 렌더링 (굵게·이탤릭·취소선·목록)
 
 ### Changed
+- **운영 서버 이전** (커밋 103): human-bug-tier 공유 VM → 전용 VM `161.33.186.255`(ARM 11GB) + Cloudflare Tunnel. 공유 VM 에서는 VidShare 완전 제거
 - `setup-vm.sh` 가 Ubuntu 22.04(PGDG 저장소), 도메인 없이 `<IP>.sslip.io`, 블록 볼륨 없이(`--no-volume`), 비대화형 실행(DB 비밀번호 서버 생성)을 지원 (커밋 101)
 - 포트폴리오 문서·사이트·슬라이드를 PostgreSQL·Oracle Cloud 기준으로 갱신, 슬라이드 "운영 준비" 추가 (커밋 100)
 - **백엔드 데이터 계층 전부 async** (커밋 096): `better-sqlite3`(동기) → `pg`(비동기).

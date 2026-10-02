@@ -9,6 +9,8 @@ deploy/
 │   ├── setup-vm.sh                 최초 1회 (전용 VM): 패키지·볼륨 마운트·Postgres 이전·Caddy·systemd·방화벽
 │   ├── setup-shared-nginx.sh       최초 1회 (nginx 가 이미 있는 VM 에 추가): Postgres·사이트 파일·systemd
 │   ├── nginx-vidshare.conf         위 스크립트가 설치하는 nginx 사이트 (certbot 이 HTTPS 덧붙임)
+│   ├── setup-vm-tunnel.sh          최초 1회 (전용 VM, 80·443 막힘): Cloudflare 터널로 공개 ← 현재 운영
+│   ├── get-tunnel-url.sh           현재 터널 URL 출력 (/usr/local/bin/vidshare-tunnel-url)
 │   ├── deploy.sh                   반복 배포: 백업 → pull → build → db:migrate → 재시작 → health
 │   ├── backup.sh                   pg_dump 야간 백업 (/usr/local/bin/vidshare-backup 으로 설치)
 │   ├── Caddyfile                   api 도메인 HTTPS + /uploads 직접 서빙 + reverse_proxy :4000
@@ -18,7 +20,8 @@ deploy/
 └── windows/                        내 PC 에서 쓰는 파일 (PowerShell 5.1)
     ├── setup-postgres-d.ps1        D 드라이브 Postgres 에 vidshare 계정·DB, D:\vidshare-data 폴더
     ├── backup-local.ps1            로컬 DB pg_dump → D:\vidshare-data\backups\local (-Register 로 매일)
-    └── backup-pull.ps1             운영 백업·업로드 → D:\vidshare-data\backups\prod (-Register 로 매일)
+    ├── backup-pull.ps1             운영 백업·업로드 → D:\vidshare-data\backups\prod (-Register 로 매일)
+    └── sync-tunnel-url.ps1         터널 주소가 바뀌면 프론트·콘솔 재배포 (-Register 로 매시간)
 ```
 
 ## 순서 요약
