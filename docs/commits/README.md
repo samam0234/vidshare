@@ -176,7 +176,7 @@ NNN-짧은-영문-slug.md
 | 100 | [100-portfolio-postgres-oracle.md](./100-portfolio-postgres-oracle.md) | `497f4f8` | 포트폴리오 갱신 — PostgreSQL·Oracle Cloud·운영 준비 | 2026-10-02 |
 | 101 | [101-setup-vm-jammy-sslip.md](./101-setup-vm-jammy-sslip.md) | `70172ca` | setup-vm.sh — Ubuntu 22.04·sslip.io·볼륨 없음·비대화형 | 2026-10-02 |
 | 102 | [102-live-deploy-shared-vm.md](./102-live-deploy-shared-vm.md) | `8adaa48` | 운영 배포 — 기존 Oracle VM 에 함께 설치 | 2026-10-02 |
-| 103 | [103-dedicated-vm-tunnel.md](./103-dedicated-vm-tunnel.md) | `TBD` | 전용 VM + Cloudflare Tunnel 로 이전, 공유 VM 에서 제거 | 2026-10-02 |
+| 103 | [103-dedicated-vm-tunnel.md](./103-dedicated-vm-tunnel.md) | `cde8f5a` | 전용 VM + Cloudflare Tunnel 로 이전, 공유 VM 에서 제거 | 2026-10-02 |
 
 ---
 

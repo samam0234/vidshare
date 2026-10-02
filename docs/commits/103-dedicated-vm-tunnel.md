@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `103` |
 | **파일명** | `103-dedicated-vm-tunnel.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `cde8f5a` |
+| **Git 커밋 (full)** | `cde8f5adf302827886a25ea5bd557fdd65521df7` |
 | **날짜** | `2026-10-02` |
 | **작성자** | `Claude` |
 | **브랜치** | `master` |
