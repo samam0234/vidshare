@@ -6,8 +6,8 @@
 |------|------|
 | **문서 번호** | `101` |
 | **파일명** | `101-setup-vm-jammy-sslip.md` |
-| **Git 커밋 (short)** | `TBD` |
-| **Git 커밋 (full)** | `TBD` |
+| **Git 커밋 (short)** | `70172ca` |
+| **Git 커밋 (full)** | `70172ca7ab061aa687cdd5302bf236f0df09fbef` |
 | **날짜** | `2026-10-02` |
 | **작성자** | `Claude` |
 | **브랜치** | `master` |
