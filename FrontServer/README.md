@@ -25,7 +25,7 @@ npm run dev
 npm run lint
 npm run typecheck
 npm test              # 순수 함수 (guest-routes 등)
-npm run test:e2e      # Playwright (백엔드+프론트 필요)
+npm run test:e2e      # Playwright — 백엔드·프론트를 직접 띄움. DATABASE_URL_TEST 의 `e2e` 스키마 사용(매번 초기화)
 npm run build
 npm start
 npm run deploy        # OpenNext → Cloudflare Workers

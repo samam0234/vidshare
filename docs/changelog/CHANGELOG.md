@@ -142,6 +142,8 @@
 - 죽은 코드: `store.ts` 의 `listNotifications`/`deleteNotification`/`patchNotification`, `seedNotifications`, `Notification` 타입
 
 ### Fixed
+- E2E(Playwright) 백엔드가 개발 DB(`.env` 의 `DATABASE_URL`)로 뜨던 문제 (커밋 099, 096 회귀).
+  테스트 DB 의 `e2e` 스키마를 매 실행 초기화해 쓴다 (`scripts/reset-schema.ts`)
 - ESLint가 OpenNext 빌드 산출물(`.open-next/`)까지 검사하고 있던 문제 (커밋 093).
   FrontServer 27,002건 / console 7,987건이 전부 생성 코드였고, 무시 규칙 추가 후
   두 앱 모두 기존 폰트 경고 1건만 남는다
