@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- **관리자 계정 찾기 · 비밀번호 재설정** (커밋 104): `npm run list-admins`, `npm run reset-password -- <handle> [--generate|--stdin]`(세션 전부 종료), 이 PC 에서 `deploy/windows/admin-tools.ps1 -List / -Reset <handle>`, 콘솔 로그인 화면 안내
 - `setup-vm-tunnel.sh`·`get-tunnel-url.sh`(80·443 막힌 VM 을 터널로 공개), `sync-tunnel-url.ps1`(터널 주소 변경 시 프론트·콘솔 자동 재배포, 매시간) (커밋 103)
 - **운영 배포** (커밋 102): 백엔드 `https://161-33-190-199.sslip.io` (Oracle VM, human-bug-tier 와 공유). 데이터 151행 이관, 프론트·콘솔 재배포, 운영 백업을 D 드라이브로 매일 가져오기
 - `deploy/oracle/setup-shared-nginx.sh`, `nginx-vidshare.conf` — nginx 가 이미 있는 VM 에 추가 설치 (커밋 de353af)

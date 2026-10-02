@@ -83,6 +83,8 @@ npm run test:watch # 테스트 진행 상태 감지
 npm run db:migrate # 마이그레이션만 적용 (배포 스크립트가 사용)
 npm run db:import-sqlite [-- --from <경로>] [-- --replace]  # SQLite → Postgres 1회 이관
 npm run db:doc     # data/DataBaseColumn.md 로 테이블·데이터 덤프
+npm run list-admins                         # 관리자 핸들 목록 (핸들을 잊었을 때)
+npm run reset-password -- <handle> --generate # 비밀번호 재설정(무작위) + 그 계정 세션 전부 종료
 ```
 
 ### 관리자 계정 만들기

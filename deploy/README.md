@@ -21,6 +21,7 @@ deploy/
     ├── setup-postgres-d.ps1        D 드라이브 Postgres 에 vidshare 계정·DB, D:\vidshare-data 폴더
     ├── backup-local.ps1            로컬 DB pg_dump → D:\vidshare-data\backups\local (-Register 로 매일)
     ├── backup-pull.ps1             운영 백업·업로드 → D:\vidshare-data\backups\prod (-Register 로 매일)
+    ├── admin-tools.ps1             운영 서버 관리자 찾기(-List) · 비밀번호 재설정(-Reset <handle>)
     └── sync-tunnel-url.ps1         터널 주소가 바뀌면 프론트·콘솔 재배포 (-Register 로 매시간)
 ```
 
