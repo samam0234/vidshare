@@ -181,7 +181,7 @@ NNN-짧은-영문-slug.md
 | 105 | [105-portfolio-live-deploy.md](./105-portfolio-live-deploy.md) | `976ad33` | 포트폴리오: 운영 배포 · 관리자 복구 반영 | 2026-10-02 |
 | 106 | [106-docs-live-state.md](./106-docs-live-state.md) | `31afdc1` | 문서 전체를 실제 운영 구성으로 맞춤 | 2026-10-02 |
 | 107 | [107-upload-tabs.md](./107-upload-tabs.md) | — | 업로드 화면: 쇼츠 기본 + 서브메뉴로 롱폼 업로드 | 2026-10-07 |
-| 108 | [108-short-controls.md](./108-short-controls.md) | — | 쇼츠 ⋮ 설정 메뉴: 업로더 수정·삭제, 시청자 비추천·신고·차단 | 2026-10-07 |
+| 108 | [108-short-controls.md](./108-short-controls.md) | `6c7b458` | 쇼츠 ⋮ 설정 메뉴: 업로더 수정·삭제, 시청자 비추천·신고·차단 | 2026-10-07 |
 
 ---
 
