@@ -180,6 +180,7 @@ NNN-짧은-영문-slug.md
 | 104 | [104-admin-password-reset.md](./104-admin-password-reset.md) | `b8b5bd7` | 관리자 계정 찾기 · 비밀번호 재설정 | 2026-10-02 |
 | 105 | [105-portfolio-live-deploy.md](./105-portfolio-live-deploy.md) | `976ad33` | 포트폴리오: 운영 배포 · 관리자 복구 반영 | 2026-10-02 |
 | 106 | [106-docs-live-state.md](./106-docs-live-state.md) | `31afdc1` | 문서 전체를 실제 운영 구성으로 맞춤 | 2026-10-02 |
+| 107 | [107-upload-tabs.md](./107-upload-tabs.md) | — | 업로드 화면: 쇼츠 기본 + 서브메뉴로 롱폼 업로드 | 2026-10-07 |
 
 ---
 

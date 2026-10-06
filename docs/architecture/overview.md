@@ -139,9 +139,9 @@ PostgreSQL (pg Pool)
 | `/profile/[id]` | `ProfilePageClient` | 열람 자유 |
 | `/profile/[id]/followers`, `.../following` | 팔로워·팔로잉 목록 | 열람 자유 |
 | `/playlists/[id]` | 재생목록 상세 | 열람 자유 |
-| `/upload` | `UploadForm` | 필요 |
+| `/upload` | `UploadTabs` + `UploadForm`(기본, 쇼츠) / `LongformForm`(`?type=longform`) | 필요 |
 | `/longform`, `/longform/[id]` | `LongformList`, `LongformDetail` | 열람 자유 |
-| `/longform/write` | `LongformForm` | 필요 |
+| `/longform/write` | → `/upload?type=longform` 로 redirect (예전 주소) | 필요 |
 | `/community`, `/community/[id]` | `CommunityList`, `CommunityDetail` | 열람 자유 |
 | `/community/write` | `CommunityForm` | 필요 |
 | `/messages`, `/messages/[id]` | `MessagesPageClient`, `MessageThread` | 필요 |

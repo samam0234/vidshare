@@ -9,11 +9,12 @@ import { mediaUrl } from "@/lib/media";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/context/AuthContext";
 import { loginHref } from "@/lib/guest-routes";
+import { uploadHref } from "@/lib/upload-tabs";
 import SerialBadge from "@/components/ui/SerialBadge";
 
 export default function LongformList() {
   const { user } = useAuth();
-  const writeHref = user ? "/longform/write" : loginHref("/longform/write");
+  const writeHref = user ? uploadHref("longform") : loginHref(uploadHref("longform"));
 
   const { data: longform = [], isLoading: loading, error } = useQuery({
     queryKey: queryKeys.longform,
@@ -38,11 +39,11 @@ export default function LongformList() {
         </div>
         {user ? (
           <Link
-            href="/longform/write"
+            href={uploadHref("longform")}
             className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
           >
             <Plus size={16} />
-            롱폼 등록
+            롱폼 업로드
           </Link>
         ) : null}
       </div>
@@ -65,10 +66,10 @@ export default function LongformList() {
           </p>
           {user ? (
             <Link
-              href="/longform/write"
+              href={uploadHref("longform")}
               className="text-sm font-medium text-[var(--accent)] hover:underline"
             >
-              지금 등록하기
+              지금 업로드하기
             </Link>
           ) : (
             <Link

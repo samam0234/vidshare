@@ -111,6 +111,7 @@
 - 챗봇 봇 답변 마크다운 렌더링 (굵게·이탤릭·취소선·목록)
 
 ### Changed
+- **업로드 화면 서브메뉴** (커밋 107): `/upload` 는 쇼츠 업로드가 기본이고 서브메뉴 "롱폼 업로드"(`?type=longform`)로 롱폼 업로드 화면으로 바뀐다. `/longform/write` 는 새 주소로 redirect
 - **문서를 실제 운영 구성으로** (커밋 106): deployment.md 전면 재작성, plan.md 에 실제 구성(▶) 반영, README·하위 README·아키텍처·로드맵·보안·ops 절차서를 전용 VM + 터널 · 블록 볼륨 없음 · `SameSite=None` 기준으로 갱신
 - **포트폴리오 운영 배포 반영** (커밋 105): 문서·docx·pptx·소개 사이트·Notion 을 운영 중 상태(전용 VM + Cloudflare Tunnel), 관리자 복구, 테스트 191건 기준으로 갱신
 - **운영 서버 이전** (커밋 103): human-bug-tier 공유 VM → 전용 VM `161.33.186.255`(ARM 11GB) + Cloudflare Tunnel. 공유 VM 에서는 VidShare 완전 제거

@@ -51,7 +51,7 @@ NEXT_PUBLIC_API_URL=
 | 팔로잉 피드 | `/following` | 로그인 |
 | 검색 | `/search` | 쇼츠·롱폼·커뮤니티·유저 |
 | 프로필 | `/profile/[id]` | 그리드, 팔로워/팔로잉, 재생목록 |
-| 업로드 | `/upload` | 로그인, 실파일 |
+| 업로드 | `/upload` (쇼츠 기본 · 서브메뉴 `?type=longform` 이 롱폼) | 로그인, 실파일 |
 | 롱폼 | `/longform` | 목록·작성·상세 |
 | 커뮤니티 | `/community` | 목록·작성·상세 |
 | 메시지 | `/messages` | 로그인, WebSocket |

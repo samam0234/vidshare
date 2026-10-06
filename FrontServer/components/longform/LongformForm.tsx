@@ -129,7 +129,7 @@ export default function LongformForm() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-      <h1 className="text-2xl font-bold">롱폼 등록</h1>
+      <h1 className="text-2xl font-bold">롱폼 업로드</h1>
       <p className="mt-1 text-sm text-[var(--text-muted)]">
         영상을 파일로 올리거나 외부 URL을 넣을 수 있습니다. 저장하면 상세 페이지로 이동합니다.
       </p>
