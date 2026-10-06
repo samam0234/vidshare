@@ -4,6 +4,7 @@ import {
   adminDeleteCommunityPost,
   adminDeleteLongform,
   adminDeleteShort,
+  adminListShorts,
 } from "../../data/store";
 import { requireAdmin } from "../../auth/requireAdmin";
 import { HttpError } from "../../middleware/errorHandler";
@@ -17,9 +18,15 @@ function numericId(raw: string): number {
 }
 
 /**
- * 업로드된 원본 파일(`/uploads`)은 지우지 않는다 — 이 저장소에는 아직 파일
- * 수명주기를 관리하는 코드가 없다. DB 레코드만 사라지고 파일은 남는다.
+ * 쇼츠를 지우면 다른 곳이 쓰지 않는 업로드 파일(`/uploads`)도 함께 정리한다(107).
+ * 롱폼·커뮤니티는 아직 DB 레코드만 지우고 파일은 남는다.
  */
+
+/** GET /api/admin/content/shorts — 비공개 포함 전체 (공개 `/api/shorts` 는 비공개를 숨긴다) */
+router.get("/shorts", async (req, res) => {
+  await requireAdmin(req);
+  res.json({ success: true, data: await adminListShorts() });
+});
 
 /** DELETE /api/admin/content/shorts/:id */
 router.delete("/shorts/:id", async (req, res) => {

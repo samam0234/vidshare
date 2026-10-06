@@ -2,6 +2,7 @@ import { v4 as uuid } from "uuid";
 import { getDb, withTx } from "../db/client";
 import { publishNotification } from "../realtime/notificationBus";
 import { publishChatLine } from "../realtime/chatBus";
+import { deleteStoredUpload } from "../upload/files";
 import type {
   AdminReport,
   AdminStats,
@@ -23,6 +24,7 @@ import type {
   Message,
   NotificationCategory,
   Short,
+  ShortVisibility,
   SupportInquiry,
   UserRole,
 } from "../types";
@@ -52,6 +54,8 @@ type ShortJoinRow = {
   thumb: string | null;
   gradient: string;
   created_at: string;
+  visibility: string;
+  comments_enabled: number;
   handle: string;
   author_name: string;
   author_bio: string;
@@ -63,6 +67,7 @@ const SHORT_SELECT = `
   SELECT
     s.id, s.title, s.description, s.author_id, s.likes, s.comment_count,
     s.views, s.video_url, s.thumb, s.gradient, s.created_at,
+    s.visibility, s.comments_enabled,
     u.handle, u.name AS author_name, u.bio AS author_bio,
     u.avatar AS author_avatar, u.role AS author_role
   FROM shorts s
@@ -98,10 +103,23 @@ function toShort(row: ShortJoinRow): Short {
     views: row.views,
     gradient: row.gradient,
     createdAt: row.created_at,
+    visibility: row.visibility === "private" ? "private" : "public",
+    commentsEnabled: Boolean(row.comments_enabled),
     ...(row.video_url ? { videoUrl: row.video_url } : {}),
     ...(row.thumb ? { thumb: row.thumb } : {}),
   };
 }
+
+/** 비공개 쇼츠는 작성자 본인에게만 보인다. */
+function visibleClause(viewerId?: string): { sql: string; params: string[] } {
+  return viewerId
+    ? { sql: "(s.visibility = 'public' OR s.author_id = ?)", params: [viewerId] }
+    : { sql: "s.visibility = 'public'", params: [] };
+}
+
+/** 내가 "비추천"한 쇼츠는 내 추천 피드에서 뺀다. */
+const NOT_DISLIKED_CLAUSE =
+  "s.id NOT IN (SELECT short_id FROM short_dislikes WHERE user_id = ?)";
 
 export async function listAuthors(): Promise<Author[]> {
   const rows = await getDb().all<UserRow>(
@@ -211,7 +229,10 @@ export async function listFollowingShorts(userId: string, limit = 50): Promise<S
      WHERE s.author_id IN (
        SELECT following_id FROM user_follows WHERE follower_id = ?
      )
+     AND s.visibility = 'public'
+     AND ${NOT_DISLIKED_CLAUSE}
      ORDER BY s.created_at DESC, s.id DESC LIMIT ?`,
+    userId,
     userId,
     limit
   );
@@ -371,13 +392,15 @@ export async function deletePlaylist(id: number, ownerId: string): Promise<boole
   return info.changes > 0;
 }
 
-export async function listPlaylistItems(playlistId: number): Promise<Short[]> {
+export async function listPlaylistItems(playlistId: number, viewerId?: string): Promise<Short[]> {
+  const visible = visibleClause(viewerId);
   const rows = await getDb().all<ShortJoinRow>(
     `${SHORT_SELECT}
      JOIN playlist_items pi ON pi.short_id = s.id
-     WHERE pi.playlist_id = ?
+     WHERE pi.playlist_id = ? AND ${visible.sql}
      ORDER BY pi.added_at DESC`,
-    playlistId
+    playlistId,
+    ...visible.params
   );
   return rows.map(toShort);
 }
@@ -395,7 +418,12 @@ export async function addPlaylistItem(
     ownerId
   );
   if (!playlist) return false;
-  const short = await db.get("SELECT id FROM shorts WHERE id = ?", shortId);
+  // 남의 비공개 쇼츠는 담을 수 없다 (없는 것과 같게 취급)
+  const short = await db.get(
+    "SELECT id FROM shorts WHERE id = ? AND (visibility = 'public' OR author_id = ?)",
+    shortId,
+    ownerId
+  );
   if (!short) return false;
 
   await db.run(
@@ -428,35 +456,65 @@ export async function removePlaylistItem(
   return true;
 }
 
-export async function listShorts(q?: string, viewerId?: string): Promise<Short[]> {
+export type ListShortsOptions = {
+  /** 로그인한 시청자가 "비추천"한 영상을 뺀다. 추천 피드에서만 켜고 검색에서는 끈다. */
+  excludeDisliked?: boolean;
+};
+
+/**
+ * 쇼츠 목록. 비공개는 작성자 본인에게만 보이고, 로그인한 경우 내가 차단한 유저의 영상은 제외된다.
+ */
+export async function listShorts(
+  q?: string,
+  viewerId?: string,
+  options: ListShortsOptions = {}
+): Promise<Short[]> {
   const query = q?.trim().toLowerCase() ?? "";
-  const blockClause = viewerId
-    ? "AND s.author_id NOT IN (SELECT blocked_id FROM user_blocks WHERE blocker_id = ?)"
-    : "";
-  const viewerParams = viewerId ? [viewerId] : [];
-  if (!query) {
-    const sql = `${SHORT_SELECT} WHERE 1=1 ${blockClause} ORDER BY s.created_at DESC, s.id DESC`;
-    const rows = await getDb().all<ShortJoinRow>(sql, ...viewerParams);
-    return rows.map(toShort);
+  const visible = visibleClause(viewerId);
+  const clauses: string[] = [visible.sql];
+  const params: (string | number)[] = [...visible.params];
+
+  if (query) {
+    const like = `%${query}%`;
+    clauses.push("(lower(s.title) LIKE ? OR lower(u.handle) LIKE ? OR lower(s.description) LIKE ?)");
+    params.push(like, like, like);
   }
-  const like = `%${query}%`;
-  const sql = `${SHORT_SELECT}
-     WHERE (lower(s.title) LIKE ? OR lower(u.handle) LIKE ? OR lower(s.description) LIKE ?)
-     ${blockClause}
-     ORDER BY s.created_at DESC, s.id DESC`;
-  const rows = await getDb().all<ShortJoinRow>(sql, like, like, like, ...viewerParams);
+  if (viewerId) {
+    clauses.push("s.author_id NOT IN (SELECT blocked_id FROM user_blocks WHERE blocker_id = ?)");
+    params.push(viewerId);
+    if (options.excludeDisliked) {
+      clauses.push(NOT_DISLIKED_CLAUSE);
+      params.push(viewerId);
+    }
+  }
+
+  const rows = await getDb().all<ShortJoinRow>(
+    `${SHORT_SELECT} WHERE ${clauses.join(" AND ")} ORDER BY s.created_at DESC, s.id DESC`,
+    ...params
+  );
   return rows.map(toShort);
 }
 
-export async function getShort(id: string): Promise<Short | undefined> {
+/** 공개 범위를 따져 한 편을 돌려준다. 남의 비공개 쇼츠는 없는 것처럼 undefined. */
+export async function getShort(id: string, viewerId?: string): Promise<Short | undefined> {
+  const short = await getShortAny(id);
+  if (!short) return undefined;
+  if (short.visibility === "private" && short.author.id !== viewerId) return undefined;
+  return short;
+}
+
+/** 공개 범위를 따지지 않는다. 소유권을 이미 확인한 호출(수정·삭제·생성)과 관리자용. */
+async function getShortAny(id: string): Promise<Short | undefined> {
   const row = await getDb().get<ShortJoinRow>(`${SHORT_SELECT} WHERE s.id = ?`, id);
   return row ? toShort(row) : undefined;
 }
 
-export async function listShortsByAuthor(authorId: string): Promise<Short[]> {
+export async function listShortsByAuthor(authorId: string, viewerId?: string): Promise<Short[]> {
+  const visible = visibleClause(viewerId);
   const rows = await getDb().all<ShortJoinRow>(
-    `${SHORT_SELECT} WHERE s.author_id = ? ORDER BY s.created_at DESC, s.id DESC`,
-    authorId
+    `${SHORT_SELECT} WHERE s.author_id = ? AND ${visible.sql} ORDER BY s.created_at DESC, s.id DESC`,
+    authorId,
+    ...visible.params
   );
   return rows.map(toShort);
 }
@@ -492,7 +550,141 @@ export async function createShort(input: {
     createdAt
   );
 
-  return (await getShort(id))!;
+  return (await getShortAny(id))!;
+}
+
+/** 댓글·좋아요가 공개 범위와 댓글 허용을 확인할 때 쓴다. */
+export async function getShortAccess(
+  id: string
+): Promise<{ authorId: string; visibility: ShortVisibility; commentsEnabled: boolean } | undefined> {
+  const row = await getDb().get<{ author_id: string; visibility: string; comments_enabled: number }>(
+    "SELECT author_id, visibility, comments_enabled FROM shorts WHERE id = ?",
+    id
+  );
+  if (!row) return undefined;
+  return {
+    authorId: row.author_id,
+    visibility: row.visibility === "private" ? "private" : "public",
+    commentsEnabled: Boolean(row.comments_enabled),
+  };
+}
+
+export type ShortPatch = {
+  title?: string;
+  description?: string;
+  /** 문자열이면 교체, null 이면 썸네일을 지우고 그라데이션으로 돌린다 */
+  thumb?: string | null;
+  visibility?: ShortVisibility;
+  commentsEnabled?: boolean;
+};
+
+export type OwnerResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; reason: "not_found" | "forbidden" };
+
+/** 작성자 본인만 고칠 수 있다. 바뀐 썸네일의 옛 파일은 다른 곳이 안 쓰면 지운다. */
+export async function updateShort(
+  id: string,
+  ownerId: string,
+  patch: ShortPatch
+): Promise<OwnerResult<Short>> {
+  const db = getDb();
+  const current = await db.get<{ author_id: string; thumb: string | null }>(
+    "SELECT author_id, thumb FROM shorts WHERE id = ?",
+    id
+  );
+  if (!current) return { ok: false, reason: "not_found" };
+  if (current.author_id !== ownerId) return { ok: false, reason: "forbidden" };
+
+  const sets: string[] = [];
+  const params: (string | number | null)[] = [];
+  if (patch.title !== undefined) {
+    sets.push("title = ?");
+    params.push(patch.title);
+  }
+  if (patch.description !== undefined) {
+    sets.push("description = ?");
+    params.push(patch.description);
+  }
+  if (patch.thumb !== undefined) {
+    sets.push("thumb = ?");
+    params.push(patch.thumb);
+  }
+  if (patch.visibility !== undefined) {
+    sets.push("visibility = ?");
+    params.push(patch.visibility);
+  }
+  if (patch.commentsEnabled !== undefined) {
+    sets.push("comments_enabled = ?");
+    params.push(patch.commentsEnabled ? 1 : 0);
+  }
+  if (sets.length) {
+    await db.run(`UPDATE shorts SET ${sets.join(", ")} WHERE id = ? AND author_id = ?`, ...params, id, ownerId);
+  }
+
+  if (patch.thumb !== undefined && current.thumb && current.thumb !== patch.thumb) {
+    await removeUploadIfUnreferenced(current.thumb);
+  }
+  return { ok: true, value: (await getShortAny(id))! };
+}
+
+/** 작성자 본인만 지울 수 있다. 댓글·재생목록 항목·비추천은 FK CASCADE 로 함께 사라진다. */
+export async function deleteShort(id: string, ownerId: string): Promise<OwnerResult<true>> {
+  const db = getDb();
+  const row = await db.get<{ author_id: string; video_url: string | null; thumb: string | null }>(
+    "SELECT author_id, video_url, thumb FROM shorts WHERE id = ?",
+    id
+  );
+  if (!row) return { ok: false, reason: "not_found" };
+  if (row.author_id !== ownerId) return { ok: false, reason: "forbidden" };
+
+  await db.run("DELETE FROM shorts WHERE id = ? AND author_id = ?", id, ownerId);
+  await removeUploadIfUnreferenced(row.video_url);
+  await removeUploadIfUnreferenced(row.thumb);
+  return { ok: true, value: true };
+}
+
+/**
+ * 서버에 올린 파일(/uploads/<uuid>.<ext>)을 다른 쇼츠·롱폼이 안 쓰면 디스크에서 지운다.
+ * 외부 URL 이나 다른 경로는 건드리지 않는다. 실패해도 삭제 자체를 막지 않는다.
+ */
+async function removeUploadIfUnreferenced(url: string | null | undefined): Promise<void> {
+  if (!url) return;
+  try {
+    const used = await getDb().get(
+      `SELECT 1 AS x FROM shorts WHERE video_url = ? OR thumb = ?
+       UNION ALL
+       SELECT 1 AS x FROM longform WHERE video_url = ? OR thumb = ?
+       LIMIT 1`,
+      url,
+      url,
+      url,
+      url
+    );
+    if (used) return;
+    await deleteStoredUpload(url);
+  } catch (err) {
+    console.error("업로드 파일 정리 실패:", err);
+  }
+}
+
+/** 로그인한 시청자의 "비추천". 그 유저의 추천 피드에서만 빠지고 영상 자체는 그대로다. */
+export async function dislikeShort(userId: string, shortId: string): Promise<void> {
+  await getDb().run(
+    `INSERT INTO short_dislikes (user_id, short_id, created_at)
+     VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
+    userId,
+    shortId,
+    new Date().toISOString()
+  );
+}
+
+export async function undislikeShort(userId: string, shortId: string): Promise<void> {
+  await getDb().run(
+    "DELETE FROM short_dislikes WHERE user_id = ? AND short_id = ?",
+    userId,
+    shortId
+  );
 }
 
 export async function likeShort(id: string, unlike: boolean) {
@@ -1514,9 +1706,26 @@ export async function setUserSuspended(userId: string, suspended: boolean): Prom
   });
 }
 
+/** 관리자 콘솔용 — 비공개를 포함한 전체 쇼츠. 신고된 영상을 비공개로 돌려 운영자 눈을 피할 수 없게 한다. */
+export async function adminListShorts(): Promise<Short[]> {
+  const rows = await getDb().all<ShortJoinRow>(
+    `${SHORT_SELECT} ORDER BY s.created_at DESC, s.id DESC`
+  );
+  return rows.map(toShort);
+}
+
 /** 쇼츠 삭제. comments/playlist_items 는 FK ON DELETE CASCADE 로 함께 사라진다. */
 export async function adminDeleteShort(id: string): Promise<boolean> {
-  const info = await getDb().run("DELETE FROM shorts WHERE id = ?", id);
+  const db = getDb();
+  const row = await db.get<{ video_url: string | null; thumb: string | null }>(
+    "SELECT video_url, thumb FROM shorts WHERE id = ?",
+    id
+  );
+  const info = await db.run("DELETE FROM shorts WHERE id = ?", id);
+  if (info.changes > 0 && row) {
+    await removeUploadIfUnreferenced(row.video_url);
+    await removeUploadIfUnreferenced(row.thumb);
+  }
   return info.changes > 0;
 }
 

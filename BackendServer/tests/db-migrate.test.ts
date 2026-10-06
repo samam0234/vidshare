@@ -49,12 +49,12 @@ describe("마이그레이션", () => {
     assert.deepEqual(await migrate(db), []);
   });
 
-  it("22개 업무 테이블을 만든다", async () => {
+  it("23개 업무 테이블을 만든다", async () => {
     const row = await db.get<{ c: number }>(
       `SELECT COUNT(*) AS c FROM information_schema.tables
        WHERE table_schema = current_schema() AND table_name <> 'schema_migrations'`
     );
-    assert.equal(row?.c, 22);
+    assert.equal(row?.c, 23);
   });
 
   it("handle 은 대소문자를 무시하고 유일하다", async () => {

@@ -18,6 +18,10 @@ export type Short = {
   thumb?: string;
   gradient: string;
   createdAt: string;
+  /** 비공개면 작성자 본인만 본다 */
+  visibility?: "public" | "private";
+  /** false 면 새 댓글을 막는다 */
+  commentsEnabled?: boolean;
 };
 
 export type Comment = {

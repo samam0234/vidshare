@@ -40,7 +40,7 @@ export default function ContentClient() {
           res.data.map((s: Short) => ({
             key: s.id,
             title: s.title,
-            meta: `@${s.author.handle} · 좋아요 ${s.likes} · 댓글 ${s.comments} · ${formatWhen(s.createdAt)}`,
+            meta: `@${s.author.handle} · 좋아요 ${s.likes} · 댓글 ${s.comments} · ${formatWhen(s.createdAt)}${s.visibility === "private" ? " · 비공개" : ""}`,
             body: s.description ? truncate(s.description, 120) : undefined,
             onDelete: () => adminApi.deleteShort(s.id),
           }))

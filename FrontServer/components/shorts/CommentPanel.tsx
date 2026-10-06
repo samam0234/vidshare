@@ -13,6 +13,8 @@ type Props = {
   onEdit: (id: string, text: string) => void;
   onDelete: (id: string) => void;
   canWrite?: boolean;
+  /** 작성자가 댓글을 닫아 둔 영상 — 입력창 대신 안내를 보여 준다 */
+  commentsClosed?: boolean;
   currentUserId?: string;
 };
 
@@ -24,6 +26,7 @@ export default function CommentPanel({
   onEdit,
   onDelete,
   canWrite = true,
+  commentsClosed = false,
   currentUserId,
 }: Props) {
   const [text, setText] = useState("");
@@ -106,7 +109,7 @@ export default function CommentPanel({
         >
           {comments.length === 0 && (
             <p className="py-10 text-center text-sm text-[var(--text-muted)]">
-              첫 댓글을 남겨보세요.
+              {commentsClosed ? "작성자가 댓글을 닫아 둔 영상이에요." : "첫 댓글을 남겨보세요."}
             </p>
           )}
           {threads.map(({ root, replies }) => (
@@ -139,7 +142,11 @@ export default function CommentPanel({
           ))}
         </div>
 
-        {canWrite ? (
+        {commentsClosed ? (
+          <div className="border-t border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-center text-sm text-[var(--text-muted)]">
+            작성자가 새 댓글을 막아 두었어요. 기존 댓글은 그대로 볼 수 있어요.
+          </div>
+        ) : canWrite ? (
           <div className="border-t border-[var(--border)] bg-[var(--bg-card)] p-3">
             {replyTo && (
               <div className="mb-2 flex items-center gap-1.5 text-xs text-[var(--text-muted)]">

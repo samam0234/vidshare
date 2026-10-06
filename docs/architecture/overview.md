@@ -25,7 +25,7 @@ VidShare는 **쇼츠 + 롱폼 + 커뮤니티 + 메시지 + AI 챗봇**을 한 �
     │  /api/*        ← requireRequestUser
     │  /api/admin/*  ← requireAdmin
     ▼
-[PostgreSQL 16]  22개 테이블 + schema_migrations
+[PostgreSQL 16]  23개 테이블 + schema_migrations
                  로컬: D:\PostgreSQL\16\data · 운영: Oracle VM /var/lib/postgresql/16/main
 [Files]   UPLOADS_PATH  ← 영상·썸네일. DB에는 /uploads/<uuid>.ext 만 저장
 ```
@@ -207,7 +207,7 @@ src/
 ├── db/
 │   ├── client.ts        ← pg Pool + Db 래퍼(all/get/run/exec) + withTx
 │   ├── migrate.ts       ← schema_migrations 기반 러너 (advisory lock)
-│   ├── migrations/      ← 0001_init.ts (22개 테이블) …  TS 모듈 (tsc 가 .sql 을 복사하지 않음)
+│   ├── migrations/      ← 0001_init.ts (22개 테이블) · 0002_short_controls.ts (공개 범위·댓글 허용·비추천) …  TS 모듈 (tsc 가 .sql 을 복사하지 않음)
 │   └── seed.ts
 ├── middleware/errorHandler.ts   ← HttpError → JSON 변환
 ├── middleware/asyncRouter.ts    ← async 핸들러 실패를 next(err) 로 (096)
@@ -238,7 +238,8 @@ src/
 |------|------|------|
 | `/api/health` | `health.ts` | — (DB `SELECT 1` 까지 확인, 실패 시 503) |
 | `/api/auth/*` | `auth.ts` | 일부 |
-| `/api/shorts`, `/api/shorts/:id` | `shorts.ts` | 생성 시 필요 |
+| `/api/shorts`, `/api/shorts/:id` | `shorts.ts` | 생성·수정·삭제 시 필요 (수정·삭제는 작성자만, 107) |
+| `/api/shorts/:id/dislike` | `shorts.ts` | 필요 (비추천 — 내 추천 피드에서만 제외, 107) |
 | `/api/shorts/:id/comments` | `comments.ts` | 작성 시 필요 |
 | `/api/users/:id` | `users.ts` | — |
 | `/api/longform` | `longform.ts` | 생성 시 필요 |

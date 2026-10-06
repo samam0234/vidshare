@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- **쇼츠 ⋮ 설정 메뉴** (커밋 108): 업로더는 수정(제목·내용·썸네일)·공개 범위(공개/비공개)·댓글 허용·삭제(업로드 파일 정리 포함), 다른 유저·비로그인은 비추천(내 추천에서 제외, 되돌리기)·링크 복사·프로필·신고·작성자 차단. 마이그레이션 `0002_short_controls`(23개 테이블), API 4개 추가(PATCH/DELETE `/api/shorts/:id`, POST/DELETE `/api/shorts/:id/dislike`)
 - **관리자 계정 찾기 · 비밀번호 재설정** (커밋 104): `npm run list-admins`, `npm run reset-password -- <handle> [--generate|--stdin]`(세션 전부 종료), 이 PC 에서 `deploy/windows/admin-tools.ps1 -List / -Reset <handle>`, 콘솔 로그인 화면 안내
 - `setup-vm-tunnel.sh`·`get-tunnel-url.sh`(80·443 막힌 VM 을 터널로 공개), `sync-tunnel-url.ps1`(터널 주소 변경 시 프론트·콘솔 자동 재배포, 매시간) (커밋 103)
 - **운영 배포** (커밋 102): 백엔드 `https://161-33-190-199.sslip.io` (Oracle VM, human-bug-tier 와 공유). 데이터 151행 이관, 프론트·콘솔 재배포, 운영 백업을 D 드라이브로 매일 가져오기

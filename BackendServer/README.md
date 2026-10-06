@@ -121,14 +121,19 @@ npm run create-admin -- <handle> <password> --promote
 |--------|------|------|
 | GET | `/api/health` | 헬스 체크 |
 | GET | `/api/search?q=` | 통합 검색 (쇼츠·롱폼·커뮤니티·유저) |
-| GET | `/api/shorts?q=` | 쇼츠 목록 (검색 선택) |
-| GET | `/api/shorts/:id` | 쇼츠 상세 |
-| POST | `/api/shorts` | 쇼츠 생성 `{ title, description?, gradient?, videoUrl?, thumb? }` (로그인) |
+| GET | `/api/shorts?q=` | 추천 피드 (검색 선택). 로그인 시 차단한 유저·**비추천한 영상**이 빠지고(검색어가 있으면 비추천은 적용 안 함), 비공개는 작성자만 본다 |
+| GET | `/api/shorts/:id` | 쇼츠 상세 (남의 비공개는 404) |
+| POST | `/api/shorts` | 쇼츠 생성 `{ title(≤100자), description?(≤2000자), gradient?, videoUrl?, thumb? }` (로그인) |
+| PATCH | `/api/shorts/:id` | 수정 `{ title?, description?, thumb?: string\|null, visibility?: "public"\|"private", commentsEnabled? }` (**작성자만**, 107) |
+| DELETE | `/api/shorts/:id` | 삭제 — 댓글·재생목록 항목·비추천이 함께 지워지고 다른 곳이 안 쓰는 업로드 파일도 정리 (**작성자만**, 107) |
+| GET | `/api/admin/content/shorts` | (관리자) 비공개 포함 전체 쇼츠 — 콘솔 콘텐츠 화면용 |
+| POST | `/api/shorts/:id/dislike` | 비추천 — 내 추천 피드에서 이 영상을 뺀다 (로그인, 내 영상은 400) |
+| DELETE | `/api/shorts/:id/dislike` | 비추천 취소 (로그인) |
 | POST | `/api/uploads?kind=` | 파일 업로드 `multipart file` (`image` \| `video`, 로그인) |
 | GET | `/uploads/:file` | 업로드된 영상·이미지 정적 파일 |
 | POST | `/api/shorts/:id/like` | 좋아요 `{ action?: "unlike" }` |
 | GET | `/api/shorts/:shortId/comments` | 댓글 목록 |
-| POST | `/api/shorts/:shortId/comments` | 댓글 작성 `{ text, author? }` |
+| POST | `/api/shorts/:shortId/comments` | 댓글 작성 `{ text, author? }` — 댓글을 닫아 둔 영상은 403, 남의 비공개는 404 |
 | POST | `/api/auth/register` | 회원가입 `{ handle, name, password }` |
 | POST | `/api/auth/login` | 로그인 `{ handle, password }` |
 | POST | `/api/auth/logout` | 로그아웃 (세션 쿠키 삭제) |

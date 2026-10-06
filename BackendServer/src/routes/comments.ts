@@ -2,10 +2,11 @@ import { Router } from "../middleware/asyncRouter";
 import {
   addComment,
   deleteComment,
+  getShortAccess,
   listComments,
   updateComment,
 } from "../data/store";
-import { requireRequestUser } from "../auth/requestUser";
+import { getRequestPublicUser, requireRequestUser } from "../auth/requestUser";
 import { HttpError } from "../middleware/errorHandler";
 
 const router = Router({ mergeParams: true });
@@ -15,6 +16,12 @@ router.get("/", async (req, res) => {
   const shortId = (req.params as { shortId?: string }).shortId ?? req.query.shortId;
   if (!shortId || typeof shortId !== "string") {
     throw new HttpError(400, "shortId is required");
+  }
+  // 남의 비공개 쇼츠의 댓글은 읽을 수 없다
+  const access = await getShortAccess(shortId);
+  if (access?.visibility === "private") {
+    const viewer = await getRequestPublicUser(req);
+    if (viewer?.id !== access.authorId) throw new HttpError(404, "Short not found");
   }
   res.json({ success: true, data: await listComments(shortId) });
 });
@@ -34,6 +41,15 @@ router.post("/", async (req, res) => {
   }
   if (parentId !== undefined && typeof parentId !== "string") {
     throw new HttpError(400, "parentId는 문자열이어야 합니다.");
+  }
+
+  // 남의 비공개 쇼츠는 없는 것처럼, 댓글을 닫아 둔 쇼츠는 새 댓글을 막는다
+  const access = await getShortAccess(shortId);
+  if (!access || (access.visibility === "private" && access.authorId !== user.id)) {
+    throw new HttpError(404, "Short not found");
+  }
+  if (!access.commentsEnabled) {
+    throw new HttpError(403, "작성자가 댓글을 닫아 둔 영상입니다.");
   }
 
   const comment = await addComment({

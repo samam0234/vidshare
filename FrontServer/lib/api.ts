@@ -158,6 +158,42 @@ export const api = {
     return body;
   },
 
+  /** 작성자 본인만. thumb: 문자열이면 교체, null 이면 썸네일 제거 */
+  updateShort: (
+    id: string,
+    patch: {
+      title?: string;
+      description?: string;
+      thumb?: string | null;
+      visibility?: "public" | "private";
+      commentsEnabled?: boolean;
+    }
+  ) =>
+    request<Short>(`/api/shorts/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+
+  /** 작성자 본인만. 댓글·재생목록 항목·업로드 파일이 함께 정리된다 */
+  deleteShort: (id: string) =>
+    request<{ id: string; deleted: boolean }>(
+      `/api/shorts/${encodeURIComponent(id)}`,
+      { method: "DELETE" }
+    ),
+
+  /** 비추천 — 로그인한 유저의 추천 피드에서 이 영상을 뺀다 */
+  dislikeShort: (id: string) =>
+    request<{ id: string; disliked: boolean }>(
+      `/api/shorts/${encodeURIComponent(id)}/dislike`,
+      { method: "POST" }
+    ),
+
+  undislikeShort: (id: string) =>
+    request<{ id: string; disliked: boolean }>(
+      `/api/shorts/${encodeURIComponent(id)}/dislike`,
+      { method: "DELETE" }
+    ),
+
   likeShort: (id: string, action: "like" | "unlike") =>
     request<{ id: string; likes: number }>(`/api/shorts/${id}/like`, {
       method: "POST",

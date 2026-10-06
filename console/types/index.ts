@@ -68,6 +68,9 @@ export type Short = {
   thumb?: string;
   gradient: string;
   createdAt: string;
+  /** 비공개면 작성자 본인만 본다 (관리자 목록에는 포함된다) */
+  visibility?: "public" | "private";
+  commentsEnabled?: boolean;
 };
 
 export type LongformVideo = {

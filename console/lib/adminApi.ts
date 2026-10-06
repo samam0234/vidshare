@@ -47,8 +47,8 @@ export const adminApi = {
       { method: "PATCH", body: JSON.stringify({ suspended }) }
     ),
 
-  // 콘텐츠 (읽기는 공개 API 를 그대로 쓰고, 삭제만 관리자 경로)
-  getShorts: () => request<Short[]>("/api/shorts"),
+  // 콘텐츠 (쇼츠는 비공개까지 봐야 하므로 관리자 경로, 롱폼·커뮤니티는 공개 API 를 그대로 쓴다)
+  getShorts: () => request<Short[]>("/api/admin/content/shorts"),
   getLongform: () => request<LongformVideo[]>("/api/longform"),
   getCommunity: () => request<CommunityPost[]>("/api/community"),
 

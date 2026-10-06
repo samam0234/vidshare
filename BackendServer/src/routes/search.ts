@@ -1,4 +1,5 @@
 import { Router } from "../middleware/asyncRouter";
+import { getRequestPublicUser } from "../auth/requestUser";
 import {
   listShorts,
   searchAuthors,
@@ -18,6 +19,7 @@ router.get("/", async (req, res) => {
     return;
   }
 
+  const viewer = await getRequestPublicUser(req);
   const raw = Number(req.query.limit);
   const limit = Number.isFinite(raw) ? Math.min(Math.max(raw, 1), 50) : 20;
 
@@ -25,7 +27,7 @@ router.get("/", async (req, res) => {
     success: true,
     data: {
       query: q,
-      shorts: (await listShorts(q)).slice(0, limit),
+      shorts: (await listShorts(q, viewer?.id)).slice(0, limit),
       longform: await searchLongform(q, limit),
       community: await searchCommunity(q, limit),
       users: await searchAuthors(q, limit),

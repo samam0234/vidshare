@@ -7,6 +7,7 @@ import type { Short } from "@/types";
 import { formatCount } from "@/lib/utils";
 import { mediaUrl } from "@/lib/media";
 import ShortActions from "./ShortActions";
+import ShortMenu from "./ShortMenu";
 
 type Props = {
   short: Short;
@@ -17,6 +18,11 @@ type Props = {
   onDislike: () => void;
   onComment: () => void;
   onShare: () => void;
+  onEdited: (short: Short) => void;
+  onDeleted: (id: string) => void;
+  onNotInterested: (short: Short) => void;
+  onBlocked: (authorId: string) => void;
+  notify: (text: string) => void;
 };
 
 export default function ShortCard({
@@ -28,6 +34,11 @@ export default function ShortCard({
   onDislike,
   onComment,
   onShare,
+  onEdited,
+  onDeleted,
+  onNotInterested,
+  onBlocked,
+  notify,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -128,6 +139,15 @@ export default function ShortCard({
             </p>
           )}
         </div>
+
+        <ShortMenu
+          short={short}
+          onEdited={onEdited}
+          onDeleted={onDeleted}
+          onNotInterested={onNotInterested}
+          onBlocked={onBlocked}
+          notify={notify}
+        />
 
         <button
           type="button"

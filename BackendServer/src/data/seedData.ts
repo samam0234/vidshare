@@ -49,7 +49,8 @@ export const seedAuthors: Author[] = seedAuthorBase.map((a) => ({
 
 const authorById = Object.fromEntries(seedAuthors.map((a) => [a.id, a]));
 
-export const seedShorts: Short[] = [
+/** 시드는 공개 범위·댓글 허용을 DB 기본값(공개·허용)에 맡긴다. */
+export const seedShorts: Omit<Short, "visibility" | "commentsEnabled">[] = [
   {
     id: "s1",
     title: "쉬고 돈 적게 주는 알바의 실체 ㅋㅋㅋ",

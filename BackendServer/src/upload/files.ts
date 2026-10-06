@@ -53,6 +53,24 @@ export function mimeToExt(
   return null;
 }
 
+/**
+ * 서버에 올린 파일(`/uploads/<uuid>.<ext>`)만 지운다. 외부 URL·다른 경로는 무시하고,
+ * 이미 없으면 조용히 넘어간다. 경로는 정규식으로 검증된 파일명만 uploads 폴더에 붙인다.
+ */
+export async function deleteStoredUpload(url: string): Promise<boolean> {
+  if (!STORED_FILE_RE.test(url)) return false;
+  const dir = uploadsDir();
+  const target = path.resolve(dir, path.basename(url));
+  if (path.dirname(target) !== dir) return false;
+  try {
+    await fs.promises.unlink(target);
+    return true;
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw err;
+  }
+}
+
 export function newStoredName(ext: string) {
   return `${randomUUID()}${ext}`;
 }

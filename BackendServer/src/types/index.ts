@@ -39,6 +39,8 @@ export type AdminStats = {
   communityCount: number;
 };
 
+export type ShortVisibility = "public" | "private";
+
 export type Short = {
   id: string;
   title: string;
@@ -51,6 +53,10 @@ export type Short = {
   thumb?: string;
   gradient: string;
   createdAt: string;
+  /** 비공개면 작성자 본인만 본다 */
+  visibility: ShortVisibility;
+  /** false 면 새 댓글을 막는다 */
+  commentsEnabled: boolean;
 };
 
 export type Comment = {

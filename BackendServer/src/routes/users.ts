@@ -28,7 +28,8 @@ router.get("/:id", async (req, res) => {
 router.get("/:id/shorts", async (req, res) => {
   const user = await findAuthor(req.params.id);
   if (!user) throw new HttpError(404, "User not found");
-  res.json({ success: true, data: await listShortsByAuthor(user.id) });
+  const viewer = await getRequestPublicUser(req);
+  res.json({ success: true, data: await listShortsByAuthor(user.id, viewer?.id) });
 });
 
 export default router;

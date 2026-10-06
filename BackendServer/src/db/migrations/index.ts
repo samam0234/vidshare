@@ -1,4 +1,5 @@
 import { sql as init } from "./0001_init";
+import { sql as shortControls } from "./0002_short_controls";
 
 export type Migration = { version: string; name: string; sql: string };
 
@@ -8,4 +9,5 @@ export type Migration = { version: string; name: string; sql: string };
  */
 export const MIGRATIONS: Migration[] = [
   { version: "0001", name: "init", sql: init },
+  { version: "0002", name: "short_controls", sql: shortControls },
 ];

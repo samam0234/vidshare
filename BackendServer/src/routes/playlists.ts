@@ -9,7 +9,7 @@ import {
   listPlaylistsByOwner,
   removePlaylistItem,
 } from "../data/store";
-import { requireRequestUser } from "../auth/requestUser";
+import { getRequestPublicUser, requireRequestUser } from "../auth/requestUser";
 import { HttpError } from "../middleware/errorHandler";
 
 const router = Router();
@@ -45,9 +45,10 @@ router.get("/:id", async (req, res) => {
   if (!Number.isFinite(id)) throw new HttpError(400, "invalid id");
   const playlist = await getPlaylistById(id);
   if (!playlist) throw new HttpError(404, "Playlist not found");
+  const viewer = await getRequestPublicUser(req);
   res.json({
     success: true,
-    data: { ...playlist, items: await listPlaylistItems(id) },
+    data: { ...playlist, items: await listPlaylistItems(id, viewer?.id) },
   });
 });
 
@@ -74,7 +75,7 @@ router.post("/:id/items", async (req, res) => {
   if (!ok) throw new HttpError(404, "Playlist or short not found");
   res.status(201).json({
     success: true,
-    data: { ...(await getPlaylistById(id)), items: await listPlaylistItems(id) },
+    data: { ...(await getPlaylistById(id)), items: await listPlaylistItems(id, user.id) },
   });
 });
 
@@ -87,7 +88,7 @@ router.delete("/:id/items/:shortId", async (req, res) => {
   if (!ok) throw new HttpError(404, "Playlist not found");
   res.json({
     success: true,
-    data: { ...(await getPlaylistById(id)), items: await listPlaylistItems(id) },
+    data: { ...(await getPlaylistById(id)), items: await listPlaylistItems(id, user.id) },
   });
 });
 

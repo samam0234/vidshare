@@ -85,7 +85,7 @@
 | 프론트엔드 | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, TanStack Query |
 | 백엔드 | Node.js 24, Express 4, TypeScript, `pg`, `ws`, bcrypt, multer |
 | AI | LangChain, LangGraph, Google Gemini · Groq |
-| 데이터 | PostgreSQL 16 (22개 테이블, 버전 관리 마이그레이션), 디스크 파일 스토리지 |
+| 데이터 | PostgreSQL 16 (23개 테이블, 버전 관리 마이그레이션), 디스크 파일 스토리지 |
 | 테스트 | `node --test` (백엔드 151건 · 프론트 32건), Playwright E2E 8 시나리오, GitHub Actions CI |
 | 배포 | 프론트: Cloudflare Workers (OpenNext) · 백엔드: Oracle Cloud 전용 VM (systemd) + Cloudflare Tunnel |
 
